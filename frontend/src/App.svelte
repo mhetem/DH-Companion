@@ -1,79 +1,93 @@
 <script>
-  import logo from './assets/images/logo-universal.png'
-  import {Greet} from '../wailsjs/go/main/App.js'
+  import { GetRole, SetRole } from '../wailsjs/go/main/App.js'
+  import RolePicker from './lib/RolePicker.svelte'
+  import Header from './lib/Header.svelte'
+  import GmShell from './lib/GmShell.svelte'
+  import PlayerShell from './lib/PlayerShell.svelte'
 
-  let resultText = "Please enter your name below 👇"
-  let name
+  let role = $state('')      // '' until a role is chosen — first run shows the picker
+  let loading = $state(true)
+  let error = $state('')
 
-  function greet() {
-    Greet(name).then(result => resultText = result)
+  // Load the last-used role before painting anything, so a returning user never
+  // sees the picker flash.
+  GetRole()
+    .then((saved) => (role = saved))
+    .catch((e) => (error = String(e)))
+    .finally(() => (loading = false))
+
+  async function pick(next) {
+    const previous = role
+    role = next
+    try {
+      await SetRole(next)
+    } catch (e) {
+      error = String(e)
+      role = previous
+    }
   }
 </script>
 
-<main>
-  <img alt="Wails logo" id="logo" src="{logo}">
-  <div class="result" id="result">{resultText}</div>
-  <div class="input-box" id="input">
-    <input autocomplete="off" bind:value={name} class="input" id="name" type="text"/>
-    <button class="btn" on:click={greet}>Greet</button>
+{#if loading}
+  <div class="splash">Loading…</div>
+{:else if !role}
+  <RolePicker onpick={pick} />
+{:else}
+  <div class="app">
+    <Header {role} onswitch={pick} />
+    {#if role === 'gm'}
+      <GmShell />
+    {:else}
+      <PlayerShell />
+    {/if}
   </div>
-</main>
+{/if}
+
+{#if error}
+  <div class="error" role="alert">
+    <span>{error}</span>
+    <button onclick={() => (error = '')} aria-label="Dismiss">×</button>
+  </div>
+{/if}
 
 <style>
-
-  #logo {
-    display: block;
-    width: 50%;
-    height: 50%;
-    margin: auto;
-    padding: 10% 0 0;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-origin: content-box;
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
 
-  .result {
-    height: 20px;
-    line-height: 20px;
-    margin: 1.5rem auto;
+  .splash {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--muted);
   }
 
-  .input-box .btn {
-    width: 60px;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 3px;
+  .error {
+    position: fixed;
+    left: 50%;
+    bottom: 1.25rem;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 40rem;
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--danger);
+    border-radius: 8px;
+    background: var(--panel-2);
+    font-size: 0.85rem;
+    text-align: left;
+  }
+
+  .error button {
     border: none;
-    margin: 0 0 0 20px;
-    padding: 0 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 1.1rem;
+    line-height: 1;
     cursor: pointer;
   }
-
-  .input-box .btn:hover {
-    background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
-    color: #333333;
-  }
-
-  .input-box .input {
-    border: none;
-    border-radius: 3px;
-    outline: none;
-    height: 30px;
-    line-height: 30px;
-    padding: 0 10px;
-    background-color: rgba(240, 240, 240, 1);
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .input-box .input:hover {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
-  }
-
-  .input-box .input:focus {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
-  }
-
 </style>

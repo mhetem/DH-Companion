@@ -1,12 +1,23 @@
+:root {
+    --bg: #14161d;
+    --panel: #1b1e28;
+    --panel-2: #232733;
+    --line: #313747;
+    --text: #e8e6e3;
+    --muted: #9aa0b0;
+    --hope: #e8c26a;   /* player side */
+    --fear: #9b6bd6;   /* GM side */
+    --danger: #c2554f;
+}
+
 html {
-    background-color: rgba(27, 38, 54, 1);
-    text-align: center;
-    color: white;
+    background-color: var(--bg);
+    color: var(--text);
 }
 
 body {
     margin: 0;
-    color: white;
+    color: var(--text);
     font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
     "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
@@ -22,5 +33,4 @@ body {
 
 #app {
     height: 100vh;
-    text-align: center;
 }

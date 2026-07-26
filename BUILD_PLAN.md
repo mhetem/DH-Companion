@@ -60,15 +60,15 @@ dh-companion/
 
 **Goal:** empty app opens, shows a role, opens a SQLite file. Role is switchable.
 
-- [ ] `wails init -n dh-companion -t svelte`
-- [ ] Add deps: SQLite driver (`modernc.org/sqlite`, pure-Go = no CGO), `pressly/goose`, `sqlc`
-- [ ] `sqlc.yaml`: engine `sqlite`, point at `sql/schema` + `sql/queries`
-- [ ] DB bootstrap: open `~/.dh-companion/data.db`, run goose migrations on startup.
+- [x] `wails init -n dh-companion -t svelte`
+- [x] Add deps: SQLite driver (`modernc.org/sqlite`, pure-Go = no CGO), `pressly/goose`, `sqlc`
+- [x] `sqlc.yaml`: engine `sqlite`, point at `sql/schema` + `sql/queries`
+- [x] DB bootstrap: open `~/DH-Companion/data.db` (override with `DH_DATA_DIR`), run goose migrations on startup.
       **Both schema islands (GM + Player) always exist regardless of current role** — nothing is role-scoped.
-- [ ] `settings` table (`key TEXT PRIMARY KEY, value TEXT`) — stores `last_role` (a preference, not a gate)
-- [ ] Frontend: on launch, open the last-used role's shell (`/gm` or `/player`); first run shows the picker
-- [ ] **Persistent "switch role" affordance** (menu/header) available anytime — flips the view, updates `last_role`, touches no data
-- [ ] Bound methods: `GetRole()`, `SetRole(role)`
+- [x] `settings` table (`key TEXT PRIMARY KEY, value TEXT`) — stores `last_role` (a preference, not a gate)
+- [x] Frontend: on launch, open the last-used role's shell; first run shows the picker
+- [x] **Persistent "switch role" affordance** (header) available anytime — flips the view, updates `last_role`, touches no data
+- [x] Bound methods: `GetRole()`, `SetRole(role)`
 
 **Done when:** app launches into your last role; you can switch GM↔Player at will; data built in either mode survives the switch and relaunch.
 
