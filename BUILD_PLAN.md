@@ -78,13 +78,24 @@ dh-companion/
 
 **Goal:** the pieces both modules depend on, no UI yet.
 
-- [ ] Port `encounter_math.go` → `internal/rules/`. Add unit tests (they run in-memory now — drop testcontainers).
-- [ ] `internal/dice/`: **Duality Dice** roller — 2d12 as Hope/Fear, critical on matching dice, advantage/disadvantage (±d6), flat modifiers. Pure functions, table-tested.
-- [ ] Port `adv.go` structs → `internal/cards/`. Generalize to a `Card` shape covering adversary + environment + domain + ability variants.
-- [ ] `internal/srd/`: loader for static json in `data/`. Reuse the adversary json you already have; add an environment dataset alongside it (same loader).
-- [ ] Convert schema files (see cheatsheet below), strip `user_id` everywhere.
+- [x] Port `encounter_math.go` → `internal/rules/`. Add unit tests (they run in-memory now — drop testcontainers).
+- [x] `internal/dice/`: **Duality Dice** roller — 2d12 as Hope/Fear, critical on matching dice, advantage/disadvantage (±d6), flat modifiers. Pure functions, table-tested.
+- [x] Port `adv.go` structs → `internal/cards/`. Generalize to a `Card` shape covering adversary + environment + domain + ability variants.
+      *(`Meta`/`Card` + `Adversary` and `Environment` variants are in place; `domain` and `ability`
+      exist as `Kind` constants and gain their structs with the Phase 5 data work.)*
+- [x] `internal/srd/`: loader for static json in `data/`. Reuse the adversary json you already have; add an environment dataset alongside it (same loader).
+- [x] Convert schema files (see cheatsheet below), strip `user_id` everywhere.
 
-**Done when:** `go test ./internal/rules/... ./internal/dice/...` passes; SRD loader returns adversaries.
+**Done when:** `go test ./internal/rules/... ./internal/dice/...` passes; SRD loader returns adversaries. ✅
+
+Notes on what landed:
+- `ComputeBudget` covers spend per adversary type, party-sized minion batching, and the
+  easy/hard, multi-solo, below-tier and no-big-adversary budget adjustments.
+- The duality roller returns `{Hope, Fear, Result, Msg}`. A critical (matching dice) is a
+  flat `Hope + Fear` — the modifier and advantage die are intentionally skipped, since a
+  critical succeeds regardless. Whether a roll came up *with Hope* or *with Fear* is phrased
+  by the caller from the two fields, not by the roller.
+- Tests are statistical over the package-level `math/rand` source rather than seeded.
 
 ### pgx → SQLite porting cheatsheet
 | Postgres | SQLite |
