@@ -7,12 +7,12 @@ import "testing"
 const rolls = 20000
 
 func TestRollDiceRange(t *testing.T) {
-	for _, sides := range []int{2, 4, 6, 8, 10, 12, 20} {
-		lowest, highest := sides+1, 0
+	for _, sides := range Allowed() {
+		lowest, highest := int(sides)+1, 0
 		for i := 0; i < rolls; i++ {
 			got := RollDice(sides)
-			if got < 1 || got > sides {
-				t.Fatalf("RollDice(%d) = %d, want in [1, %d]", sides, got, sides)
+			if got < 1 || got > int(sides) {
+				t.Fatalf("RollDice(%s) = %d, want in [1, %d]", sides, got, int(sides))
 			}
 			if got < lowest {
 				lowest = got
@@ -22,35 +22,27 @@ func TestRollDiceRange(t *testing.T) {
 			}
 		}
 		if lowest != 1 {
-			t.Errorf("RollDice(%d): lowest value seen was %d, want 1", sides, lowest)
+			t.Errorf("RollDice(%s): lowest value seen was %d, want 1", sides, lowest)
 		}
-		if highest != sides {
-			t.Errorf("RollDice(%d): highest value seen was %d, want %d", sides, highest, sides)
+		if highest != int(sides) {
+			t.Errorf("RollDice(%s): highest value seen was %d, want %d", sides, highest, int(sides))
 		}
 	}
 }
 
 func TestRollDiceCoversEveryFace(t *testing.T) {
-	const sides = 12
+	const sides = D12
 	seen := make(map[int]int, sides)
 	for i := 0; i < rolls; i++ {
 		seen[RollDice(sides)]++
 	}
-	for face := 1; face <= sides; face++ {
+	for face := 1; face <= int(sides); face++ {
 		if seen[face] == 0 {
 			t.Errorf("face %d never rolled in %d rolls", face, rolls)
 		}
 	}
-	if len(seen) != sides {
-		t.Errorf("saw %d distinct faces over %d rolls, want %d", len(seen), rolls, sides)
-	}
-}
-
-func TestRollDiceOneSidedIsAlwaysOne(t *testing.T) {
-	for i := 0; i < 100; i++ {
-		if got := RollDice(1); got != 1 {
-			t.Fatalf("RollDice(1) = %d, want 1", got)
-		}
+	if len(seen) != int(sides) {
+		t.Errorf("saw %d distinct faces over %d rolls, want %d", len(seen), rolls, int(sides))
 	}
 }
 

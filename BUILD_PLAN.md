@@ -16,20 +16,7 @@ the sqlc workflow) and drops everything web/multi-user.
 | GM ↔ Player data | **Fully separate.** Two schema islands in one DB, no shared records |
 | Shipping | Two modules, independently buildable. GM first (mostly a port), Player second (greenfield) |
 
-### What carries over from DHEncounters
-- `encounter_math.go` → `internal/rules/` **verbatim** (pure, no deps)
-- `adv.go` structs → `internal/cards/`
-- The `.sql`-as-source + sqlc codegen pattern
-- Adversary reference data in `data/`
 
-### What gets dropped
-- All HTTP handlers, `decode_helper.go`, `views.go`, HTTP error plumbing
-- `auth_handlers.go`, `session.go`, `ratelimit.go`, `internal/auth/`, users + sessions tables
-- `templates/`, `static/`
-- pgx / pgtype / Postgres, testcontainers, Docker/compose
-- `user_id` on every table and query
-
----
 
 ## Target structure
 
@@ -80,6 +67,7 @@ dh-companion/
 
 - [x] Port `encounter_math.go` → `internal/rules/`. Add unit tests (they run in-memory now — drop testcontainers).
 - [x] `internal/dice/`: **Duality Dice** roller — 2d12 as Hope/Fear, critical on matching dice, advantage/disadvantage (±d6), flat modifiers. Pure functions, table-tested.
+- [x] `internal/dice/`: **GM d20** (`RollGMDice`) and damage rolls — only players roll duality dice.
 - [x] Port `adv.go` structs → `internal/cards/`. Generalize to a `Card` shape covering adversary + environment + domain + ability variants.
       *(`Meta`/`Card` + `Adversary` and `Environment` variants are in place; `domain` and `ability`
       exist as `Kind` constants and gain their structs with the Phase 5 data work.)*
@@ -96,19 +84,23 @@ Notes on what landed:
   critical succeeds regardless. Whether a roll came up *with Hope* or *with Fear* is phrased
   by the caller from the two fields, not by the roller.
 - Tests are statistical over the package-level `math/rand` source rather than seeded.
+- `dice.Roller` is a stateless struct bound as its own Wails target (`window.go.dice.Roller.*`),
+  matching how `gm.Service` is bound — the roll functions themselves stay pure and
+  package-level.
+- **Die sizes are a closed set** — d4, d6, d8, d10, d12, d20, d100. `Sides` is a named type
+  holding one constant per die, and
+  `RollDice` takes a `Sides` rather than an `int`, so no arbitrary number can reach
+  `rand.Intn` (which panics below 1). `ParseSides` is the boundary check for values arriving
+  from JS; `Roller.Damage` returns its error rather than rolling something nonsensical, and
+  `RollDice` keeps a `Valid()` backstop for a `Sides` made by a raw conversion.
+- `Roller.Sizes()` serves that list to the frontend, so the picker can't offer a die the
+  backend would reject and the set is defined in exactly one place.
+- `DualityDice` and `GMDice` carry no json tags, so they cross the bridge with capitalised
+  field names (`Hope`, `Result`, `Msg`) unlike everything else. Worth tagging at some point.
+- The GM shell has a **Dice** section (d20 with advantage/disadvantage/modifier, a damage
+  roller, and a short roll log). Phase 3 wires it to Fear inside the combat runner.
 
-### pgx → SQLite porting cheatsheet
-| Postgres | SQLite |
-|---|---|
-| `SERIAL PRIMARY KEY` | `INTEGER PRIMARY KEY AUTOINCREMENT` |
-| `pgtype.Timestamp` | `TEXT` (RFC3339) or `INTEGER` (unix) |
-| `pgtype.Int4` | `sql.NullInt64` |
-| `[]byte` JSON columns | keep as `TEXT` |
-| `$1, $2` placeholders | `?` (sqlc handles via engine setting) |
-| testcontainers Postgres | in-memory `:memory:` SQLite |
-| — | **remove** every `user_id` column + `WHERE user_id = ?` clause |
 
----
 
 ## Phase 2 — GM: Encounter Builder (port)
 
@@ -124,13 +116,58 @@ encounter(id, name, party_id, adversaries TEXT, environment_slug TEXT,
           created_at, updated_at)   -- environment_slug: SRD or custom, nullable
 ```
 
-- [ ] Migrate `parties`, `custom_adversaries`, `custom_environments`, `encounters` schema + queries (minus auth)
-- [ ] Bound methods: CRUD for parties, custom adversaries, **custom environments**, encounters
-- [ ] `ComputeBudget(settings, picks) -> BudgetSummary` bound straight to `internal/rules`
-- [ ] Frontend: adversary browser (SRD + custom), **environment browser (SRD + custom)**, encounter builder, live budget meter
-- [ ] Attach an environment to an encounter (optional, one per encounter); show its impulses/features/potential-adversaries inline
+- [x] Migrate `parties`, `custom_adversaries`, `custom_environments`, `encounters` schema + queries (minus auth)
+- [x] Bound methods: CRUD for parties, custom adversaries, **custom environments**, encounters
+- [x] `ComputeBudget(settings, picks) -> BudgetSummary` bound straight to `internal/rules`
+- [x] Frontend: adversary browser (SRD + custom), **environment browser (SRD + custom)**, encounter builder, live budget meter
+- [x] Attach an environment to an encounter (optional, one per encounter); show its impulses/features/potential-adversaries inline
+- [x] Homebrew editors — create/edit/delete forms for custom adversaries and environments,
+      reached from the browsers
 
-**Done when:** you can build an encounter against a party, attach an environment, see the budget update live, and save it — feature parity with the web app plus environments.
+Notes on what landed:
+- `internal/gm.Service` is bound as its own Wails struct, so the frontend calls
+  `window.go.gm.Service.*`. `gm.Attach` is a package function, not a method — Wails binds
+  every exported method on a bound struct, and an `Attach` method would publish
+  `context.Context`/`db.Queries`/`sql.DB` into the generated TypeScript models.
+- Nothing returns a `db.*` row. Bridge types are `gm.Party`, `cards.Adversary`,
+  `cards.Environment`, `rules.EncounterView`, with `*T` for nullable columns — the frontend
+  never sees `sql.NullString`, and the JSON-in-TEXT columns arrive decoded.
+- Custom cards are addressed by **slug** everywhere (get/update/delete). Slugs are derived
+  from the name on create and are immutable, since encounters reference them with no FK.
+- `BrowseAdversaries`/`BrowseEnvironments` return the SRD ∪ custom union, sorted, each card
+  tagged `source: "srd" | "custom"`; a custom card shadows an SRD one on slug collision.
+- Deleting a custom card leaves referencing encounters intact — the pick comes back
+  `unresolved: true` rather than failing `GetEncounter`.
+
+Notes on the frontend:
+- `Shell.svelte` now renders a section's `component` when one is set and falls back to the
+  "coming in phase N" stub otherwise, so the Player shell is untouched and phases 3–5 slot
+  in by adding a component to the section list.
+- Everything GM lives in `frontend/src/lib/gm/`; `api.js` is the single import surface over
+  the generated bindings and mirrors `validate.go`'s tier/type lists and `adversaryCost`.
+- **Parties got a section of its own** — it wasn't in the original checklist, but party size
+  and tier are what the budget is computed from, so there was no way to reach the meter
+  without it.
+- The two browsers share `CardBrowser.svelte`. Tier and type go down to the Go `Filter`;
+  the name search stays client-side so typing doesn't re-cross the bridge.
+- The builder is a full-width view rather than a third column — the shell nav plus a
+  picker plus a summary rail already fills the 1024px default window.
+- The budget meter re-calls `ComputeBudget` on every edit (party, difficulty, roster) rather
+  than reimplementing the math in JS. `difficulty` is a builder-local knob: `EncounterInput`
+  has no column for it, so it shifts the live meter but isn't saved.
+- Feature descriptions carry inline `<strong>`/`<em>` and hard newlines in the SRD json, so
+  `FeatureList.svelte` renders them as HTML inside a `pre-wrap` block.
+- Unresolved picks render in the roster outlined in red with a "missing card" note and can
+  be removed; on save they ride along in the SRD bucket, since lookup checks both lists.
+- The homebrew forms deep-copy the card into local `$state` on mount, so typing never
+  mutates the row still sitting in the browser's list, and Cancel really cancels. Both show
+  a live preview using the same detail component the browser renders.
+- Editing a card **keeps its slug** — `UpdateCustom*` addresses by slug and only writes the
+  name, so a rename can't orphan an encounter. The forms say so inline.
+- Deleting leaves the browser mounted, so `CardBrowser` takes a `reloadToken` the parent
+  bumps; saving unmounts the browser instead, and that path reloads for free.
+
+**Done when:** you can build an encounter against a party, attach an environment, see the budget update live, and save it — feature parity with the web app plus environments. ✅
 
 ---
 
@@ -222,6 +259,8 @@ experience(id, character_id, name, modifier)
 > to the end.
 
 - [ ] **CI (GitHub Actions):** `go vet`, `go test ./...`, `wails build` on every push/PR; status badge in README
+      *(Linux needs `wails build -tags webkit2_41` on distros that ship webkit2gtk 4.1 and
+      no 4.0 compat package — plain `wails build` fails at pkg-config. Bake the tag into CI.)*
 - [ ] **Cross-platform release automation:** on tag, build Win/macOS/Linux binaries via Wails and attach to a GitHub Release
 - [ ] **Auto-update:** wire Wails' updater to the release feed
 - [ ] **Data portability:** DB backup/export + import (single-file copy), plus **whole-library JSON export/import**

@@ -35,5 +35,5 @@ UPDATE custom_environments SET
   potential_adversaries = ?,
   features = ?,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-WHERE id = ?
+WHERE slug = ?
 RETURNING *;

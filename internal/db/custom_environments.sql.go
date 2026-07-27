@@ -206,7 +206,7 @@ UPDATE custom_environments SET
   potential_adversaries = ?,
   features = ?,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-WHERE id = ?
+WHERE slug = ?
 RETURNING id, slug, name, tier, type, description, impulses, difficulty, potential_adversaries, features, created_at, updated_at
 `
 
@@ -219,7 +219,7 @@ type UpdateCustomEnvironmentParams struct {
 	Difficulty           string
 	PotentialAdversaries string
 	Features             string
-	ID                   int64
+	Slug                 string
 }
 
 func (q *Queries) UpdateCustomEnvironment(ctx context.Context, arg UpdateCustomEnvironmentParams) (CustomEnvironment, error) {
@@ -232,7 +232,7 @@ func (q *Queries) UpdateCustomEnvironment(ctx context.Context, arg UpdateCustomE
 		arg.Difficulty,
 		arg.PotentialAdversaries,
 		arg.Features,
-		arg.ID,
+		arg.Slug,
 	)
 	var i CustomEnvironment
 	err := row.Scan(

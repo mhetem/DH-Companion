@@ -250,7 +250,7 @@ UPDATE custom_adversaries SET
   standard_attack = ?,
   features = ?,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-WHERE id = ?
+WHERE slug = ?
 RETURNING id, slug, name, tier, type, description, horde_number, motives, experiences, difficulty, threshold_minor, threshold_major, hp, stress, standard_attack, features, created_at, updated_at
 `
 
@@ -269,7 +269,7 @@ type UpdateCustomAdversaryParams struct {
 	Stress         string
 	StandardAttack sql.NullString
 	Features       sql.NullString
-	ID             int64
+	Slug           string
 }
 
 func (q *Queries) UpdateCustomAdversary(ctx context.Context, arg UpdateCustomAdversaryParams) (CustomAdversary, error) {
@@ -288,7 +288,7 @@ func (q *Queries) UpdateCustomAdversary(ctx context.Context, arg UpdateCustomAdv
 		arg.Stress,
 		arg.StandardAttack,
 		arg.Features,
-		arg.ID,
+		arg.Slug,
 	)
 	var i CustomAdversary
 	err := row.Scan(

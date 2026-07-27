@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/mhetem/DH-Companion/internal/db"
+	"github.com/mhetem/DH-Companion/internal/gm"
+	"github.com/mhetem/DH-Companion/internal/srd"
 	"github.com/pressly/goose/v3"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	_ "modernc.org/sqlite"
@@ -29,23 +31,35 @@ type App struct {
 	ctx  context.Context
 	q    *db.Queries
 	conn *sql.DB
+	gm   *gm.Service
 }
 
-func NewApp() *App {
-	return &App{}
+func NewApp(gmSvc *gm.Service) *App {
+	return &App{gm: gmSvc}
 }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	q, conn, err := Open("")
 	if err != nil {
-		runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
-			Type: runtime.ErrorDialog, Title: "Database error", Message: err.Error(),
-		})
-		runtime.Quit(ctx)
+		a.fatal(ctx, "Database error", err)
 		return
 	}
 	a.q, a.conn = q, conn
+
+	catalog, err := srd.Default()
+	if err != nil {
+		a.fatal(ctx, "Reference data error", err)
+		return
+	}
+	gm.Attach(a.gm, ctx, q, conn, catalog)
+}
+
+func (a *App) fatal(ctx context.Context, title string, err error) {
+	runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
+		Type: runtime.ErrorDialog, Title: title, Message: err.Error(),
+	})
+	runtime.Quit(ctx)
 }
 
 func (a *App) shutdown(ctx context.Context) {

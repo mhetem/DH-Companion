@@ -35,18 +35,18 @@ func adversaryCost(advType string) int {
 }
 
 type EncounterSettings struct {
-	PartySize  int
-	PartyTier  string
-	Difficulty string
+	PartySize  int    `json:"partySize"`
+	PartyTier  string `json:"partyTier"`
+	Difficulty string `json:"difficulty"`
 }
 
 type BudgetSummary struct {
-	PartySize   int
-	Budget      int
-	Spent       int
-	Remaining   int
-	Over        bool
-	Adjustments []string
+	PartySize   int      `json:"partySize"`
+	Budget      int      `json:"budget"`
+	Spent       int      `json:"spent"`
+	Remaining   int      `json:"remaining"`
+	Over        bool     `json:"over"`
+	Adjustments []string `json:"adjustments"`
 }
 
 func isBigType(advType string) bool {

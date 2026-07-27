@@ -43,5 +43,5 @@ UPDATE custom_adversaries SET
   standard_attack = ?,
   features = ?,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-WHERE id = ?
+WHERE slug = ?
 RETURNING *;

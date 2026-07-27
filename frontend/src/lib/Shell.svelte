@@ -14,11 +14,21 @@
     {/each}
   </nav>
 
-  <main>
-    <h2>{active.label}</h2>
-    <p class="blurb">{active.blurb}</p>
-    <p class="phase">Coming in phase {active.phase}</p>
-  </main>
+  {#if active.component}
+    {@const Section = active.component}
+    <main class="pane">
+      <!-- Keyed so switching sections remounts instead of reusing the old state. -->
+      {#key active.id}
+        <Section />
+      {/key}
+    </main>
+  {:else}
+    <main class="stub">
+      <h2>{active.label}</h2>
+      <p class="blurb">{active.blurb}</p>
+      <p class="phase">Coming in phase {active.phase}</p>
+    </main>
+  {/if}
 </div>
 
 <style>
@@ -33,6 +43,7 @@
     flex-direction: column;
     gap: 0.15rem;
     width: 12rem;
+    flex-shrink: 0;
     padding: 0.75rem;
     border-right: 1px solid var(--line);
     background: var(--panel);
@@ -60,6 +71,15 @@
   main {
     display: flex;
     flex: 1;
+    min-width: 0;
+  }
+
+  .pane {
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .stub {
     flex-direction: column;
     align-items: center;
     justify-content: center;

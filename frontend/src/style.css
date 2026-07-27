@@ -8,6 +8,7 @@
     --hope: #e8c26a;   /* player side */
     --fear: #9b6bd6;   /* GM side */
     --danger: #c2554f;
+    --ok: #6ba86f;
 }
 
 html {
@@ -33,4 +34,102 @@ body {
 
 #app {
     height: 100vh;
+}
+
+/* ── Shared controls ─────────────────────────────────────────────────────────
+   Base chrome for the form controls the GM panes lean on. Component styles are
+   scoped by Svelte, so anything reused across panes lives here instead. */
+
+input,
+select,
+textarea {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.85rem;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--fear);
+}
+
+textarea {
+    resize: vertical;
+    line-height: 1.45;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--muted);
+    opacity: 0.7;
+}
+
+.btn {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel-2);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.btn:hover:not(:disabled) { border-color: var(--muted); }
+
+.btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.btn.primary {
+    border-color: var(--fear);
+    color: var(--fear);
+}
+
+.btn.primary:hover:not(:disabled) {
+    background: var(--fear);
+    color: var(--bg);
+}
+
+.btn.danger {
+    border-color: transparent;
+    background: transparent;
+    color: var(--danger);
+}
+
+.btn.danger:hover:not(:disabled) { border-color: var(--danger); }
+
+.btn.ghost {
+    border-color: transparent;
+    background: transparent;
+    color: var(--muted);
+}
+
+.btn.ghost:hover:not(:disabled) {
+    border-color: var(--line);
+    color: var(--text);
+}
+
+/* Source / tier / type chips shown on cards. */
+.chip {
+    padding: 0.1rem 0.45rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.chip.custom {
+    border-color: var(--fear);
+    color: var(--fear);
 }
