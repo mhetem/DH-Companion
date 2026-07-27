@@ -7,8 +7,6 @@ CREATE TABLE custom_environments (
     type                  TEXT NOT NULL,
     description           TEXT NOT NULL,
     impulses              TEXT NOT NULL DEFAULT '',
-    -- Difficulty is TEXT, not INTEGER: SRD environments such as Ambushed print
-    -- "Special (see 'Relative Strength')" instead of a number.
     difficulty            TEXT NOT NULL,
     potential_adversaries TEXT NOT NULL DEFAULT '[]',
     features              TEXT NOT NULL DEFAULT '[]',

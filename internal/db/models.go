@@ -4,6 +4,66 @@
 
 package db
 
+import (
+	"database/sql"
+)
+
+type CustomAdversary struct {
+	ID             int64
+	Slug           string
+	Name           string
+	Tier           string
+	Type           string
+	Description    string
+	HordeNumber    string
+	Motives        string
+	Experiences    string
+	Difficulty     string
+	ThresholdMinor string
+	ThresholdMajor string
+	Hp             string
+	Stress         string
+	StandardAttack sql.NullString
+	Features       sql.NullString
+	CreatedAt      string
+	UpdatedAt      string
+}
+
+type CustomEnvironment struct {
+	ID                   int64
+	Slug                 string
+	Name                 string
+	Tier                 string
+	Type                 string
+	Description          string
+	Impulses             string
+	Difficulty           string
+	PotentialAdversaries string
+	Features             string
+	CreatedAt            string
+	UpdatedAt            string
+}
+
+type Encounter struct {
+	ID                int64
+	EncounterName     string
+	Adversaries       string
+	CustomAdversaries string
+	EnvironmentSlug   sql.NullString
+	CreatedAt         string
+	UpdatedAt         string
+	PartyID           sql.NullInt64
+}
+
+type Party struct {
+	ID        int64
+	Name      string
+	Size      int64
+	Tier      string
+	CreatedAt string
+	UpdatedAt string
+}
+
 type Setting struct {
 	Key   string
 	Value string

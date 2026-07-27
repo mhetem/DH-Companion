@@ -12,7 +12,7 @@ type DualityDice struct {
 }
 
 func RollDice(sides int) int {
-	return rand.Intn(sides)
+	return rand.Intn(sides) + 1
 }
 
 func DualityDiceRoll(hasAdvantage bool, hasDisadvantage bool, modifier int) DualityDice {
