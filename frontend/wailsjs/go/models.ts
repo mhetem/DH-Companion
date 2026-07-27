@@ -321,6 +321,201 @@ export namespace gm {
 		    return a;
 		}
 	}
+	export class CombatSummary {
+	    id: number;
+	    encounterId?: number;
+	    encounterName: string;
+	    fear: number;
+	    active: boolean;
+	    createdAt: string;
+	    updatedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CombatSummary(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.encounterId = source["encounterId"];
+	        this.encounterName = source["encounterName"];
+	        this.fear = source["fear"];
+	        this.active = source["active"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
+	export class CombatantView {
+	    id: number;
+	    combatId: number;
+	    displayName: string;
+	    adversarySlug?: string;
+	    hpMax: number;
+	    hpMarked: number;
+	    stressMax: number;
+	    stressMarked: number;
+	    spotlight: boolean;
+	    adversary?: cards.Adversary;
+	    source: string;
+	    unresolved?: boolean;
+	    createdAt: string;
+	    updatedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CombatantView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.combatId = source["combatId"];
+	        this.displayName = source["displayName"];
+	        this.adversarySlug = source["adversarySlug"];
+	        this.hpMax = source["hpMax"];
+	        this.hpMarked = source["hpMarked"];
+	        this.stressMax = source["stressMax"];
+	        this.stressMarked = source["stressMarked"];
+	        this.spotlight = source["spotlight"];
+	        this.adversary = this.convertValues(source["adversary"], cards.Adversary);
+	        this.source = source["source"];
+	        this.unresolved = source["unresolved"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CombatView {
+	    id: number;
+	    encounterId?: number;
+	    encounterName: string;
+	    fear: number;
+	    fearMax: number;
+	    active: boolean;
+	    combatants: CombatantView[];
+	    environment?: cards.Environment;
+	    createdAt: string;
+	    updatedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CombatView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.encounterId = source["encounterId"];
+	        this.encounterName = source["encounterName"];
+	        this.fear = source["fear"];
+	        this.fearMax = source["fearMax"];
+	        this.active = source["active"];
+	        this.combatants = this.convertValues(source["combatants"], CombatantView);
+	        this.environment = this.convertValues(source["environment"], cards.Environment);
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CombatantInput {
+	    id?: number;
+	    combatId: number;
+	    displayName: string;
+	    adversarySlug?: string;
+	    hpMax: number;
+	    stressMax: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new CombatantInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.combatId = source["combatId"];
+	        this.displayName = source["displayName"];
+	        this.adversarySlug = source["adversarySlug"];
+	        this.hpMax = source["hpMax"];
+	        this.stressMax = source["stressMax"];
+	    }
+	}
+	
+	export class Countdown {
+	    id: number;
+	    name: string;
+	    value: number;
+	    max: number;
+	    kind: string;
+	    createdAt: string;
+	    updatedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Countdown(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.value = source["value"];
+	        this.max = source["max"];
+	        this.kind = source["kind"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
+	export class CountdownInput {
+	    id?: number;
+	    name: string;
+	    value: number;
+	    max: number;
+	    kind: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CountdownInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.value = source["value"];
+	        this.max = source["max"];
+	        this.kind = source["kind"];
+	    }
+	}
 	export class Pick {
 	    slug: string;
 	    count: number;

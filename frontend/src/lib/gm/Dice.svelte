@@ -1,5 +1,13 @@
 <script>
+  import { fade, fly, scale } from 'svelte/transition'
   import { Damage, GM, Sizes, errorMessage } from './api.js'
+  import RollResult from './RollResult.svelte'
+
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+
+  // compact drops the page chrome and stacks the rollers so the same component can
+  // sit in the combat runner's rail. The roll logic lives here only.
+  let { compact = false } = $props()
 
   // GMDice and DualityDice have no json tags on the Go side, so their fields
   // arrive capitalised — Result and Msg, not result and msg.
@@ -21,9 +29,28 @@
     .then((sizes) => (dieSizes = sizes ?? []))
     .catch((e) => (error = errorMessage(e)))
 
+  let nextId = 0
+
+  // The result flashes centre-screen long enough to read, then clears itself. Miss it
+  // and it's still in the log below.
+  const FLASH_MS = 2200
+  let flash = $state(null)
+  let flashTimer
+
   function record(entry) {
-    log = [{ ...entry, at: new Date() }, ...log].slice(0, 12)
+    const item = { ...entry, id: nextId++, at: new Date() }
+    log = [item, ...log].slice(0, 12)
+    flash = item
+    clearTimeout(flashTimer)
+    flashTimer = setTimeout(() => (flash = null), FLASH_MS)
   }
+
+  function dismiss() {
+    clearTimeout(flashTimer)
+    flash = null
+  }
+
+  $effect(() => () => clearTimeout(flashTimer))
 
   async function rollD20() {
     try {
@@ -31,7 +58,8 @@
       error = ''
       record({
         kind: 'd20',
-        headline: String(roll.Result),
+        value: Number(roll.Result),
+        max: 20 + Number(modifier),
         note: roll.Msg,
         detail: describeD20()
       })
@@ -62,7 +90,8 @@
       error = ''
       record({
         kind: 'damage',
-        headline: String(roll.total),
+        value: Number(roll.total),
+        max: Number(roll.count) * Number(roll.sides) + Number(roll.modifier),
         note: '',
         detail: `${roll.count}d${roll.sides}${signed(roll.modifier)}`
       })
@@ -72,14 +101,16 @@
   }
 </script>
 
-<div class="dice">
-  <header>
-    <h2>Dice</h2>
-    <p class="blurb">
-      A d20 for GM rolls and a damage roller. Duality dice stay on the player side — the
-      combat runner will wire this to Fear in phase 3.
-    </p>
-  </header>
+<div class="dice" class:compact>
+  {#if !compact}
+    <header>
+      <h2>Dice</h2>
+      <p class="blurb">
+        A d20 for GM rolls and a damage roller. Duality dice stay on the player side —
+        only players roll Hope and Fear.
+      </p>
+    </header>
+  {/if}
 
   {#if error}
     <p class="error">{error}</p>
@@ -116,17 +147,20 @@
           <input type="number" min="1" max="20" bind:value={count} />
         </label>
         <label class="narrow">
-          <span>Size</span>
-          <select bind:value={sides}>
-            {#each dieSizes as size (size)}
-              <option value={size}>d{size}</option>
-            {/each}
-          </select>
-        </label>
-        <label class="narrow">
           <span>Modifier</span>
           <input type="number" bind:value={damageModifier} />
         </label>
+      </div>
+
+      <div class="sizes" role="group" aria-label="Die size">
+        <span class="slabel">Size</span>
+        <div class="chips">
+          {#each dieSizes as size (size)}
+            <button class="die" class:on={sides === size} onclick={() => (sides = size)} aria-pressed={sides === size}>
+              d{size}
+            </button>
+          {/each}
+        </div>
       </div>
       <p class="hint">The modifier lands once on the total, not on each die.</p>
       <button class="btn primary" onclick={rollDamage} disabled={!dieSizes.length}>
@@ -141,9 +175,14 @@
       <p class="empty">Nothing rolled yet.</p>
     {:else}
       <ul>
-        {#each log as entry (entry.at.getTime() + entry.headline)}
-          <li>
-            <span class="result" class:crit={Boolean(entry.note)}>{entry.headline}</span>
+        {#each log as entry (entry.id)}
+          <li in:fly={{ y: -8, duration: reduced ? 0 : 180 }}>
+            <RollResult
+              value={entry.value}
+              max={entry.max}
+              crit={Boolean(entry.note)}
+              {compact}
+            />
             <span class="detail">
               {entry.detail}
               {#if entry.note}<strong class="note">{entry.note}</strong>{/if}
@@ -154,6 +193,25 @@
       </ul>
     {/if}
   </section>
+
+  {#if flash}
+    <div class="flash" role="status" aria-live="polite">
+      {#key flash.id}
+        <button
+          class="card"
+          class:crit={Boolean(flash.note)}
+          onclick={dismiss}
+          title="Dismiss"
+          in:scale={{ start: 0.88, duration: reduced ? 0 : 170 }}
+          out:fade={{ duration: reduced ? 0 : 220 }}
+        >
+          <span class="fdetail">{flash.detail}</span>
+          <RollResult value={flash.value} max={flash.max} crit={Boolean(flash.note)} big />
+          {#if flash.note}<span class="fnote">{flash.note}</span>{/if}
+        </button>
+      {/key}
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -254,7 +312,74 @@
     opacity: 0.85;
   }
 
+  .sizes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 100%;
+  }
+
+  .slabel {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .die {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+  }
+
+  .die:hover:not(.on) {
+    border-color: var(--muted);
+    color: var(--text);
+  }
+
+  .die.on {
+    border-color: var(--fear);
+    background: var(--fear);
+    color: var(--bg);
+  }
+
   .log { margin-top: 1.25rem; }
+
+  /* Rail-sized: no page padding or scroll of its own, rollers stacked, log trimmed. */
+  .dice.compact {
+    flex: none;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .dice.compact .rollers { flex-direction: column; }
+
+  /* Nested inside the rail's panel, so the inner cards step up a shade. */
+  .dice.compact .rollers section {
+    flex: none;
+    padding: 0.7rem 0.75rem;
+    background: var(--panel-2);
+  }
+
+  .dice.compact .log li { background: var(--panel-2); }
+
+  .dice.compact .log { margin-top: 0.75rem; }
+
+  .dice.compact .log li:nth-child(n + 5) { display: none; }
+
+  .dice.compact .time { display: none; }
 
   .log ul {
     margin: 0.5rem 0 0;
@@ -272,15 +397,6 @@
     border-radius: 6px;
     background: var(--panel);
   }
-
-  .result {
-    min-width: 2.5rem;
-    font-size: 1.15rem;
-    font-weight: 600;
-    text-align: right;
-  }
-
-  .result.crit { color: var(--fear); }
 
   .detail {
     flex: 1;
@@ -303,5 +419,47 @@
     margin: 0.5rem 0 0;
     font-size: 0.85rem;
     color: var(--muted);
+  }
+
+  /* Fixed to the viewport so it centres over the whole window, and transparent to
+     clicks so a stray roll never blocks the runner underneath. */
+  .flash {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 1.25rem 2.25rem;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    box-shadow: 0 18px 48px rgb(0 0 0 / 45%);
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  .card.crit { border-color: var(--fear); }
+
+  .fdetail {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  .fnote {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--fear);
   }
 </style>

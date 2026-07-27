@@ -24,6 +24,18 @@ func Attach(s *Service, ctx context.Context, q *db.Queries, conn *sql.DB, catalo
 	s.ctx, s.q, s.conn, s.catalog = ctx, q, conn, catalog
 }
 
+func (s *Service) tx(fn func(*db.Queries) error) error {
+	tx, err := s.conn.BeginTx(s.ctx, nil)
+	if err != nil {
+		return fmt.Errorf("opening transaction: %w", err)
+	}
+	defer tx.Rollback()
+	if err := fn(s.q.WithTx(tx)); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
 var ErrNotFound = errors.New("not found")
 
 func notFound(kind, key string) error {

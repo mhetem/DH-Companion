@@ -98,7 +98,8 @@ Notes on what landed:
 - `DualityDice` and `GMDice` carry no json tags, so they cross the bridge with capitalised
   field names (`Hope`, `Result`, `Msg`) unlike everything else. Worth tagging at some point.
 - The GM shell has a **Dice** section (d20 with advantage/disadvantage/modifier, a damage
-  roller, and a short roll log). Phase 3 wires it to Fear inside the combat runner.
+  roller, and a short roll log). It stays a GM-side utility — duality dice are player-only,
+  so nothing here feeds the Fear pool.
 
 
 
@@ -177,21 +178,77 @@ Notes on the frontend:
 
 Schema (island A, cont.):
 ```sql
-combat(id, encounter_id, fear INTEGER DEFAULT 0, active INTEGER, created_at)
-combatant(id, combat_id, adversary_slug, display_name,
-          hp_max, hp_marked, stress_max, stress_marked, spotlight INTEGER)
-countdown(id, name, value INTEGER, max INTEGER, kind TEXT)
+combats(id, encounter_id, fear INTEGER DEFAULT 0, active INTEGER, created_at, updated_at)
+combatants(id, combat_id, adversary_slug, display_name,
+           hp_max, hp_marked, stress_max, stress_marked, spotlight INTEGER)
+countdowns(id, name, value INTEGER, max INTEGER, kind TEXT)
 ```
 
-- [ ] Start a combat from a saved encounter (spawns combatants from picks)
-- [ ] Per-combatant HP/Stress steppers, spotlight toggle, quick-view of card features
-- [ ] **Fear tracker** (0–12) at the combat level
-- [ ] **Countdowns / progress clocks** — add, tick up/down, delete
-- [ ] Surface the encounter's **environment** in the runner — impulses + features on hand as GM prompts during the scene
-- [ ] **Duality dice** widget wired to Fear — a roll with Fear bumps the pool
-- [ ] Auto-save state (so closing the app mid-fight is safe)
+- [x] Start a combat from a saved encounter (spawns combatants from picks)
+- [x] Per-combatant HP/Stress steppers, spotlight toggle, quick-view of card features
+- [x] **Fear tracker** (0–12) at the combat level — the GM adjusts it by hand
+- [x] **Countdowns / progress clocks** — add, tick up/down, delete
+- [x] Surface the encounter's **environment** in the runner — impulses + features on hand as GM prompts during the scene
+- [x] Auto-save state (so closing the app mid-fight is safe)
 
-**Done when:** you can run a saved encounter end to end — mark damage, roll duality dice, spend/gain Fear, advance a countdown — and reopen exactly where you left off.
+**Only players roll duality dice**, so the runner has no duality widget and nothing bumps
+Fear automatically — the GM gains and spends it manually. The Hope/Fear roller belongs to
+the Player module in Phase 5.
+
+Notes on the schema:
+- Tables are **plural** (`combats`, `combatants`, `countdowns`) to match everything else in
+  the database, and every column is `NOT NULL` with a default — the frontend never sees a
+  null where zero is meant. `adversary_slug` is the one genuinely nullable column.
+- `combatants.adversary_slug` is **plain TEXT, not a foreign key**. SRD adversaries live in
+  `data/` json and homebrew lives in `custom_adversaries`, so there is no single table to
+  point at, and an ad-hoc combatant has no source card at all.
+- `combatants.combat_id` is `ON DELETE CASCADE`; deleting a fight takes its roster with it.
+  `combats.encounter_id` stays `ON DELETE SET NULL` so a combat outlives the encounter it
+  came from, matching how Phase 2 keeps encounters that reference deleted cards.
+- **Clamping happens in SQL**, not Go: Fear, HP, Stress and countdown values are all written
+  as `max(0, min(ceiling, current + delta))`. Holding a stepper at either end is a no-op
+  rather than an error to handle mid-scene; the `CHECK` constraints are the backstop.
+
+Notes on what landed:
+- Nothing returns a `db.*` row, same as Phase 2 — `gm.CombatView`, `gm.CombatantView` and
+  `gm.Countdown` are the bridge types. `CombatantView` embeds the resolved `cards.Adversary`
+  so the feature quick-view needs no second call.
+- `StartCombat` runs in one transaction (the first in the codebase — `Service.tx` is the
+  helper), stands down any active fight, and spawns one combatant per adversary per pick.
+  Several of the same card get numbered; a lone one keeps the card's name.
+- Card `hp`/`stress` are **text**, combatant maxima are integers. `parseStat` takes the
+  leading integer run, so `"8"`, `"8 (5)"` and `"8-10"` all give 8, falling back to 1.
+  All 129 SRD adversaries parse cleanly; homebrew hp/stress is unvalidated free text, so a
+  bad card can't block a fight from starting — the GM corrects the combatant inline.
+- A pick whose custom card was deleted still spawns, named after its slug with fallback
+  stats and flagged `unresolved`, rather than silently dropping adversaries.
+- **Spotlight is not exclusive** — `SetSpotlight` toggles one combatant and
+  `ClearSpotlights` wipes the fight, so the GM can hold several at once.
+- Auto-save needed no separate path: every mutator is `:one`, touches `updated_at`, and
+  returns the updated row, so the UI renders what the database actually holds.
+- Countdowns are still **global** until Phase 4 gives them a `campaign_id`.
+
+Notes on the frontend:
+- `CombatRunner.svelte` is the section. With no fight running it lists saved encounters to
+  start from and past fights to resume; it calls `GetActiveCombat` on mount, so it reopens
+  mid-combat where you left off.
+- **HP counts up, not down** — `0/8` at full health, ticking to `8/8`, matching the Stress
+  track beside it. The database always stored marked-ascending; only the display differed.
+- The **Dice** section is reused inside the runner's rail via a `compact` prop rather than a
+  second copy of the roll logic, and is opt-in behind a Show/Hide toggle remembered in
+  `localStorage`. Die sizes are chips rather than a `<select>`, still served by
+  `Roller.Sizes()` so the picker can't offer a die the backend rejects.
+- `RollResult.svelte` tumbles through plausible values before settling on the real one —
+  the roll is already resolved server-side, so the animation is theatre over a known
+  outcome. Results also flash centre-screen for ~2s and then fade; the log below is the
+  catch-up if you miss it. Everything honours `prefers-reduced-motion`.
+
+Open: three sqlc params (`SetFear`, `SetCombatantVitals`, `UpdateCountdown`) infer as
+`interface{}` because the arg sits inside `max(0, min(…))`, and surface as `any` in the
+generated TypeScript. A `CAST(… AS INTEGER)` inside the clamp is the likely fix.
+
+**Done when:** you can run a saved encounter end to end — mark damage, spend/gain Fear,
+advance a countdown — and reopen exactly where you left off. ✅
 
 ---
 

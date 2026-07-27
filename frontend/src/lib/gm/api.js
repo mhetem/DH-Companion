@@ -1,27 +1,48 @@
 // Single import surface for the GM module. Everything here is bound on the Go
 // side as window.go.gm.Service.* — the generated wrappers just forward to it.
 export {
+  AdjustFear,
+  AdvanceCountdown,
   BrowseAdversaries,
   BrowseEnvironments,
+  ClearSpotlights,
   ComputeBudget,
   CreateCustomAdversary,
   CreateCustomEnvironment,
   CreateParty,
+  DeleteCombat,
+  DeleteCountdown,
   DeleteCustomAdversary,
   DeleteCustomEnvironment,
   DeleteEncounter,
   DeleteParty,
+  EndCombat,
+  GetActiveCombat,
   GetAdversary,
+  GetCombat,
+  GetCountdown,
   GetCustomAdversary,
   GetCustomEnvironment,
   GetEncounter,
   GetEnvironment,
   GetParty,
+  ListCombats,
+  ListCountdowns,
   ListCustomAdversaries,
   ListCustomEnvironments,
   ListEncounters,
   ListParties,
+  MarkHP,
+  MarkStress,
+  RemoveCombatant,
+  ResumeCombat,
+  SaveCombatant,
+  SaveCountdown,
   SaveEncounter,
+  SetFear,
+  SetSpotlight,
+  SetVitals,
+  StartCombat,
   UpdateCustomAdversary,
   UpdateCustomEnvironment,
   UpdateParty
@@ -29,7 +50,7 @@ export {
 
 // The roller is bound as its own struct too — window.go.dice.Roller.*. Sizes()
 // serves the rollable die list, so the allowed set lives only in internal/dice.
-export { Damage, Duality, GM, Sizes } from '../../../wailsjs/go/dice/Roller.js'
+export { Damage, GM, Sizes } from '../../../wailsjs/go/dice/Roller.js'
 
 // Mirrors internal/gm/validate.go — keep the two in step.
 export const TIERS = ['1', '2', '3', '4']

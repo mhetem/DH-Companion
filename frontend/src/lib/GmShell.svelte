@@ -5,6 +5,7 @@
   import Adversaries from './gm/Adversaries.svelte'
   import Environments from './gm/Environments.svelte'
   import Dice from './gm/Dice.svelte'
+  import CombatRunner from './gm/CombatRunner.svelte'
 
   const sections = [
     { id: 'encounters', label: 'Encounters', component: Encounters },
@@ -12,7 +13,7 @@
     { id: 'adversaries', label: 'Adversaries', component: Adversaries },
     { id: 'environments', label: 'Environments', component: Environments },
     { id: 'dice', label: 'Dice', component: Dice },
-    { id: 'combat', label: 'Combat Runner', phase: 3, blurb: 'Run a saved encounter live — HP, stress, spotlight, Fear, and countdowns.' },
+    { id: 'combat', label: 'Combat Runner', component: CombatRunner },
     { id: 'campaigns', label: 'Campaigns', phase: 4, blurb: 'Sessions, recaps, and typed notes for NPCs, locations, and plot threads.' }
   ]
 </script>

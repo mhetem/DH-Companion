@@ -8,6 +8,39 @@ import (
 	"database/sql"
 )
 
+type Combat struct {
+	ID          int64
+	EncounterID sql.NullInt64
+	Fear        int64
+	Active      int64
+	CreatedAt   string
+	UpdatedAt   string
+}
+
+type Combatant struct {
+	ID            int64
+	CombatID      int64
+	AdversarySlug sql.NullString
+	DisplayName   string
+	HpMax         int64
+	HpMarked      int64
+	StressMax     int64
+	StressMarked  int64
+	Spotlight     int64
+	CreatedAt     string
+	UpdatedAt     string
+}
+
+type Countdown struct {
+	ID        int64
+	Name      string
+	Value     int64
+	Max       int64
+	Kind      string
+	CreatedAt string
+	UpdatedAt string
+}
+
 type CustomAdversary struct {
 	ID             int64
 	Slug           string

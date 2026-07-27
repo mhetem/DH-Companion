@@ -24,14 +24,27 @@ from the header.
 
 - `internal/rules` — encounter budget math: cost per adversary type, minion batching, and
   the difficulty / multi-solo / below-tier / no-big-adversary adjustments
-- `internal/dice` — duality dice (2d12 Hope + Fear), criticals on matching dice,
-  advantage/disadvantage as ±d6, flat modifiers
+- `internal/dice` — duality dice (2d12 Hope + Fear) for the player side, a GM d20 with
+  advantage/disadvantage, and damage rolls
 - `internal/cards` — shared card model (adversary and environment variants)
 - `internal/srd` — loader for the SRD json embedded in `data/`
 - `sql/schema` + `sql/queries` — SQLite schema and sqlc queries for parties, custom
   adversaries, custom environments and encounters
 
-Both shells are still navigation-only; the UI features start at Phase 2. See
+**Phase 2 done** — the GM encounter builder:
+
+- browsers for adversaries and environments over the SRD and your homebrew, merged and
+  filterable by tier and type
+- homebrew editors — create, edit and delete custom adversaries and environments
+- parties, and an encounter builder with a live battle-point budget meter
+- an optional environment per encounter, with its impulses and features shown inline
+
+**Phase 3 done** — the live combat runner: start a fight from a saved encounter and its
+adversaries spawn as combatants with their own HP and Stress, a Fear tracker, countdown
+clocks, the environment on hand as GM prompts, and the dice rollers available without
+leaving the fight. State saves as you go, so closing mid-combat is safe.
+
+The Player module is still navigation-only — it starts at Phase 5. See
 [BUILD_PLAN.md](BUILD_PLAN.md) for the full roadmap.
 
 ## Running it
