@@ -8,9 +8,10 @@
   } from '../../wailsjs/go/main/App.js'
   import { applyScale } from './display.js'
   import ShortcutHelp from './ShortcutHelp.svelte'
+  import Settings from './Settings.svelte'
   import lockup from '../assets/images/hilt-app-lockup.svg'
 
-  let { role, scale, onswitch, onscale, onerror } = $props()
+  let { role, scale, onswitch, onscale, onerror, onreload } = $props()
 
   let scales = $state([])
 
@@ -76,6 +77,7 @@
 
   <div class="display">
     <ShortcutHelp />
+    <Settings {onreload} />
 
     <label>
       <span class="sronly">Window size</span>

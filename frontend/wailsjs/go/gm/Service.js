@@ -86,6 +86,10 @@ export function EndCombat(arg1) {
   return window['go']['gm']['Service']['EndCombat'](arg1);
 }
 
+export function ExportLibraryJSON() {
+  return window['go']['gm']['Service']['ExportLibraryJSON']();
+}
+
 export function GetActiveCombat() {
   return window['go']['gm']['Service']['GetActiveCombat']();
 }
@@ -132,6 +136,14 @@ export function GetParty(arg1) {
 
 export function GetSession(arg1) {
   return window['go']['gm']['Service']['GetSession'](arg1);
+}
+
+export function ImportLibraryJSON(arg1) {
+  return window['go']['gm']['Service']['ImportLibraryJSON'](arg1);
+}
+
+export function ImportShareCode(arg1) {
+  return window['go']['gm']['Service']['ImportShareCode'](arg1);
 }
 
 export function LinkCombat(arg1, arg2, arg3) {
@@ -202,6 +214,10 @@ export function NoteKinds() {
   return window['go']['gm']['Service']['NoteKinds']();
 }
 
+export function PreviewShareCode(arg1) {
+  return window['go']['gm']['Service']['PreviewShareCode'](arg1);
+}
+
 export function ReindexCards() {
   return window['go']['gm']['Service']['ReindexCards']();
 }
@@ -260,6 +276,14 @@ export function SetSpotlight(arg1, arg2) {
 
 export function SetVitals(arg1, arg2, arg3) {
   return window['go']['gm']['Service']['SetVitals'](arg1, arg2, arg3);
+}
+
+export function ShareAdversary(arg1) {
+  return window['go']['gm']['Service']['ShareAdversary'](arg1);
+}
+
+export function ShareEnvironment(arg1) {
+  return window['go']['gm']['Service']['ShareEnvironment'](arg1);
 }
 
 export function StartCombat(arg1, arg2, arg3) {

@@ -1,6 +1,8 @@
 <script>
   import CardBrowser from './CardBrowser.svelte'
   import AdversaryDetail from './AdversaryDetail.svelte'
+  import ShareExport from './ShareExport.svelte'
+  import ShareImport from './ShareImport.svelte'
   import AdversaryForm from './AdversaryForm.svelte'
   import {
     ADVERSARY_TYPES,
@@ -21,6 +23,11 @@
   function onsaved(saved) {
     selectedSlug = saved.slug
     editing = null
+  }
+
+  function onimported(card) {
+    selectedSlug = card.slug
+    reloadToken += 1
   }
 
   async function remove(card) {
@@ -50,6 +57,9 @@
     {#if error}
       <p class="error">{error}</p>
     {/if}
+    <div class="tools">
+      <ShareImport expect="adversary" {onimported} />
+    </div>
     <CardBrowser
       types={ADVERSARY_TYPES}
       load={BrowseAdversaries}
@@ -72,6 +82,7 @@
           {#snippet actions()}
             {#if item.source === 'custom'}
               <button class="btn" onclick={() => (editing = item)}>Edit</button>
+              <ShareExport kind="adversary" slug={item.slug} name={item.name} />
               <button class="btn danger" onclick={() => remove(item)}>Delete</button>
             {/if}
           {/snippet}
@@ -82,6 +93,13 @@
 {/if}
 
 <style>
+  .tools {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem 0;
+  }
+
   .wrap {
     display: flex;
     flex: 1;

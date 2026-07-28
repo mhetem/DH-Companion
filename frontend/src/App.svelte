@@ -11,6 +11,7 @@
   let error = $state('')
 
   let scale = $state(100)
+  let reloadToken = $state(0)
 
   // Load the last-used role before painting anything, so a returning user never
   // sees the picker flash — and the saved scale alongside it, so the first frame is
@@ -48,12 +49,15 @@
       onswitch={pick}
       onscale={(next) => (scale = next)}
       onerror={(message) => (error = message)}
+      onreload={() => (reloadToken += 1)}
     />
-    {#if role === 'gm'}
-      <GmShell />
-    {:else}
-      <PlayerShell />
-    {/if}
+    {#key reloadToken}
+      {#if role === 'gm'}
+        <GmShell />
+      {:else}
+        <PlayerShell />
+      {/if}
+    {/key}
   </div>
 {/if}
 

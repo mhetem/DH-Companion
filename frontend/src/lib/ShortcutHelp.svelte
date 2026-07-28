@@ -1,132 +1,46 @@
 <script>
-  import { fade } from 'svelte/transition'
-  import { SHORTCUTS, modal, onKeys } from './keys.js'
-
-  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+  import Modal from './Modal.svelte'
+  import { SHORTCUTS, onKeys } from './keys.js'
 
   let open = $state(false)
-  let sheet = $state(null)
-
-  // Focus follows the sheet, so the opener doesn't keep it and re-fire on space.
-  $effect(() => {
-    if (open) sheet?.focus()
-  })
-
-  // While the sheet is up it owns the keyboard — see the modal counter in keys.js.
-  $effect(() => {
-    if (!open) return
-    modal.open()
-    return () => modal.close()
-  })
 
   // '?' is bound app-wide rather than per pane, so the list is reachable from
-  // anywhere — including the panes that have no shortcuts of their own.
-  $effect(() =>
-    onKeys(
-      () => ({
-        '?': () => (open = !open),
-        ...(open ? { Escape: () => (open = false) } : {})
-      }),
-      { whenModal: true }
-    )
-  )
+  // anywhere — including the panes that have no shortcuts of their own. Modal
+  // itself owns Escape and the capture-phase gate.
+  $effect(() => onKeys(() => ({ '?': () => (open = !open) }), { whenModal: true }))
 </script>
 
-<button class="opener" onclick={() => (open = true)} title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">
+<button class="iconbtn" onclick={() => (open = true)} title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">
   ⌨
 </button>
 
-{#if open}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <div
-    class="scrim"
-    role="button"
-    tabindex="-1"
-    aria-label="Close"
-    onclick={() => (open = false)}
-    transition:fade={{ duration: reduced ? 0 : 120 }}
-  >
-    <div
-      bind:this={sheet}
-      class="sheet"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Keyboard shortcuts"
-      tabindex="-1"
-      onclick={(e) => e.stopPropagation()}
-    >
-      <header>
-        <h2>Keyboard shortcuts</h2>
-        <button class="btn ghost" onclick={() => (open = false)}>Close</button>
-      </header>
+<Modal bind:open label="Keyboard shortcuts" width="46rem">
+  <header>
+    <h2>Keyboard shortcuts</h2>
+    <button class="btn ghost" onclick={() => (open = false)}>Close</button>
+  </header>
 
-      <div class="groups">
-        {#each SHORTCUTS as group (group.scope)}
-          <section>
-            <h3>{group.scope}</h3>
-            {#if group.note}<p class="note">{group.note}</p>{/if}
-            <dl>
-              {#each group.keys as row (row.key)}
-                <div>
-                  <dt><kbd>{row.key}</kbd></dt>
-                  <dd>{row.label}</dd>
-                </div>
-              {/each}
-            </dl>
-          </section>
-        {/each}
-      </div>
-
-      <p class="foot">Shortcuts stay out of the way while you are typing in a field.</p>
-    </div>
+  <div class="groups">
+    {#each SHORTCUTS as group (group.scope)}
+      <section>
+        <h3>{group.scope}</h3>
+        {#if group.note}<p class="note">{group.note}</p>{/if}
+        <dl>
+          {#each group.keys as row (row.key)}
+            <div>
+              <dt><kbd>{row.key}</kbd></dt>
+              <dd>{row.label}</dd>
+            </div>
+          {/each}
+        </dl>
+      </section>
+    {/each}
   </div>
-{/if}
+
+  <p class="foot">Shortcuts stay out of the way while you are typing in a field.</p>
+</Modal>
 
 <style>
-  .opener {
-    padding: 0.35rem 0.6rem;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    background: transparent;
-    color: var(--muted);
-    font: inherit;
-    font-size: 0.9rem;
-    line-height: 1;
-    cursor: pointer;
-  }
-
-  .opener:hover {
-    border-color: var(--muted);
-    color: var(--text);
-  }
-
-  .scrim {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    display: grid;
-    place-items: center;
-    padding: 2rem 1rem;
-    border: none;
-    background: rgb(0 0 0 / 55%);
-    cursor: default;
-  }
-
-  .sheet {
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-    width: min(46rem, 100%);
-    max-height: 100%;
-    overflow-y: auto;
-    padding: 1.25rem 1.4rem;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: var(--panel);
-    box-shadow: 0 18px 48px rgb(0 0 0 / 45%);
-    text-align: left;
-  }
-
   header {
     display: flex;
     align-items: center;

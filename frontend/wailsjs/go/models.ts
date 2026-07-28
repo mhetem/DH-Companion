@@ -668,6 +668,36 @@ export namespace gm {
 	        this.type = source["type"];
 	    }
 	}
+	export class ImportReport {
+	    parties: number;
+	    customAdversaries: number;
+	    customEnvironments: number;
+	    encounters: number;
+	    campaigns: number;
+	    sessions: number;
+	    notes: number;
+	    countdowns: number;
+	    renamed: string[];
+	    skipped: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ImportReport(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.parties = source["parties"];
+	        this.customAdversaries = source["customAdversaries"];
+	        this.customEnvironments = source["customEnvironments"];
+	        this.encounters = source["encounters"];
+	        this.campaigns = source["campaigns"];
+	        this.sessions = source["sessions"];
+	        this.notes = source["notes"];
+	        this.countdowns = source["countdowns"];
+	        this.renamed = source["renamed"];
+	        this.skipped = source["skipped"];
+	    }
+	}
 	export class Note {
 	    id: number;
 	    campaignId: number;
@@ -871,6 +901,30 @@ export namespace gm {
 		    return a;
 		}
 	}
+	export class SharePreview {
+	    kind: string;
+	    name: string;
+	    slug: string;
+	    tier: string;
+	    type: string;
+	    description: string;
+	    renamed: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new SharePreview(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kind = source["kind"];
+	        this.name = source["name"];
+	        this.slug = source["slug"];
+	        this.tier = source["tier"];
+	        this.type = source["type"];
+	        this.description = source["description"];
+	        this.renamed = source["renamed"];
+	    }
+	}
 
 }
 
@@ -1052,6 +1106,33 @@ export namespace rules {
 		    }
 		    return a;
 		}
+	}
+
+}
+
+export namespace update {
+	
+	export class Release {
+	    current: string;
+	    latest: string;
+	    url: string;
+	    notes: string;
+	    newer: boolean;
+	    known: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Release(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.current = source["current"];
+	        this.latest = source["latest"];
+	        this.url = source["url"];
+	        this.notes = source["notes"];
+	        this.newer = source["newer"];
+	        this.known = source["known"];
+	    }
 	}
 
 }

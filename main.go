@@ -13,6 +13,8 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+var version = "dev"
+
 func main() {
 
 	// Each module is bound as its own struct, so the frontend reaches the GM

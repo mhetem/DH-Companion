@@ -46,6 +46,8 @@ export function DeleteSession(arg1:number):Promise<void>;
 
 export function EndCombat(arg1:number):Promise<gm.CombatView>;
 
+export function ExportLibraryJSON():Promise<string>;
+
 export function GetActiveCombat():Promise<gm.CombatView>;
 
 export function GetAdversary(arg1:string):Promise<gm.BrowseAdversary>;
@@ -69,6 +71,10 @@ export function GetNote(arg1:number):Promise<gm.Note>;
 export function GetParty(arg1:number):Promise<gm.Party>;
 
 export function GetSession(arg1:number):Promise<gm.SessionView>;
+
+export function ImportLibraryJSON(arg1:string):Promise<gm.ImportReport>;
+
+export function ImportShareCode(arg1:string):Promise<gm.SharePreview>;
 
 export function LinkCombat(arg1:number,arg2:any,arg3:any):Promise<gm.CombatView>;
 
@@ -104,6 +110,8 @@ export function MarkStress(arg1:number,arg2:number):Promise<gm.CombatantView>;
 
 export function NoteKinds():Promise<Array<string>>;
 
+export function PreviewShareCode(arg1:string):Promise<gm.SharePreview>;
+
 export function ReindexCards():Promise<void>;
 
 export function RemoveCombatant(arg1:number):Promise<void>;
@@ -133,6 +141,10 @@ export function SetFear(arg1:number,arg2:number):Promise<number>;
 export function SetSpotlight(arg1:number,arg2:boolean):Promise<gm.CombatantView>;
 
 export function SetVitals(arg1:number,arg2:number,arg3:number):Promise<gm.CombatantView>;
+
+export function ShareAdversary(arg1:string):Promise<string>;
+
+export function ShareEnvironment(arg1:string):Promise<string>;
 
 export function StartCombat(arg1:number,arg2:any,arg3:any):Promise<gm.CombatView>;
 

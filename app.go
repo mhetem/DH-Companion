@@ -56,10 +56,11 @@ var windowPresets = []WindowSize{
 }
 
 type App struct {
-	ctx  context.Context
-	q    *db.Queries
-	conn *sql.DB
-	gm   *gm.Service
+	ctx     context.Context
+	q       *db.Queries
+	conn    *sql.DB
+	gm      *gm.Service
+	catalog *srd.Catalog
 }
 
 func NewApp(gmSvc *gm.Service) *App {
@@ -80,6 +81,7 @@ func (a *App) startup(ctx context.Context) {
 		a.fatal(ctx, "Reference data error", err)
 		return
 	}
+	a.catalog = catalog
 	gm.Attach(a.gm, ctx, q, conn, catalog)
 
 	if err := a.gm.ReindexCards(); err != nil {
@@ -250,17 +252,24 @@ func (a *App) SetRole(role string) error {
 	return a.q.SetSetting(a.ctx, db.SetSettingParams{Key: settingLastRole, Value: role})
 }
 
+func dataDir(dir string) (string, error) {
+	if dir != "" {
+		return dir, nil
+	}
+	if d := os.Getenv("DH_DATA_DIR"); d != "" {
+		return d, nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, "DH-Companion"), nil
+}
+
 func Open(dir string) (*db.Queries, *sql.DB, error) {
-	if dir == "" {
-		if d := os.Getenv("DH_DATA_DIR"); d != "" {
-			dir = d
-		} else {
-			home, err := os.UserHomeDir()
-			if err != nil {
-				return nil, nil, err
-			}
-			dir = filepath.Join(home, "DH-Companion")
-		}
+	dir, err := dataDir(dir)
+	if err != nil {
+		return nil, nil, err
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, nil, err

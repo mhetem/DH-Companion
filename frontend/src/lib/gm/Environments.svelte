@@ -1,6 +1,8 @@
 <script>
   import CardBrowser from './CardBrowser.svelte'
   import EnvironmentDetail from './EnvironmentDetail.svelte'
+  import ShareExport from './ShareExport.svelte'
+  import ShareImport from './ShareImport.svelte'
   import EnvironmentForm from './EnvironmentForm.svelte'
   import {
     BrowseEnvironments,
@@ -19,6 +21,11 @@
   function onsaved(saved) {
     selectedSlug = saved.slug
     editing = null
+  }
+
+  function onimported(card) {
+    selectedSlug = card.slug
+    reloadToken += 1
   }
 
   async function remove(card) {
@@ -48,6 +55,9 @@
     {#if error}
       <p class="error">{error}</p>
     {/if}
+    <div class="tools">
+      <ShareImport expect="environment" {onimported} />
+    </div>
     <CardBrowser
       types={ENVIRONMENT_TYPES}
       load={BrowseEnvironments}
@@ -71,6 +81,7 @@
           {#snippet actions()}
             {#if item.source === 'custom'}
               <button class="btn" onclick={() => (editing = item)}>Edit</button>
+              <ShareExport kind="environment" slug={item.slug} name={item.name} />
               <button class="btn danger" onclick={() => remove(item)}>Delete</button>
             {/if}
           {/snippet}
@@ -81,6 +92,13 @@
 {/if}
 
 <style>
+  .tools {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem 0;
+  }
+
   .wrap {
     display: flex;
     flex: 1;

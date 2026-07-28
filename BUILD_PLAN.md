@@ -479,17 +479,102 @@ experience(id, character_id, name, modifier)
 > here only because release automation depends on the app being buildable. Don't leave CI
 > to the end.
 
-- [ ] **CI (GitHub Actions):** `go vet`, `go test ./...`, `wails build` on every push/PR; status badge in README
+- [x] **CI (GitHub Actions):** `gofmt`, `go vet`, `go test ./... -race`, and `wails build` on
+      all three platforms for every push/PR; status badge in README
       *(Linux needs `wails build -tags webkit2_41` on distros that ship webkit2gtk 4.1 and
-      no 4.0 compat package — plain `wails build` fails at pkg-config. Bake the tag into CI.)*
-- [ ] **Cross-platform release automation:** on tag, build Win/macOS/Linux binaries via Wails and attach to a GitHub Release
-- [ ] **Auto-update:** wire Wails' updater to the release feed
-- [ ] **Data portability:** DB backup/export + import (single-file copy), plus **whole-library JSON export/import**
-- [ ] **Shareable homebrew codes:** compress+base64 a custom adversary/environment/character into a paste-able string others can import (versioned format)
+      no 4.0 compat package — plain `wails build` fails at pkg-config. Baked into CI.)*
+- [x] **Cross-platform release automation:** on tag, build Win/macOS/Linux binaries via Wails and attach to a GitHub Release
+- [x] **Update check** — *not* auto-update; see the note below on why that bullet was wrong
+- [x] **Data portability:** DB backup/export + import, plus **whole-library JSON export/import**
+- [x] **Shareable homebrew codes:** compress+base64 a custom adversary/environment into a paste-able string others can import (versioned format)
 - [x] App icon + name
 - [x] Empty states
 - [x] Keyboard shortcuts for combat/dice
 - [x] README + first-run notes
+
+Notes on CI and release:
+- Two workflows. `ci.yml` runs `gofmt -l` (failing on any unformatted file), `go vet`,
+  `go test ./... -race`, then a full `wails build` on Linux, Windows and macOS —
+  `fail-fast: false`, so one platform breaking still reports the other two.
+- `release.yml` fires on a `v*` tag, builds `linux/amd64`, `windows/amd64` and
+  `darwin/universal`, packages each with `LICENSE`/`NOTICE.md`/`README.md`, publishes
+  `SHA256SUMS.txt`, and attaches everything to a GitHub Release.
+- **The Linux webkit tag is baked into both.** Ubuntu runners ship webkit2gtk 4.1 with no
+  4.0 compat package, so a plain `wails build` fails at pkg-config; the Linux branch passes
+  `-tags webkit2_41` and the others do not.
+- The tag is stamped in with `-ldflags "-X main.version=$GITHUB_REF_NAME"`. Untagged builds
+  report `dev`, which the update check treats as uncomparable rather than as "out of date".
+- Release notes say the builds are unsigned. There are no signing certificates, so macOS
+  Gatekeeper and Windows SmartScreen will both warn on first run, and that is better said
+  than discovered.
+
+Notes on the update check:
+- **The plan said "wire Wails' updater to the release feed". There is no such thing.**
+  Wails v2 ships no updater package — the only matches for "updater" under `pkg/` are React
+  and Preact boilerplate in the project templates. So this is an update *check*, not
+  auto-update: `internal/update` asks the GitHub releases API for the latest tag, compares
+  it as semver, and offers a button that opens the download page. Nothing replaces a binary.
+- **It only runs when you press the button.** No check on startup, no background poll. The
+  README calls this app local-first with no server, and a phone-home on launch would quietly
+  make that untrue for the sake of a version string.
+- Real self-update would mean a third-party library replacing the running executable, plus
+  code signing to make that safe to do. Both are real work and neither is free; the button
+  is the honest version until they exist.
+
+Notes on data portability:
+- **Backup is `VACUUM INTO ?`, not a file copy.** It takes a consistent snapshot of a live
+  database without closing it, which a `cp` of a WAL-mode database does not — you would get
+  the main file without the log. Verified that the driver accepts it as a *bound parameter*
+  (including paths with spaces and quotes) rather than needing the path spliced into SQL.
+- Restore validates before it destroys: the candidate is opened read-only and must carry
+  both `settings` and `goose_db_version` or it is refused as "not made by Hilt". The current
+  database is then snapshotted to `data-replaced-<stamp>.db` *before* the swap, the WAL and
+  SHM sidecars are cleared, and the app reopens, re-migrates and reindexes in place.
+- The library export is deliberately **not** the database — it is readable JSON of the things
+  you authored, and it **merges**. Cards whose name is taken are renamed (`Gutter Wraith (2)`),
+  and because slugs derive from names, imported encounters are remapped through a
+  slug-old→slug-new table so their picks still resolve. Parties are matched by name and
+  reused rather than duplicated.
+- Import reports counts, renames and skips instead of failing whole. One bad card should not
+  cost you the other forty.
+- `ExportLibrary`/`ImportLibrary` are built **entirely on existing exported `gm.Service`
+  methods** — no new SQL, so none of this needed `sqlc generate`. The one exception is
+  reading raw encounter rows, which `library.go` can do directly because it lives in package
+  `gm` and can reach `s.q` and `decodePicks`.
+
+Notes on share codes:
+- Format is `HILT<version>:<base64url(zlib(json))>` — `HILT1:` today. The version is checked
+  before anything is decoded, so a code from a future build is refused with a message that
+  says so rather than failing as corrupt.
+- **Decoding is defensive**, because a code arrives from a stranger: raw input is stripped of
+  all whitespace first (codes get wrapped by chat clients), the inflate is capped at 1 MiB
+  against a zip bomb, and every failure mode returns the same plain-language error rather
+  than a stack of wrapped internals. Verified round-trip fidelity, tolerance of line-wrapped
+  paste, and rejection of empty / wrong-prefix / future-version / truncated / garbage input.
+- base64**url** with no padding, so a code survives being pasted into a URL or a chat client
+  that eats `+`, `/` and `=`.
+- A code carries **one card and nothing else** — no encounters, no campaign, nothing personal.
+- Sharing is offered on homebrew only. An SRD card is one that everybody already has, and
+  re-encoding SRD text into shareable strings is not a thing this app needs to do.
+- Import previews before it writes, so you see what a code holds before it lands.
+
+Notes on the frontend:
+- `Modal.svelte` is the scrim-and-sheet shell, extracted once there were going to be four
+  copies of it. It owns focus, the `Escape` binding, and the capture-phase modal gate from
+  the keyboard work, so no caller re-implements any of that. `ShortcutHelp` and `Settings`
+  were retrofitted onto it rather than left as near-duplicates.
+- `.iconbtn` in `style.css` is the shared chrome for the two header openers, for the same
+  reason `.empty` and `kbd` live there.
+- **Settings is a header sheet, not a nav section.** It is app-wide — backup, library,
+  version, data location — and the GM nav is already eight entries deep and entirely about
+  running a game.
+- Restoring a database or importing a library bumps a `reloadToken` in `App.svelte` that
+  keys the shell, so every pane remounts and re-reads. Without it the panes would keep
+  rendering whatever they loaded before the data underneath changed.
+- The generated Wails bindings under `frontend/wailsjs/` are committed, so the new methods
+  were added there by hand to keep the tree building. **`wails build` and `wails dev`
+  regenerate that directory** — the hand-written entries match what the generator emits, and
+  will simply be rewritten identically.
 
 Notes on the name:
 - **The app is called Hilt.** The rename is display-only: the window title, the page title,

@@ -1,0 +1,128 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  GO_VERSION: '1.25'
+  NODE_VERSION: '22'
+  WAILS_VERSION: v2.13.0
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: linux-amd64
+            platform: linux/amd64
+          - os: windows-latest
+            label: windows-amd64
+            platform: windows/amd64
+          - os: macos-latest
+            label: macos-universal
+            platform: darwin/universal
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Linux build deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+
+      # The tag is stamped into main.version so the in-app update check has something
+      # to compare against. Without it the build reports "dev" and never offers one.
+      - name: Build
+        shell: bash
+        run: |
+          LDFLAGS="-X main.version=${GITHUB_REF_NAME}"
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            wails build -clean -platform ${{ matrix.platform }} -tags webkit2_41 -ldflags "$LDFLAGS"
+          else
+            wails build -clean -platform ${{ matrix.platform }} -ldflags "$LDFLAGS"
+          fi
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp LICENSE NOTICE.md README.md build/bin/ 2>/dev/null || true
+          cd build/bin
+          case "$RUNNER_OS" in
+            Linux)
+              tar czf ../../dist/Hilt-${{ matrix.label }}.tar.gz DH-Companion LICENSE NOTICE.md README.md
+              ;;
+            Windows)
+              7z a ../../dist/Hilt-${{ matrix.label }}.zip DH-Companion.exe LICENSE NOTICE.md README.md
+              ;;
+            macOS)
+              zip -qr ../../dist/Hilt-${{ matrix.label }}.zip DH-Companion.app LICENSE NOTICE.md README.md
+              ;;
+          esac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.label }}
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        run: |
+          cd dist
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      # macOS and Windows builds are unsigned, so the first launch needs the user to
+      # step past Gatekeeper / SmartScreen. Say so on the release rather than leaving
+      # them to guess.
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<'EOF'
+          Builds are **unsigned**. macOS: right-click the app and choose Open the first
+          time, or clear the quarantine flag. Windows: SmartScreen will warn on first run.
+
+          Your data lives in `~/DH-Companion/data.db` and is untouched by an upgrade —
+          drop the new binary over the old one. Export a backup from Settings first if
+          you want one.
+
+          This build bundles Daggerheart SRD 1.0 content under the Darrington Press
+          Community Gaming License. See `NOTICE.md` in the archive for attribution.
+          EOF
+          gh release create "${GITHUB_REF_NAME}" dist/* \
+            --title "Hilt ${GITHUB_REF_NAME}" \
+            --notes-file notes.md

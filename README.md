@@ -1,5 +1,7 @@
 <img src="frontend/src/assets/images/hilt-app-lockup.svg" alt="Hilt" height="90">
 
+[![CI](https://github.com/mhetem/DH-Companion/actions/workflows/ci.yml/badge.svg)](https://github.com/mhetem/DH-Companion/actions/workflows/ci.yml)
+
 > 🚧 **Work in progress** — early development, nothing is stable yet.
 
 A **[Daggerheart](https://www.daggerheart.com/)™ Compatible** desktop companion app, for
@@ -86,7 +88,24 @@ On Linux distros that only ship webkit2gtk 4.1, add `-tags webkit2_41` to both c
 ## Data
 
 The database is created at `~/DH-Companion/data.db`. Override the location with the
-`DH_DATA_DIR` environment variable.
+`DH_DATA_DIR` environment variable. The gear button in the header opens **Settings & data**,
+which is where the following live:
+
+- **Back up / restore.** A backup is a `VACUUM INTO` snapshot — a consistent copy of the
+  live database taken without closing it. Restoring backs up what you have first, then
+  swaps the file and reopens.
+- **Export / import library.** Readable JSON covering parties, homebrew cards, encounters
+  and campaigns (with their sessions, notes and clocks). Import **adds** rather than
+  replacing, and renames anything whose name is taken — `Gutter Wraith` arriving beside an
+  existing one becomes `Gutter Wraith (2)`, and encounters that referenced it follow the
+  rename.
+- **Update check.** Manual only. Nothing is sent, and nothing is checked until you press
+  the button — the app makes no network request otherwise.
+
+**Share codes** are on the homebrew cards themselves: any custom adversary or environment
+has a *Share* button that produces a `HILT1:…` string, and *Import code* in the browser
+takes one back. The code is a compressed, versioned payload carrying that one card and
+nothing else — no encounters, no campaign, no personal data.
 
 After changing anything in `sql/schema/` or `sql/queries/`, regenerate the DB layer:
 
