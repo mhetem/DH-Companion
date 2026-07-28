@@ -874,6 +874,29 @@ export namespace gm {
 
 }
 
+export namespace main {
+	
+	export class WindowSize {
+	    label: string;
+	    width: number;
+	    height: number;
+	    fits: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new WindowSize(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.label = source["label"];
+	        this.width = source["width"];
+	        this.height = source["height"];
+	        this.fits = source["fits"];
+	    }
+	}
+
+}
+
 export namespace rules {
 	
 	export class BudgetSummary {

@@ -27,8 +27,8 @@ func main() {
 		Title:     "DH-Companion",
 		Width:     1920,
 		Height:    1080,
-		MinWidth:  1100,
-		MinHeight: 700,
+		MinWidth:  minWindowWidth,
+		MinHeight: minWindowHeight,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

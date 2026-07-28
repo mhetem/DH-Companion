@@ -73,7 +73,7 @@
   .meter.over .remaining { color: var(--danger); }
 
   .track {
-    height: 6px;
+    height: 0.375rem;
     border-radius: 999px;
     background: var(--bg);
     overflow: hidden;

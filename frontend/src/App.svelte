@@ -1,5 +1,6 @@
 <script>
-  import { GetRole, SetRole } from '../wailsjs/go/main/App.js'
+  import { GetRole, GetUIScale, SetRole } from '../wailsjs/go/main/App.js'
+  import { applyScale } from './lib/display.js'
   import RolePicker from './lib/RolePicker.svelte'
   import Header from './lib/Header.svelte'
   import GmShell from './lib/GmShell.svelte'
@@ -9,10 +10,17 @@
   let loading = $state(true)
   let error = $state('')
 
+  let scale = $state(100)
+
   // Load the last-used role before painting anything, so a returning user never
-  // sees the picker flash.
-  GetRole()
-    .then((saved) => (role = saved))
+  // sees the picker flash — and the saved scale alongside it, so the first frame is
+  // already at the right size rather than visibly resettling.
+  Promise.all([GetRole(), GetUIScale()])
+    .then(([savedRole, savedScale]) => {
+      role = savedRole
+      scale = savedScale
+      applyScale(savedScale)
+    })
     .catch((e) => (error = String(e)))
     .finally(() => (loading = false))
 
@@ -34,7 +42,13 @@
   <RolePicker onpick={pick} />
 {:else}
   <div class="app">
-    <Header {role} onswitch={pick} />
+    <Header
+      {role}
+      {scale}
+      onswitch={pick}
+      onscale={(next) => (scale = next)}
+      onerror={(message) => (error = message)}
+    />
     {#if role === 'gm'}
       <GmShell />
     {:else}

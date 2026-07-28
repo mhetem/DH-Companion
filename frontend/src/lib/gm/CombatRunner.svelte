@@ -356,9 +356,11 @@
     color: var(--danger);
   }
 
+  /* The rail is allowed to give ground rather than hold 20rem and squeeze the
+     roster — at 200% UI scale that column is twice as wide in real pixels. */
   .grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 20rem;
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 20rem);
     gap: 1rem;
     align-items: start;
   }

@@ -153,9 +153,28 @@ Notes on the frontend:
   the name search stays client-side so typing doesn't re-cross the bridge.
 - The builder is a full-width view rather than a third column — the shell nav plus a
   picker plus a summary rail already filled the window it was designed against.
-  *(The window opened at 1024×768 then; it opens at 1920×1080 now, with a 1100×700 floor.
-  Prose-heavy panes — card detail, the campaign page — carry a `max-width` so lines stay
-  readable rather than running the full width.)*
+  *(The window opened at 1024×768 then; the built-in default is 1920×1080 now, with a
+  1100×700 floor. Prose-heavy panes — card detail, the campaign page — carry a `max-width`
+  so lines stay readable rather than running the full width.)*
+- **Window size is a user setting**, stored in `settings` as `window_size` = `"WxH"` next to
+  `last_role`. The header picker offers HD → 4K, and `shutdown` records whatever size the
+  window was left at, so dragging the frame is remembered the same way picking a preset is.
+  Sizes are clamped against `ScreenGetAll` — a preset larger than the display shrinks to fit
+  and is marked unavailable in the picker rather than opening off-screen. `Screen.Size` is
+  the logical-pixel space `WindowSetSize` works in; `Screen.Width`/`Height` are physical and
+  deprecated. A malformed or too-small stored value is ignored so the app still opens.
+- **UI scale is the separate knob for readability** (`ui_scale`, 80–200%). Window size and
+  legibility aren't the same thing: a 4K window on a 4K screen makes everything physically
+  *smaller*, because CSS pixels don't grow with the resolution. Scale is applied as a
+  percentage on the root font size, which works because every length in the app is in `rem`
+  — controls, gutters and the prose `max-width`s all grow with the text instead of it
+  swelling inside fixed chrome. Only two `px` lengths existed and both are gone.
+  The header applies it optimistically and rolls back if the write fails; a bad stored value
+  falls back to 100% rather than rendering the app at some unusable size.
+  *(Known edge: `@media` breakpoints resolve against the viewport and ignore root font size —
+  `em` in a media query means the initial 16px, not ours — so a breakpoint can't respond to
+  scale. The runner's grid gives the rail a `minmax` range instead of a fixed width, which
+  covers the case that mattered.)*
 - The budget meter re-calls `ComputeBudget` on every edit (party, difficulty, roster) rather
   than reimplementing the math in JS. `difficulty` is a builder-local knob: `EncounterInput`
   has no column for it, so it shifts the live meter but isn't saved.
