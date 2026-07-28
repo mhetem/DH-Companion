@@ -1,16 +1,28 @@
 <script>
   import FeatureList from './FeatureList.svelte'
 
-  let { combatant, busy = false, onmarkhp, onmarkstress, onspotlight, onremove } = $props()
+  let { combatant, selected = false, busy = false, onmarkhp, onmarkstress, onspotlight, onremove } = $props()
 
   let open = $state(false)
 
   const card = $derived(combatant.adversary)
   const attack = $derived(card?.standardAttack)
   const down = $derived(combatant.hpMax > 0 && combatant.hpMarked >= combatant.hpMax)
+
+  // Keeps the keyboard cursor on screen when arrowing past the fold of a long roster.
+  let el = $state(null)
+  $effect(() => {
+    if (selected) el?.scrollIntoView({ block: 'nearest' })
+  })
 </script>
 
-<li class:spotlit={combatant.spotlight} class:down class:unresolved={combatant.unresolved}>
+<li
+  bind:this={el}
+  class:spotlit={combatant.spotlight}
+  class:down
+  class:unresolved={combatant.unresolved}
+  class:selected
+>
   <div class="row">
     <button
       class="spot"
@@ -91,6 +103,15 @@
   li.spotlit { border-color: var(--fear); }
   li.unresolved { border-color: var(--danger); }
   li.down { opacity: 0.6; }
+
+  /* The keyboard cursor. Gold rather than --fear, so it reads as chrome and can sit on
+     a spotlit row without the two states fighting over the same border colour. */
+  li.selected {
+    border-color: var(--gold);
+    box-shadow: inset 0.2rem 0 0 var(--gold);
+  }
+
+  li.selected.down { opacity: 1; }
 
   .row {
     display: flex;

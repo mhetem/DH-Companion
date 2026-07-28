@@ -207,6 +207,7 @@
     padding: 1rem 0.5rem;
     font-size: 0.85rem;
     color: var(--muted);
+    line-height: 1.5;
   }
 
   /* Capped for line length — at 1920 a card's features would otherwise run the

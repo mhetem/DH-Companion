@@ -17,6 +17,7 @@
     StartCombat,
     errorMessage
   } from './api.js'
+  import { onKeys } from '../keys.js'
   import CombatLinks from './CombatLinks.svelte'
   import CombatantRow from './CombatantRow.svelte'
   import Countdowns from './Countdowns.svelte'
@@ -51,6 +52,11 @@
   let error = $state('')
 
   const spotlit = $derived(combat?.combatants.filter((c) => c.spotlight).length ?? 0)
+
+  // Selection is the keyboard's cursor over the roster — separate from spotlight,
+  // which is a rules concept the GM sets deliberately and can hold on several at once.
+  let selectedId = $state(null)
+  const selected = $derived(combat?.combatants.find((c) => c.id === selectedId) ?? null)
 
   async function load() {
     try {
@@ -118,6 +124,7 @@
     run(async () => {
       await EndCombat(combat.id)
       combat = null
+      selectedId = null
       loading = true
       await loadPickers()
       loading = false
@@ -141,7 +148,46 @@
       if (!confirm(`Remove ${c.displayName} from the fight?`)) return
       await RemoveCombatant(c.id)
       combat.combatants = combat.combatants.filter((x) => x.id !== c.id)
+      if (selectedId === c.id) selectedId = null
     })
+
+  function move(step) {
+    const list = combat?.combatants ?? []
+    if (!list.length) return
+    const at = list.findIndex((c) => c.id === selectedId)
+    const next = at === -1 ? (step > 0 ? 0 : list.length - 1) : (at + step + list.length) % list.length
+    selectedId = list[next].id
+  }
+
+  // Read fresh on every keypress, so the map reflects what is on screen now — with no
+  // fight running it is empty and the keys fall through to the browser. The busy gate
+  // mirrors the steppers being `disabled` mid-write rather than racing them.
+  $effect(() =>
+    onKeys(() => {
+      if (!combat) return {}
+      const c = selected
+      const steppers =
+        c && !busy
+          ? {
+              h: () => markHp(c, 1),
+              H: () => markHp(c, -1),
+              s: () => markStress(c, 1),
+              S: () => markStress(c, -1),
+              x: () => spotlight(c, !c.spotlight)
+            }
+          : {}
+      return {
+        ArrowDown: () => move(1),
+        ArrowUp: () => move(-1),
+        j: () => move(1),
+        k: () => move(-1),
+        ...steppers,
+        ...(c ? { Escape: () => (selectedId = null) } : {}),
+        ...(spotlit > 0 && !busy ? { c: clearSpotlights } : {}),
+        ...(busy ? {} : { f: () => adjustFear(1), F: () => adjustFear(-1) })
+      }
+    })
+  )
 </script>
 
 <div class="runner">
@@ -254,16 +300,30 @@
         <div class="rhead">
           <h3>Roster</h3>
           {#if spotlit > 0}
-            <button class="btn ghost" onclick={clearSpotlights} disabled={busy}>Clear spotlight ({spotlit})</button>
+            <button class="btn ghost" onclick={clearSpotlights} disabled={busy}>
+              Clear spotlight ({spotlit}) <kbd>c</kbd>
+            </button>
           {/if}
         </div>
         {#if !combat.combatants.length}
           <p class="empty">Nothing left standing.</p>
         {:else}
+          {#if selected}
+            <p class="keyhint">
+              <strong>{selected.displayName}</strong> selected —
+              <kbd>h</kbd> HP, <kbd>s</kbd> Stress, hold <kbd>shift</kbd> to clear,
+              <kbd>x</kbd> spotlight, <kbd>esc</kbd> to drop it.
+            </p>
+          {:else}
+            <p class="keyhint">
+              Press <kbd>↓</kbd> to work the roster from the keyboard, or <kbd>?</kbd> for every shortcut.
+            </p>
+          {/if}
           <ul class="combatants">
             {#each combat.combatants as c (c.id)}
               <CombatantRow
                 combatant={c}
+                selected={c.id === selectedId}
                 {busy}
                 onmarkhp={(d) => markHp(c, d)}
                 onmarkstress={(d) => markStress(c, d)}
@@ -379,6 +439,18 @@
     list-style: none;
   }
 
+  .keyhint {
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1.9;
+    color: var(--muted);
+  }
+
+  .keyhint strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
   .rail {
     display: flex;
     flex-direction: column;
@@ -492,12 +564,7 @@
     font-size: 0.75rem;
   }
 
-  .empty {
-    margin: 0;
-    padding: 0.75rem 0;
-    font-size: 0.85rem;
-    color: var(--muted);
-  }
+  .empty { padding: 0.75rem 0; }
 
   @media (max-width: 900px) {
     .grid { grid-template-columns: minmax(0, 1fr); }

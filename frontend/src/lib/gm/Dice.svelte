@@ -1,6 +1,7 @@
 <script>
   import { fade, fly, scale } from 'svelte/transition'
   import { Damage, GM, Sizes, errorMessage } from './api.js'
+  import { onKeys } from '../keys.js'
   import RollResult from './RollResult.svelte'
 
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
@@ -99,6 +100,24 @@
       error = errorMessage(e)
     }
   }
+
+  // Escape is only claimed while a flash is up, so it stays free for the runner's
+  // "drop the selection" when both are mounted and nothing has been rolled.
+  $effect(() =>
+    onKeys(() => ({
+      r: rollD20,
+      d: rollDamage,
+      a: () => (advantage = !advantage),
+      z: () => (disadvantage = !disadvantage),
+      ...Object.fromEntries(dieSizes.map((size, i) => [String(i + 1), () => (sides = size)])),
+      ...(flash ? { Escape: dismiss } : {})
+    }))
+  )
+
+  const sizeKey = (size) => {
+    const i = dieSizes.indexOf(size)
+    return i >= 0 && i < 9 ? String(i + 1) : ''
+  }
 </script>
 
 <div class="dice" class:compact>
@@ -123,10 +142,12 @@
         <label class="check">
           <input type="checkbox" bind:checked={advantage} />
           <span>Advantage</span>
+          <kbd>a</kbd>
         </label>
         <label class="check">
           <input type="checkbox" bind:checked={disadvantage} />
           <span>Disadvantage</span>
+          <kbd>z</kbd>
         </label>
         <label class="narrow">
           <span>Modifier</span>
@@ -136,7 +157,7 @@
       {#if advantage && disadvantage}
         <p class="hint">Advantage and disadvantage cancel — this rolls flat.</p>
       {/if}
-      <button class="btn primary" onclick={rollD20}>Roll {describeD20()}</button>
+      <button class="btn primary" onclick={rollD20}>Roll {describeD20()} <kbd>r</kbd></button>
     </section>
 
     <section>
@@ -156,7 +177,13 @@
         <span class="slabel">Size</span>
         <div class="chips">
           {#each dieSizes as size (size)}
-            <button class="die" class:on={sides === size} onclick={() => (sides = size)} aria-pressed={sides === size}>
+            <button
+              class="die"
+              class:on={sides === size}
+              onclick={() => (sides = size)}
+              aria-pressed={sides === size}
+              title={sizeKey(size) ? `d${size} — press ${sizeKey(size)}` : `d${size}`}
+            >
               d{size}
             </button>
           {/each}
@@ -164,7 +191,7 @@
       </div>
       <p class="hint">The modifier lands once on the total, not on each die.</p>
       <button class="btn primary" onclick={rollDamage} disabled={!dieSizes.length}>
-        Roll {count}d{sides}{signed(damageModifier)}
+        Roll {count}d{sides}{signed(damageModifier)} <kbd>d</kbd>
       </button>
     </section>
   </div>
@@ -415,11 +442,7 @@
     opacity: 0.7;
   }
 
-  .empty {
-    margin: 0.5rem 0 0;
-    font-size: 0.85rem;
-    color: var(--muted);
-  }
+  .empty { margin-top: 0.5rem; }
 
   /* Fixed to the viewport so it centres over the whole window, and transparent to
      clicks so a stray roll never blocks the runner underneath. */

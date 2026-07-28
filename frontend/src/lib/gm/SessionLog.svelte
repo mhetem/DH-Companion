@@ -21,7 +21,7 @@
   let detail = $state(null)
   let editingId = $state(null)
   let form = $state(blank())
-  let linkPick = $state('')
+  let linkPicks = $state([])
 
   function blank() {
     return { number: '', title: '', date: today(), recap: '' }
@@ -50,6 +50,8 @@
   refresh()
 
   async function toggle(session) {
+    // Picks are per-session, so they never ride along into the next one opened.
+    linkPicks = []
     if (openId === session.id) {
       openId = null
       detail = null
@@ -121,11 +123,21 @@
     }
   }
 
+  function togglePick(id) {
+    linkPicks = linkPicks.includes(id) ? linkPicks.filter((x) => x !== id) : [...linkPicks, id]
+  }
+
+  // One call per encounter rather than a bulk method: each link is an independent
+  // INSERT OR IGNORE, so a failure part-way leaves the earlier ones linked and
+  // visible instead of silently rolling them back, and every call returns the
+  // session as it now stands.
   async function link(session) {
-    if (!linkPick) return
+    if (!linkPicks.length) return
     try {
-      detail = await LinkEncounter(session.id, Number(linkPick))
-      linkPick = ''
+      for (const id of linkPicks) {
+        detail = await LinkEncounter(session.id, id)
+      }
+      linkPicks = []
       error = ''
     } catch (e) {
       error = errorMessage(e)
@@ -230,13 +242,27 @@
 
                 {#if unlinked.length}
                   <div class="linkrow">
-                    <select bind:value={linkPick}>
-                      <option value="">Link an encounter…</option>
+                    <ul class="options">
                       {#each unlinked as enc (enc.id)}
-                        <option value={enc.id}>{enc.name || 'Untitled encounter'}</option>
+                        <li>
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={linkPicks.includes(enc.id)}
+                              onchange={() => togglePick(enc.id)}
+                            />
+                            <span class="oname">{enc.name || 'Untitled encounter'}</span>
+                            <span class="ometa">
+                              {enc.totalCount}
+                              {enc.totalCount === 1 ? 'adversary' : 'adversaries'}
+                            </span>
+                          </label>
+                        </li>
                       {/each}
-                    </select>
-                    <button class="btn ghost" onclick={() => link(session)} disabled={!linkPick}>Link</button>
+                    </ul>
+                    <button class="btn ghost" onclick={() => link(session)} disabled={!linkPicks.length}>
+                      {linkPicks.length > 1 ? `Link ${linkPicks.length} encounters` : 'Link encounter'}
+                    </button>
                   </div>
                 {/if}
               </div>
@@ -308,17 +334,19 @@
     gap: 0.6rem;
   }
 
-  label {
+  /* Scoped to the form: the encounter picker below has labels of its own that want
+     none of this, and the uppercasing in particular would carry into them. */
+  form label {
     display: flex;
     flex: 1;
     flex-direction: column;
     gap: 0.25rem;
   }
 
-  label.tiny { flex: 0 0 4.5rem; }
-  label.narrow { flex: 0 0 9rem; }
+  form label.tiny { flex: 0 0 4.5rem; }
+  form label.narrow { flex: 0 0 9rem; }
 
-  label span {
+  form label span {
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.07em;
@@ -463,10 +491,59 @@
 
   .linkrow {
     display: flex;
-    gap: 0.35rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
   }
 
-  .linkrow select { flex: 1; min-width: 0; }
+  /* Scrolls rather than growing: a campaign can hold far more encounters than a
+     session ever links, and this sits inside an expanded row. */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    width: 100%;
+    max-height: 9rem;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0.3rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg);
+    list-style: none;
+  }
+
+  .options li {
+    padding: 0;
+    border: none;
+    background: none;
+  }
+
+  .options label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.2rem 0.3rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .options label:hover { background: var(--panel-2); }
+
+  .oname {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ometa {
+    font-size: 0.7rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
 
   .empty {
     margin: 0;

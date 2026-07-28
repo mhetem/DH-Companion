@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="130" height="130" viewBox="0 0 130 130" role="img" aria-label="Hilt logo">
+  <defs>
+    <linearGradient id="cGold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dcc069"/><stop offset="1" stop-color="#8a7534"/>
+    </linearGradient>
+    <linearGradient id="cField" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#241f2e"/><stop offset="1" stop-color="#181521"/>
+    </linearGradient>
+  </defs>
+  <rect x="18" y="18" width="94" height="94" rx="24" fill="url(#cField)" stroke="#c9a94e" stroke-width="2"/>
+  <rect x="42" y="72" width="46" height="26" rx="3" fill="#7a2f24" stroke="#b6412e" stroke-width="1.2"/>
+  <rect x="44" y="69" width="42" height="5" rx="1.5" fill="#ece3d0"/>
+  <rect x="61" y="40" width="8" height="32" rx="3" fill="url(#cGold)"/>
+  <path d="M46 47 Q65 39 84 47 Q65 54 46 47 Z" fill="url(#cGold)"/>
+  <circle cx="65" cy="37" r="5.5" fill="#b6412e" stroke="#dcc069" stroke-width="1.3"/>
+</svg>

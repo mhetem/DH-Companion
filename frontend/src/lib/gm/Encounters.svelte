@@ -1,5 +1,6 @@
 <script>
   import EncounterBuilder from './EncounterBuilder.svelte'
+  import EmptyState from '../EmptyState.svelte'
   import { ListEncounters, ListParties, errorMessage } from './api.js'
 
   // The builder is wide enough on its own that the list and the builder swap
@@ -75,7 +76,10 @@
     {#if loading}
       <p class="empty">Loading…</p>
     {:else if !encounters.length}
-      <p class="empty">No encounters yet. Start one with <em>New encounter</em>.</p>
+      <EmptyState title="No encounters yet">
+        Start one with <em>New encounter</em> — pick a party, add adversaries, and the budget
+        meter follows along.
+      </EmptyState>
     {:else}
       <ul>
         {#each encounters as encounter (encounter.id)}
@@ -173,11 +177,6 @@
 
   .meta {
     font-size: 0.75rem;
-    color: var(--muted);
-  }
-
-  .empty {
-    font-size: 0.85rem;
     color: var(--muted);
   }
 </style>

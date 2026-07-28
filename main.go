@@ -24,7 +24,7 @@ func main() {
 	app := NewApp(gmSvc)
 
 	err := wails.Run(&options.App{
-		Title:     "DH-Companion",
+		Title:     "Hilt",
 		Width:     1920,
 		Height:    1080,
 		MinWidth:  minWindowWidth,
@@ -32,7 +32,7 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
+		BackgroundColour: &options.RGBA{R: 16, G: 13, B: 23, A: 1},
 		OnStartup:        app.startup,
 		OnShutdown:       app.shutdown,
 		Bind: []interface{}{

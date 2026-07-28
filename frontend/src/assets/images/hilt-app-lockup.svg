@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="130" viewBox="0 0 300 130" role="img" aria-label="Hilt app lockup">
+  <defs>
+    <linearGradient id="bGold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dcc069"/><stop offset="1" stop-color="#8a7534"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Option B mark: open grimoire with hilt in the gutter -->
+  <g transform="translate(0,0)">
+    <!-- left page -->
+    <path d="M20 78 Q42 68 63 76 L63 108 Q42 100 20 108 Z" fill="#ece3d0"/>
+    <!-- right page -->
+    <path d="M110 78 Q88 68 67 76 L67 108 Q88 100 110 108 Z" fill="#ece3d0"/>
+    <!-- page lines -->
+    <g stroke="#c2b48f" stroke-width="1">
+      <line x1="27" y1="82" x2="56" y2="82"/><line x1="27" y1="90" x2="56" y2="90"/><line x1="27" y1="98" x2="56" y2="98"/>
+      <line x1="74" y1="82" x2="103" y2="82"/><line x1="74" y1="90" x2="103" y2="90"/><line x1="74" y1="98" x2="103" y2="98"/>
+    </g>
+    <!-- spine shadow -->
+    <path d="M63 76 L67 76 L67 108 L63 108 Z" fill="#7d8794" opacity="0.35"/>
+    <!-- hilt rising from the gutter -->
+    <rect x="61" y="30" width="8" height="46" rx="3" fill="url(#bGold)"/>
+    <path d="M42 40 Q65 31 88 40 Q65 47 42 40 Z" fill="url(#bGold)"/>
+    <circle cx="65" cy="27" r="6" fill="#b6412e" stroke="#dcc069" stroke-width="1.5"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="128" y="98" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="700" letter-spacing="3" fill="#ece3d0">Hilt</text>
+</svg>

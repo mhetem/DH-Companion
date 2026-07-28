@@ -236,10 +236,4 @@
     border-color: var(--fear);
     background: var(--fear);
   }
-
-  .empty {
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--muted);
-  }
 </style>

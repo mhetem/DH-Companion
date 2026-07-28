@@ -252,10 +252,4 @@
     background: var(--panel-2);
     font-size: 0.8rem;
   }
-
-  .empty {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--muted);
-  }
 </style>

@@ -502,8 +502,6 @@
 
   .empty {
     padding: 0.75rem 0.5rem;
-    font-size: 0.8rem;
-    color: var(--muted);
     border: none;
     background: none;
   }

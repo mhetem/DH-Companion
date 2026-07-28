@@ -7,6 +7,8 @@
     WindowPresets
   } from '../../wailsjs/go/main/App.js'
   import { applyScale } from './display.js'
+  import ShortcutHelp from './ShortcutHelp.svelte'
+  import lockup from '../assets/images/hilt-app-lockup.svg'
 
   let { role, scale, onswitch, onscale, onerror } = $props()
 
@@ -67,12 +69,14 @@
 </script>
 
 <header>
-  <span class="brand">DH Companion</span>
+  <img class="brand" src={lockup} alt="Hilt" />
   <span class="badge" class:gm={role === 'gm'} class:player={role === 'player'}>
     {role === 'gm' ? 'Game Master' : 'Player'}
   </span>
 
   <div class="display">
+    <ShortcutHelp />
+
     <label>
       <span class="sronly">Window size</span>
       <select {value} onchange={(e) => resize(e.currentTarget.value)} title="Window size">
@@ -101,6 +105,7 @@
 
 <style>
   header {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -109,9 +114,22 @@
     background: var(--panel);
   }
 
+  /* A gold hairline over the border, fading out past the lockup — the brand frame
+     without a second hard rule across the window. */
+  header::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 -1px 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--gold), var(--gold-deep) 20%, transparent 55%);
+  }
+
+  /* The lockup carries ~16% dead space above and below its artwork, so it is sized
+     past the header's line box and pulled back in rather than padding it out. */
   .brand {
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    display: block;
+    height: 2.9rem;
+    margin: -0.55rem 0;
   }
 
   .badge {

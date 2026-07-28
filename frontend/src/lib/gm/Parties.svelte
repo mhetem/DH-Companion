@@ -224,8 +224,6 @@
   .empty {
     display: block;
     padding: 1rem 0;
-    font-size: 0.85rem;
-    color: var(--muted);
     border: none;
     background: none;
   }

@@ -6,6 +6,10 @@
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
+  "info": {
+    "productName": "Hilt",
+    "comments": "A Daggerheart companion for both sides of the table."
+  },
   "author": {
     "name": "",
     "email": ""

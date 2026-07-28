@@ -355,12 +355,6 @@
     font-style: italic;
   }
 
-  .empty {
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--muted);
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .caret { transition: none; }
   }

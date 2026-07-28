@@ -347,6 +347,14 @@ Notes on linking a fight:
   encounters you lined up for a session. The second is history: fights that really happened.
   A session shows both lists, and they routinely differ — prepped fights the party walked
   around, improvised fights that were never an encounter.
+- **A session links as many encounters as you like.** It always could — `session_encounters`
+  is a join table and `LinkSessionEncounter` is an `INSERT OR IGNORE` — but the UI only
+  offered a one-at-a-time dropdown, so linking four fights was eight clicks. The picker is a
+  scrolling checkbox list of the not-yet-linked encounters now, committed in one press
+  ("Link 3 encounters"). It stays one `LinkEncounter` call per pick rather than a bulk
+  method: each insert is independent, so a failure part-way leaves the earlier ones linked
+  and on screen instead of rolling them back.
+- Picks are cleared when a different session is expanded, so they never ride along.
 - Picking a session **implies its campaign**, and `resolveLinks` overrides whatever campaign
   the caller passed rather than letting the two disagree. `StartCombat` and `LinkCombat`
   share it, so starting a linked fight and linking one afterwards can't drift apart. The
@@ -478,7 +486,95 @@ experience(id, character_id, name, modifier)
 - [ ] **Auto-update:** wire Wails' updater to the release feed
 - [ ] **Data portability:** DB backup/export + import (single-file copy), plus **whole-library JSON export/import**
 - [ ] **Shareable homebrew codes:** compress+base64 a custom adversary/environment/character into a paste-able string others can import (versioned format)
-- [ ] App icon + name; empty states; keyboard shortcuts for combat/dice; README + first-run notes
+- [x] App icon + name
+- [x] Empty states
+- [x] Keyboard shortcuts for combat/dice
+- [x] README + first-run notes
+
+Notes on the name:
+- **The app is called Hilt.** The rename is display-only: the window title, the page title,
+  `wails.json`'s `info.productName`, the header, the role picker and the README all say
+  Hilt, while the repo, the Go module path (`github.com/mhetem/DH-Companion`), the binary
+  and the data directory (`~/DH-Companion/data.db`) are unchanged — renaming the data
+  directory would strand every existing database, and none of the rest is user-visible.
+- `frontend/src/assets/images/` holds the two source SVGs: `hilt-logo.svg` (the mark) and
+  `hilt-app-lockup.svg` (mark + wordmark). The header and the role picker both `import` the
+  lockup, so there is one copy of the artwork rather than a component-inlined duplicate.
+  Vite inlines it as a data URI at build time — it is well under the 4 kB threshold.
+- `build/appicon.svg` is the icon source: the same mark on a tighter viewBox, since the
+  logo carries an 18-unit transparent margin that would waste an icon's canvas. It is
+  rasterised to `build/appicon.png` at 1024² and to `build/windows/icon.ico` as a
+  seven-entry PNG-payload ICO (16→256). Regenerate both from it rather than editing the
+  bitmaps.
+
+Notes on the keyboard:
+- `lib/keys.js` is the whole mechanism: an `isTyping` guard on the event target, a `combo`
+  normaliser (`h`, `H` for shift, DOM names for the rest, and ctrl/meta/alt chords left to
+  the platform), and `onKeys(read)`. **`read` is a function, called per keypress**, so a map
+  built out of runes sees current state instead of what it closed over on mount.
+- **Selection is a new concept in the runner** — the keyboard's cursor over the roster,
+  deliberately *not* spotlight. Spotlight is a rules state the GM sets on purpose and can
+  hold on several combatants at once; overloading it as the keyboard target would have
+  conflated the two. The cursor is drawn in `--gold` so it reads as chrome and can sit on a
+  spotlit (`--fear`) row without the borders fighting. Selection is keyboard-only: mouse
+  users click the steppers directly, and a hint line above the roster says which keys act
+  on what.
+- **`--gold` earned its keep here.** It was added for the brand frame and turned out to be
+  the only accent not already spoken for by the rules colours.
+- The runner gates its steppers on `busy`, mirroring the buttons being `disabled` mid-write
+  rather than racing concurrent marks against the same row.
+- **A modal counter alone could not make the shortcut sheet exclusive.** A microtask
+  checkpoint runs between two window listeners, so Svelte flushed the state change that
+  closed the sheet — and with it `modal.close()` — before the next listener was called, and
+  one Escape both dismissed the sheet and dropped the roster selection behind it. The fix is
+  that modal owners listen in the **capture** phase and `stopPropagation()` there, which is
+  what actually keeps the event from the handlers underneath. The counter stays as the
+  second line of defence.
+- Dice claims `Escape` only while a flash is up, so it stays free for the runner's "drop the
+  selection" when both are mounted and nothing has been rolled. That is the only key the two
+  maps both want; `s` is Stress in the runner, which is why disadvantage is `z` and not `s`.
+- `SHORTCUTS` in `keys.js` feeds the `?` sheet, but the components bind the key strings by
+  hand — **nothing checks that the two agree.** Key caps also sit inline on the controls
+  themselves, which is the discoverability that matters; the sheet is the reference.
+
+Notes on the palette:
+- The custom properties in `style.css` are retuned to the logo: `--bg`/`--panel` are its
+  purple-tinted near-black field, `--text` is its parchment `#ece3d0`, and `--gold` /
+  `--gold-deep` are its two golds, added as brand-frame tokens distinct from `--hope`.
+  `--hope` and `--fear` stay the rules colours they were.
+- **Every foreground clears WCAG AA (4.5:1) against all three surfaces** — `--bg`,
+  `--panel` and `--panel-2`. That is what set the exact values: the logo's crimson
+  `#b6412e` only reaches 2.8:1 as `--danger` on `--panel-2`, so `--danger` is a lightened
+  `#dd7161` and the deep crimson stays in the artwork. `--fear` was lightened from
+  `#9b6bd6` for the same reason (4.06 → 4.83).
+- `main.go`'s `BackgroundColour` matches `--bg`. It was still the Wails template's slate,
+  which flashed on launch before the frontend painted.
+- The `select` chevron data URI has to restate `--muted` as a literal, so it moved with it.
+
+Notes on the frontend:
+- **The GM nav follows the order of use**, not the order the phases were built in:
+  Campaigns → Parties → Encounters → Combat Runner, then the reference sections
+  (Adversaries, Environments), then the two utilities (Dice, Search). Prep runs top to
+  bottom — you need a party before the budget meter means anything, and an encounter before
+  there is a fight to run.
+- **The role picker's emoji were tofu.** 🎲 and 🛡️ render as boxes on any machine without
+  an emoji font — this one has none (`fc-match emoji` falls through to DejaVu Sans), and a
+  GTK build can't assume one. They are inline SVG now, tinted `--fear` and `--hope` so the
+  two sides read as the two sides. The `✕` buttons elsewhere are Dingbats, which DejaVu
+  covers, so they stay.
+- **Checkboxes joined `select` and the number spinners** in the WebKitGTK `appearance: none`
+  block. Phase 4 caught the other two; the Dice pane's advantage/disadvantage boxes were
+  still painting as bright system squares on a dark panel. Same data-URI caveat — the tick
+  restates `--bg` as a literal, because a data URI can't read CSS vars.
+- `EmptyState.svelte` is the full-pane "nothing here yet" block — centred, with a hint and
+  a small gold hilt. It carries the hilt as inline SVG rather than the logo, because the
+  full mark is a dark tile with a gold frame and turns to mush at 3rem. It is in
+  `lib/` rather than `lib/gm/` since the Player panes will want it in Phase 5.
+- The inline one-liner **`.empty` is now a single rule in `style.css`**. Ten components had
+  each grown their own copy at 0.8rem or 0.85rem; they keep only their own spacing and
+  structural resets now. The two cases that were a bare line in an otherwise empty pane —
+  Campaigns and Encounters — use `EmptyState` instead; the rest sit under a heading in a
+  section that is already doing the explaining, where a line is right.
 
 ---
 
@@ -495,12 +591,44 @@ experience(id, character_id, name, modifier)
 
 ---
 
+## Licensing note
+
+`LICENSE` is MIT **for the software only**, with the scope spelled out at the top of the
+file; `NOTICE.md` carries the DPCGL attribution and the per-directory breakdown. The split
+matters because `data/` is not the author's to relicense — DPCGL §3 keeps ownership with
+Critical Role, and an unqualified MIT file would purport to grant rights over it.
+
+**Known and accepted:** `data/embed.go` compiles the SRD json into the binary, so cutting a
+public release Shares Public Game Content. DPCGL §1.9 Permitted Formats are print,
+live-stream/video, podcasts and DRP-whitelisted VTTs, and it expressly excludes video games
+and other unlisted media — a general desktop app is not on the list.
+
+**Staying free does not resolve that**, which is the easy thing to get wrong here. §2.1(b)
+grants the right to "produce, reproduce, Share *and sell*... solely in the Permitted
+Formats" — the format limit sits on Sharing, and §1.8 defines Sharing as making content
+available to the public by any means, price irrelevant. The exemption that does apply is
+§1.8's, and it needs *private* **and** non-commercial: "private, non-commercial play among
+friends, family, or gaming groups in a personal setting." Running this yourself, or handing
+it to your table, is untouched. A public repo with release binaries is not a personal
+setting even when it is free.
+
+What staying non-commercial *does* remove is §4.2: no front-cover Darrington Press
+community logo, no title-page trademark statement. Only §4.1's attribution applies, and
+`NOTICE.md` carries it, including the §4.1(e) statement of the modification we made —
+transcribing the SRD into json.
+
+The decision is to ship anyway and deal with it if DRP ever objects. The two ways out, if
+that changes: ask DRP to whitelist the app, or move the SRD out of the binary so the app
+reads a `data/` directory the user supplies and the release ships code only. The second is
+a real change to `internal/srd` and `data/embed.go`, not a docs fix.
+
 ## Data sourcing note
 Adversaries you already have. **Environments** (GM side), plus domain cards, class
 features, ancestries, and communities (Player side) need to be assembled into `data/`
 json (same loader pattern as adversaries). This is content work, not code — it can proceed
-in parallel with Phases 2–5. Check the Darrington Press Community Gaming License for what
-you can redistribute.
+in parallel with Phases 2–5. All of it has landed in `data/` ahead of the Phase 5 code.
+For what may be redistributed, see the licensing note above — the constraint is the DPCGL's
+Permitted Formats, not the sourcing.
 
 ## Suggested order
 Phase 0 → 1 → 2 → 3 → 4 = a complete, usable **GM tool** (build, run, and record a

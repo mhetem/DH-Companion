@@ -7,6 +7,7 @@
     SetCampaignFear,
     errorMessage
   } from './api.js'
+  import EmptyState from '../EmptyState.svelte'
   import Countdowns from './Countdowns.svelte'
   import FearTracker from './FearTracker.svelte'
   import Notes from './Notes.svelte'
@@ -151,7 +152,9 @@
   {#if loading}
     <p class="empty">Loading…</p>
   {:else if !campaigns.length}
-    <p class="empty">No campaigns yet. Create one to start logging sessions and notes.</p>
+    <EmptyState title="No campaigns yet">
+      Create one to start logging sessions, keeping notes, and carrying Fear between fights.
+    </EmptyState>
   {:else}
     <div class="picker">
       {#each campaigns as campaign (campaign.id)}
@@ -215,7 +218,6 @@
     width: 100%;
     max-width: 68rem;
   }
-
 
   header {
     display: flex;
@@ -334,11 +336,5 @@
   .panel {
     display: flex;
     flex-direction: column;
-  }
-
-  .empty {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--muted);
   }
 </style>

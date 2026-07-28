@@ -11,12 +11,12 @@
 
   const sections = [
     { id: 'campaigns', label: 'Campaigns', component: Campaigns },
-    { id: 'encounters', label: 'Encounters', component: Encounters },
     { id: 'parties', label: 'Parties', component: Parties },
+    { id: 'encounters', label: 'Encounters', component: Encounters },
+    { id: 'combat', label: 'Combat Runner', component: CombatRunner },
     { id: 'adversaries', label: 'Adversaries', component: Adversaries },
     { id: 'environments', label: 'Environments', component: Environments },
     { id: 'dice', label: 'Dice', component: Dice },
-    { id: 'combat', label: 'Combat Runner', component: CombatRunner },
     { id: 'search', label: 'Search', component: Search }
   ]
 </script>
