@@ -52,6 +52,16 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
 
+      # windows-latest has no NSIS, and `wails build -nsis` treats that as a warning
+      # and still exits 0 — so without this the job builds happily and simply produces
+      # no installer.
+      - name: Install NSIS
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          choco install nsis --no-progress -y
+          echo "C:\Program Files (x86)\NSIS" >> "$GITHUB_PATH"
+
       # The NSIS installer and the macOS bundle take their version from wails.json,
       # not from ldflags, so the tag has to be written in before the build.
       #
@@ -87,7 +97,12 @@ jobs:
               wails build -clean -platform ${{ matrix.platform }} -tags webkit2_41 -ldflags "$LDFLAGS"
               ;;
             Windows)
+              command -v makensis >/dev/null || { echo "makensis is not on PATH"; exit 1; }
               wails build -clean -platform ${{ matrix.platform }} -nsis -ldflags "$LDFLAGS"
+              # A missing makensis is only a warning to Wails, so check the artifact
+              # rather than trusting the exit code.
+              test -s build/bin/DH-Companion-amd64-installer.exe \
+                || { echo "the NSIS installer was not produced"; exit 1; }
               ;;
             macOS)
               wails build -clean -platform ${{ matrix.platform }} -ldflags "$LDFLAGS"
@@ -117,12 +132,29 @@ jobs:
               ;;
             macOS)
               # A drag-to-Applications disk image, which is what a mac user expects.
-              STAGE="$(mktemp -d)"
-              cp -R build/bin/DH-Companion.app "$STAGE/Hilt.app"
+              # Staged inside the workspace rather than /var/folders, and ditto rather
+              # than cp -R so the bundle keeps its metadata.
+              STAGE="dmgroot"
+              rm -rf "$STAGE" && mkdir -p "$STAGE"
+              ditto build/bin/DH-Companion.app "$STAGE/Hilt.app"
               cp LICENSE NOTICE.md README.md "$STAGE/"
               ln -s /Applications "$STAGE/Applications"
-              hdiutil create -volname "Hilt" -srcfolder "$STAGE" -ov -format UDZO \
-                "dist/Hilt-${VERSION}-macos-universal.dmg"
+
+              # hdiutil intermittently returns "Resource busy" on the runners, so give
+              # it a few goes before calling the release broken. HFS+ rather than the
+              # APFS default, which is where that flakiness comes from.
+              DMG="dist/Hilt-${VERSION}-macos-universal.dmg"
+              for attempt in 1 2 3 4; do
+                if hdiutil create -volname "Hilt" -srcfolder "$STAGE" -ov \
+                     -fs HFS+ -format UDZO "$DMG"; then
+                  break
+                fi
+                echo "hdiutil attempt $attempt failed; retrying"
+                rm -f "$DMG"
+                sleep 15
+              done
+              test -s "$DMG" || { echo "could not build the disk image"; exit 1; }
+
               ditto -c -k --keepParent build/bin/DH-Companion.app \
                 "dist/Hilt-${{ matrix.label }}.zip"
               ;;

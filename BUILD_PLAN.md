@@ -557,9 +557,20 @@ Notes on installers:
   failed the release**; it now pulls out the numeric triple and drops any suffix. The full
   tag still reaches the app through `main.version`, so the UI and the update check show
   `v0.1.0-rc1` while the Windows resources carry `0.1.0`.
-- `wails build -nsis` **exits 1** when the installer step fails, so CI stops at the build
-  rather than publishing a release missing its installer. The artifact-existence check is
-  the second line of defence, not the only one.
+- **`wails build -nsis` does not reliably fail when the installer isn't produced.** With
+  NSIS present but the script broken it exits 1; with `makensis` *absent* it prints
+  `Warning: Cannot create installer: makensis not found` and **exits 0**. The v0.1.0-rc1
+  release hit exactly that: `windows-latest` ships no NSIS, the build step went green, and
+  the job only fell over later trying to rename a file that was never created. The workflow
+  now installs NSIS with choco, asserts `makensis` is on PATH before building, and tests for
+  the installer immediately after — the exit code is not trusted.
+- **`hdiutil create` intermittently returns "Resource busy" on the macOS runners.** It took
+  down the same release. The disk image is now staged inside the workspace rather than
+  `/var/folders`, built as HFS+ rather than the APFS default, and retried four times before
+  the job gives up.
+- Both of those were the two steps that could not be exercised locally, and both failed on
+  the first real tag while the locally-verified Linux job passed. Worth remembering the next
+  time something "should be fine".
 - **Windows cross-compiles from Linux.** Wails' Windows target is pure Go (the WebView2
   loader is `winloader`, no CGO), so `wails build -platform windows/amd64 -nsis` works on a
   Linux box with `makensis` installed, and produces a genuine PE32+ binary plus a working
