@@ -36,10 +36,14 @@ type feed struct {
 }
 
 func Check(ctx context.Context, current string) (Release, error) {
+	return checkAt(ctx, feedURL, current)
+}
+
+func checkAt(ctx context.Context, url, current string) (Release, error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, feedURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return Release{}, fmt.Errorf("building the update request: %w", err)
 	}

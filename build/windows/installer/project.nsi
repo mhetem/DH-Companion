@@ -56,12 +56,19 @@ ManifestDPIAware true
 !define MUI_FINISHPAGE_NOAUTOCLOSE # Wait on the INSTFILES page so the user can take a look into the details of the installation steps
 !define MUI_ABORTWARNING # This will warn the user if they exit from the installer.
 
+# Where the app keeps its database. Mirrors os.UserHomeDir() + "DH-Companion" in
+# app.go — if that ever moves, this has to move with it.
+!define APP_DATA_DIR "$PROFILE\DH-Companion"
+
 !insertmacro MUI_PAGE_WELCOME # Welcome to the installer page.
 # !insertmacro MUI_PAGE_LICENSE "resources\eula.txt" # Adds a EULA page to the installer
+!insertmacro MUI_PAGE_COMPONENTS # Pick which shortcuts to create.
 !insertmacro MUI_PAGE_DIRECTORY # In which folder install page.
 !insertmacro MUI_PAGE_INSTFILES # Installing page.
 !insertmacro MUI_PAGE_FINISH # Finished installation page.
 
+!insertmacro MUI_UNPAGE_CONFIRM # Confirm the uninstall.
+!insertmacro MUI_UNPAGE_COMPONENTS # Offer to remove the user's data as well.
 !insertmacro MUI_UNPAGE_INSTFILES # Uinstalling page
 
 !insertmacro MUI_LANGUAGE "English" # Set the Language of the installer
@@ -87,7 +94,9 @@ Function .onInit
    !insertmacro wails.checkArchitecture
 FunctionEnd
 
-Section
+Section "!${INFO_PRODUCTNAME}" SecCore
+    SectionIn RO # The app itself is not optional.
+
     !insertmacro wails.setShellContext
 
     !insertmacro wails.webview2runtime
@@ -96,16 +105,33 @@ Section
 
     !insertmacro wails.files
 
-    CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
-    CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
-
     !insertmacro wails.associateFiles
     !insertmacro wails.associateCustomProtocols
 
     !insertmacro wails.writeUninstaller
 SectionEnd
 
-Section "uninstall"
+# Both shortcuts are optional and independent — leaving both unticked installs the
+# app with no shortcut at all, which is the "none" case.
+Section "Start Menu shortcut" SecStartMenu
+    !insertmacro wails.setShellContext
+    CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
+SectionEnd
+
+Section "Desktop shortcut" SecDesktop
+    !insertmacro wails.setShellContext
+    CreateShortcut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
+SectionEnd
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecCore} "${INFO_PRODUCTNAME} itself. Your campaigns and homebrew live in ${APP_DATA_DIR} and are left alone by an upgrade."
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecStartMenu} "Add ${INFO_PRODUCTNAME} to the Start Menu."
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} "Put a ${INFO_PRODUCTNAME} shortcut on the desktop."
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+Section "un.${INFO_PRODUCTNAME}" UnSecCore
+    SectionIn RO
+
     !insertmacro wails.setShellContext
 
     RMDir /r "$AppData\${PRODUCT_EXECUTABLE}" # Remove the WebView2 DataPath
@@ -120,3 +146,14 @@ Section "uninstall"
 
     !insertmacro wails.deleteUninstaller
 SectionEnd
+
+# Unticked by default (/o): losing a campaign log to an absent-minded uninstall is
+# far worse than leaving a database behind.
+Section /o "un.Campaigns, encounters and homebrew" UnSecData
+    RMDir /r "${APP_DATA_DIR}"
+SectionEnd
+
+!insertmacro MUI_UNFUNCTION_DESCRIPTION_BEGIN
+    !insertmacro MUI_DESCRIPTION_TEXT ${UnSecCore} "Remove ${INFO_PRODUCTNAME} and its shortcuts."
+    !insertmacro MUI_DESCRIPTION_TEXT ${UnSecData} "Also delete everything you have made — campaigns, sessions, notes, encounters and homebrew cards — by removing ${APP_DATA_DIR}. This cannot be undone. Leave it unticked to keep your data for a future install."
+!insertmacro MUI_UNFUNCTION_DESCRIPTION_END

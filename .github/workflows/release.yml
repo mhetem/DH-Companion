@@ -30,14 +30,14 @@ jobs:
             label: macos-universal
             platform: darwin/universal
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -52,37 +52,98 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
 
-      # The tag is stamped into main.version so the in-app update check has something
-      # to compare against. Without it the build reports "dev" and never offers one.
+      # The NSIS installer and the macOS bundle take their version from wails.json,
+      # not from ldflags, so the tag has to be written in before the build.
+      #
+      # It must be a bare numeric X.Y.Z: project.nsi appends ".0" to build the
+      # four-part VIProductVersion, and NSIS rejects anything else — so a prerelease
+      # tag like v0.1.0-rc1 fails the build unless the suffix is dropped here. The
+      # full tag still reaches the app through main.version below.
+      - name: Stamp the version
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re, sys
+          tag = os.environ['GITHUB_REF_NAME']
+          m = re.match(r'v?(\d+)(?:\.(\d+))?(?:\.(\d+))?', tag)
+          if not m:
+              sys.exit(f'tag {tag!r} has no numeric version to stamp')
+          version = '.'.join(m.group(i) or '0' for i in (1, 2, 3))
+          p = pathlib.Path('wails.json')
+          d = json.loads(p.read_text())
+          d.setdefault('info', {})['productVersion'] = version
+          p.write_text(json.dumps(d, indent=2) + '\n')
+          print(f'{tag} -> productVersion {version}')
+          PY
+
+      # -nsis additionally produces the Windows installer. main.version is what the
+      # in-app update check compares against; without it a build reports "dev".
       - name: Build
         shell: bash
         run: |
           LDFLAGS="-X main.version=${GITHUB_REF_NAME}"
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            wails build -clean -platform ${{ matrix.platform }} -tags webkit2_41 -ldflags "$LDFLAGS"
-          else
-            wails build -clean -platform ${{ matrix.platform }} -ldflags "$LDFLAGS"
-          fi
+          case "$RUNNER_OS" in
+            Linux)
+              wails build -clean -platform ${{ matrix.platform }} -tags webkit2_41 -ldflags "$LDFLAGS"
+              ;;
+            Windows)
+              wails build -clean -platform ${{ matrix.platform }} -nsis -ldflags "$LDFLAGS"
+              ;;
+            macOS)
+              wails build -clean -platform ${{ matrix.platform }} -ldflags "$LDFLAGS"
+              ;;
+          esac
 
       - name: Package
         shell: bash
         run: |
           mkdir -p dist
-          cp LICENSE NOTICE.md README.md build/bin/ 2>/dev/null || true
-          cd build/bin
+          VERSION="${GITHUB_REF_NAME#v}"
           case "$RUNNER_OS" in
             Linux)
-              tar czf ../../dist/Hilt-${{ matrix.label }}.tar.gz DH-Companion LICENSE NOTICE.md README.md
+              # .deb and AppImage, built by the same script used locally.
+              build/linux/package.sh "$GITHUB_REF_NAME" dist
+              cp LICENSE NOTICE.md README.md build/bin/
+              tar czf "dist/Hilt-${{ matrix.label }}.tar.gz" -C build/bin \
+                DH-Companion LICENSE NOTICE.md README.md
               ;;
             Windows)
-              7z a ../../dist/Hilt-${{ matrix.label }}.zip DH-Companion.exe LICENSE NOTICE.md README.md
+              mv "build/bin/DH-Companion-amd64-installer.exe" \
+                 "dist/Hilt-${VERSION}-windows-amd64-setup.exe"
+              cp LICENSE NOTICE.md README.md build/bin/
+              7z a "dist/Hilt-${{ matrix.label }}.zip" \
+                ./build/bin/DH-Companion.exe ./build/bin/LICENSE \
+                ./build/bin/NOTICE.md ./build/bin/README.md
               ;;
             macOS)
-              zip -qr ../../dist/Hilt-${{ matrix.label }}.zip DH-Companion.app LICENSE NOTICE.md README.md
+              # A drag-to-Applications disk image, which is what a mac user expects.
+              STAGE="$(mktemp -d)"
+              cp -R build/bin/DH-Companion.app "$STAGE/Hilt.app"
+              cp LICENSE NOTICE.md README.md "$STAGE/"
+              ln -s /Applications "$STAGE/Applications"
+              hdiutil create -volname "Hilt" -srcfolder "$STAGE" -ov -format UDZO \
+                "dist/Hilt-${VERSION}-macos-universal.dmg"
+              ditto -c -k --keepParent build/bin/DH-Companion.app \
+                "dist/Hilt-${{ matrix.label }}.zip"
               ;;
           esac
+          ls -la dist/
 
-      - uses: actions/upload-artifact@v4
+      # package.sh skips the AppImage rather than failing, so a machine with no
+      # network still gets a .deb. For a release that silence is not acceptable.
+      - name: Check the expected artifacts exist
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Linux)   need=("dist"/*.deb "dist"/*.AppImage "dist"/*.tar.gz) ;;
+            Windows) need=("dist"/*setup.exe "dist"/*.zip) ;;
+            macOS)   need=("dist"/*.dmg "dist"/*.zip) ;;
+          esac
+          for f in "${need[@]}"; do
+            [ -s "$f" ] || { echo "missing or empty: $f"; exit 1; }
+          done
+
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.label }}
           path: dist/*
@@ -92,9 +153,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
@@ -113,15 +174,39 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cat > notes.md <<'EOF'
-          Builds are **unsigned**. macOS: right-click the app and choose Open the first
-          time, or clear the quarantine flag. Windows: SmartScreen will warn on first run.
+          ## Install
 
-          Your data lives in `~/DH-Companion/data.db` and is untouched by an upgrade —
-          drop the new binary over the old one. Export a backup from Settings first if
-          you want one.
+          | Platform | Download | Notes |
+          |---|---|---|
+          | Windows | `…-windows-amd64-setup.exe` | Installer. Choose Start-menu and/or desktop shortcuts, or neither. |
+          | macOS | `…-macos-universal.dmg` | Open and drag Hilt to Applications. Intel and Apple Silicon. |
+          | Linux (Debian/Ubuntu) | `…-amd64.deb` | `sudo apt install ./Hilt-*.deb` |
+          | Linux (any distro) | `…-x86_64.AppImage` | `chmod +x` it and run — no install needed. |
+
+          The `.zip` / `.tar.gz` archives are the plain binary, if you'd rather not install.
+
+          ## Before you run it
+
+          Builds are **unsigned**, so the OS will warn the first time:
+
+          - **macOS** — right-click the app and choose *Open*, or
+            `xattr -dr com.apple.quarantine /Applications/Hilt.app`
+          - **Windows** — SmartScreen: *More info* → *Run anyway*
+          - **Linux** — the `.deb` needs `libgtk-3-0` and `libwebkit2gtk-4.1-0`; the
+            AppImage carries neither, so it needs them present too
+
+          ## Upgrading and removing
+
+          Your data lives in `~/DH-Companion/data.db` and is untouched — install over the
+          top. There's a backup button in **Settings & data** if you want one anyway.
+
+          Uninstalling keeps your data by default. The Windows uninstaller offers a
+          *Campaigns, encounters and homebrew* tick-box to delete it as well; it is
+          unticked unless you ask for it. Removing the `.deb` or deleting the AppImage
+          never touches it.
 
           This build bundles Daggerheart SRD 1.0 content under the Darrington Press
-          Community Gaming License. See `NOTICE.md` in the archive for attribution.
+          Community Gaming License. See `NOTICE.md` for attribution.
           EOF
           gh release create "${GITHUB_REF_NAME}" dist/* \
             --title "Hilt ${GITHUB_REF_NAME}" \

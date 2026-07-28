@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Hilt
+GenericName=Daggerheart Companion
+Comment=Build encounters, run combat, and keep your campaign
+Exec=hilt
+Icon=hilt
+Terminal=false
+Categories=Game;RolePlaying;
+Keywords=daggerheart;ttrpg;rpg;gm;encounter;
+StartupWMClass=DH-Companion

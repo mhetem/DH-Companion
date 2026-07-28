@@ -8,10 +8,13 @@
   "frontend:dev:serverUrl": "auto",
   "info": {
     "productName": "Hilt",
+    "productVersion": "0.1.0",
+    "companyName": "mhetem",
+    "copyright": "MIT-licensed software. Daggerheart SRD content © Critical Role, LLC, used under the DPCGL.",
     "comments": "A Daggerheart companion for both sides of the table."
   },
   "author": {
-    "name": "",
-    "email": ""
+    "name": "mhetem",
+    "email": "284336022+mhetem@users.noreply.github.com"
   }
 }

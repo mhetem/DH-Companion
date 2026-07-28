@@ -508,6 +508,70 @@ Notes on CI and release:
   Gatekeeper and Windows SmartScreen will both warn on first run, and that is better said
   than discovered.
 
+Notes on installers:
+- Every platform gets a **real installable artifact**, not just a binary in an archive:
+  an NSIS `setup.exe`, a drag-to-Applications `.dmg`, and both a `.deb` and an AppImage.
+  The plain archives are still attached for anyone who would rather not install.
+- **Windows is Wails' own** — `wails build -nsis` uses the already-scaffolded
+  `build/windows/installer/`, emitting `build/bin/DH-Companion-amd64-installer.exe`. The
+  installer's display name is `info.productName` ("Hilt") while the file name comes from
+  `name` ("DH-Companion"), which is why the workflow renames it on the way to `dist/`.
+  Its uninstaller clears the WebView2 data path, *not* `~/DH-Companion` — campaigns survive
+  an uninstall.
+- **The Windows installer has a components page.** Both shortcuts are their own optional
+  section, so ticking neither is the "no shortcut" case and needs no third option. The app
+  section is `SectionIn RO` — not optional — and `wails.setShellContext` moved into each
+  shortcut section so they still land in the all-users locations under a machine install.
+- **The uninstaller offers to delete your data, unticked by default (`/o`).** It is a
+  separate `un.` section on `MUI_UNPAGE_COMPONENTS` rather than a message box, so it reads
+  as a deliberate choice rather than a dialog to dismiss. Losing a campaign log to an
+  absent-minded uninstall is far worse than leaving a database behind, so the safe option is
+  the default. `APP_DATA_DIR` is defined once at the top of `project.nsi` and mirrors
+  `os.UserHomeDir() + "DH-Companion"` in `app.go` — **if the data directory ever moves, that
+  define has to move with it.** A `DH_DATA_DIR` override is invisible to the installer.
+- `project.nsi` is a Wails *template*: it is only regenerated when missing, so these edits
+  persist — but deleting the file to "reset to defaults" silently throws them away.
+- **`wails_tools.nsh` is the opposite and must stay in its `{{.Name}}` placeholder form in
+  git.** Every `-nsis` build rewrites it with the current ProjectInfo values, so a careless
+  `git add -A` commits a hardcoded `INFO_PRODUCTVERSION`. Since it guards each define with
+  `!ifndef`, a stale committed value would win over whatever CI stamps into `wails.json` and
+  every release would carry the wrong version. Check `git diff` on this file before
+  committing; the answer is almost always to restore it.
+- `-nsis` also downloads `installer/tmp/MicrosoftEdgeWebview2Setup.exe` (1.8 MB) to embed
+  the WebView2 bootstrapper. It is gitignored — it is a fetched third-party artifact, not
+  source.
+- **macOS is `hdiutil`**, no third-party tooling: stage the `.app` next to an `/Applications`
+  symlink and compress with `-format UDZO`. `ditto -c -k --keepParent` makes the zip, since
+  plain `zip` mangles bundle metadata.
+- **Linux is `build/linux/package.sh`**, deliberately a script rather than inline YAML so it
+  can be run and verified locally — which it was: the `.deb` was built and inspected with
+  `dpkg-deb`, and the AppImage was extracted *and launched*, confirming it runs its
+  migrations and creates a database.
+- **The version has to be stamped into `wails.json` before the build**, not just into
+  ldflags. NSIS metadata and the macOS bundle read `info.productVersion` from there;
+  `main.version` (ldflags) is only what the in-app update check compares.
+- **`info.productVersion` must be a bare numeric `X.Y.Z`.** `project.nsi` builds
+  `VIProductVersion "${INFO_PRODUCTVERSION}.0"`, and NSIS rejects anything that isn't four
+  numeric parts — so `v0.1.0-rc1` fails with *invalid VIFileVersion format*. The first
+  stamping step only stripped the leading `v`, which meant **every prerelease tag would have
+  failed the release**; it now pulls out the numeric triple and drops any suffix. The full
+  tag still reaches the app through `main.version`, so the UI and the update check show
+  `v0.1.0-rc1` while the Windows resources carry `0.1.0`.
+- `wails build -nsis` **exits 1** when the installer step fails, so CI stops at the build
+  rather than publishing a release missing its installer. The artifact-existence check is
+  the second line of defence, not the only one.
+- **Windows cross-compiles from Linux.** Wails' Windows target is pure Go (the WebView2
+  loader is `winloader`, no CGO), so `wails build -platform windows/amd64 -nsis` works on a
+  Linux box with `makensis` installed, and produces a genuine PE32+ binary plus a working
+  NSIS installer. Useful for testing without waiting on a tag; the Windows runner is still
+  the canonical build.
+- The `.deb` puts the SVG in `hicolor/scalable/apps` and the PNG in `pixmaps`. The first
+  attempt filed the 1024x1024 `appicon.png` under `512x512/apps`, which claims a size it
+  isn't; `pixmaps` is the legacy fallback and carries no size contract.
+- `package.sh` **skips** the AppImage if appimagetool can't be downloaded, so a machine with
+  no network still gets a `.deb`. A release must not be that forgiving, so the workflow has
+  a separate step asserting every expected artifact exists and is non-empty.
+
 Notes on the update check:
 - **The plan said "wire Wails' updater to the release feed". There is no such thing.**
   Wails v2 ships no updater package — the only matches for "updater" under `pkg/` are React
@@ -557,6 +621,15 @@ Notes on share codes:
 - Sharing is offered on homebrew only. An SRD card is one that everybody already has, and
   re-encoding SRD text into shareable strings is not a thing this app needs to do.
 - Import previews before it writes, so you see what a code holds before it lands.
+- `internal/share` and `internal/update` are table-tested. **Two of those tests were initially
+  worthless and a mutation check caught it** — deleting the zip-bomb cap and deleting the
+  future-version gate both left the suite green, because a truncated inflate and a
+  non-zlib body fail for their own reasons anyway. Asserting only "an error happened" proved
+  nothing; both now assert the *specific* rejection, and a forged code differing from a valid
+  one only in its version digit is what exercises the version gate.
+- `Check` delegates to an unexported `checkAt(ctx, url, current)` so the HTTP paths —
+  status codes, the read cap, header shape, cancellation — are testable against an
+  `httptest` server. The exported API is unchanged and the feed URL is still a constant.
 
 Notes on the frontend:
 - `Modal.svelte` is the scrim-and-sheet shell, extracted once there were going to be four

@@ -18,12 +18,20 @@ jobs:
     name: vet & test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
+
+      # main.go embeds frontend/dist, which is gitignored and so absent on a clean
+      # checkout — without this, package main won't compile and vet dies before the
+      # tests run. Go tests never read these assets, and the build jobs below compile
+      # against the real thing on all three platforms, so a placeholder is enough
+      # here. The all: prefix is what makes a lone dotfile satisfy the pattern.
+      - name: Placeholder for the embedded frontend
+        run: mkdir -p frontend/dist && touch frontend/dist/.gitkeep
 
       - name: gofmt
         run: |
@@ -46,14 +54,14 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
