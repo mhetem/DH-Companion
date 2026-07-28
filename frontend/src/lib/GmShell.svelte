@@ -6,15 +6,18 @@
   import Environments from './gm/Environments.svelte'
   import Dice from './gm/Dice.svelte'
   import CombatRunner from './gm/CombatRunner.svelte'
+  import Campaigns from './gm/Campaigns.svelte'
+  import Search from './gm/Search.svelte'
 
   const sections = [
+    { id: 'campaigns', label: 'Campaigns', component: Campaigns },
     { id: 'encounters', label: 'Encounters', component: Encounters },
     { id: 'parties', label: 'Parties', component: Parties },
     { id: 'adversaries', label: 'Adversaries', component: Adversaries },
     { id: 'environments', label: 'Environments', component: Environments },
     { id: 'dice', label: 'Dice', component: Dice },
     { id: 'combat', label: 'Combat Runner', component: CombatRunner },
-    { id: 'campaigns', label: 'Campaigns', phase: 4, blurb: 'Sessions, recaps, and typed notes for NPCs, locations, and plot threads.' }
+    { id: 'search', label: 'Search', component: Search }
   ]
 </script>
 

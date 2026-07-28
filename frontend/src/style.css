@@ -46,10 +46,57 @@ textarea {
     padding: 0.35rem 0.5rem;
     border: 1px solid var(--line);
     border-radius: 6px;
-    background: var(--bg);
+    background-color: var(--bg);
     color: var(--text);
     font: inherit;
     font-size: 0.85rem;
+}
+
+/* WebKitGTK draws select and the number spinners as native widgets and ignores
+   background-color on them, so they came out as light system controls carrying the
+   app's light text. appearance:none is what hands the painting back to us — which
+   also means drawing the dropdown arrow, since the native one goes with it. */
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 1.75rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.75 6 6.25 11 1.75' fill='none' stroke='%239aa0b0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 0.6rem;
+    cursor: pointer;
+}
+
+select:hover:not(:disabled) { border-color: var(--muted); }
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+input[type='number'] {
+    appearance: textfield;
+    -webkit-appearance: textfield;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Date and search inputs ship their own native affordances too. */
+input[type='search']::-webkit-search-cancel-button {
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+    cursor: pointer;
 }
 
 input:focus,
@@ -57,6 +104,28 @@ select:focus,
 textarea:focus {
     outline: none;
     border-color: var(--fear);
+}
+
+/* The open dropdown is still drawn by the platform — appearance:none only reaches
+   the closed control — so every option state has to be spelled out as well. */
+option {
+    background: var(--panel);
+    color: var(--text);
+}
+
+option:checked,
+option:hover {
+    background: var(--panel-2);
+    color: var(--text);
+    font-weight: 600;
+}
+
+option:disabled { color: var(--muted); }
+
+/* Highlighted text anywhere in the app, for the same reason. */
+::selection {
+    background: var(--fear);
+    color: var(--bg);
 }
 
 textarea {

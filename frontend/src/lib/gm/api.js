@@ -1,6 +1,7 @@
 // Single import surface for the GM module. Everything here is bound on the Go
 // side as window.go.gm.Service.* — the generated wrappers just forward to it.
 export {
+  AdjustCampaignFear,
   AdjustFear,
   AdvanceCountdown,
   BrowseAdversaries,
@@ -10,39 +11,60 @@ export {
   CreateCustomAdversary,
   CreateCustomEnvironment,
   CreateParty,
+  DeleteCampaign,
   DeleteCombat,
   DeleteCountdown,
   DeleteCustomAdversary,
   DeleteCustomEnvironment,
   DeleteEncounter,
+  DeleteNote,
   DeleteParty,
+  DeleteSession,
   EndCombat,
   GetActiveCombat,
   GetAdversary,
+  GetCampaign,
   GetCombat,
   GetCountdown,
   GetCustomAdversary,
   GetCustomEnvironment,
   GetEncounter,
   GetEnvironment,
+  GetNote,
   GetParty,
+  GetSession,
+  LinkCombat,
+  LinkEncounter,
+  ListCampaigns,
   ListCombats,
   ListCountdowns,
+  ListCountdownsForCampaign,
   ListCustomAdversaries,
   ListCustomEnvironments,
   ListEncounters,
+  ListNotes,
+  ListNotesByKind,
   ListParties,
+  ListSessions,
+  ListUnassignedCountdowns,
   MarkHP,
   MarkStress,
   RemoveCombatant,
   ResumeCombat,
+  SaveCampaign,
   SaveCombatant,
   SaveCountdown,
   SaveEncounter,
+  SaveNote,
+  SaveSession,
+  Search,
+  SessionsForEncounter,
+  SetCampaignFear,
   SetFear,
   SetSpotlight,
   SetVitals,
   StartCombat,
+  UnlinkEncounter,
   UpdateCustomAdversary,
   UpdateCustomEnvironment,
   UpdateParty
@@ -69,6 +91,20 @@ export const ADVERSARY_TYPES = [
 ]
 
 export const ENVIRONMENT_TYPES = ['Event', 'Exploration', 'Social', 'Traversal']
+
+// Note kinds are a closed set in SQL (notes.kind CHECK) as well as in validate.go.
+// Labels are display-only; the value is what crosses the bridge.
+export const NOTE_KINDS = [
+  { value: 'npc', label: 'NPC' },
+  { value: 'location', label: 'Location' },
+  { value: 'faction', label: 'Faction' },
+  { value: 'lore', label: 'Lore' },
+  { value: 'plot', label: 'Plot thread' }
+]
+
+export function noteKindLabel(kind) {
+  return NOTE_KINDS.find((k) => k.value === kind)?.label ?? kind
+}
 
 // Not validated by the backend, but every SRD feature uses one of these three.
 export const FEATURE_TYPES = ['Action', 'Passive', 'Reaction']

@@ -35,6 +35,10 @@ type CombatView struct {
 	ID            int64              `json:"id"`
 	EncounterID   *int64             `json:"encounterId"`
 	EncounterName string             `json:"encounterName"`
+	CampaignID    *int64             `json:"campaignId"`
+	CampaignName  string             `json:"campaignName"`
+	SessionID     *int64             `json:"sessionId"`
+	SessionLabel  string             `json:"sessionLabel"`
 	Fear          int                `json:"fear"`
 	FearMax       int                `json:"fearMax"`
 	Active        bool               `json:"active"`
@@ -48,6 +52,10 @@ type CombatSummary struct {
 	ID            int64  `json:"id"`
 	EncounterID   *int64 `json:"encounterId"`
 	EncounterName string `json:"encounterName"`
+	CampaignID    *int64 `json:"campaignId"`
+	CampaignName  string `json:"campaignName"`
+	SessionID     *int64 `json:"sessionId"`
+	SessionLabel  string `json:"sessionLabel"`
 	Fear          int    `json:"fear"`
 	Active        bool   `json:"active"`
 	CreatedAt     string `json:"createdAt"`
@@ -105,8 +113,13 @@ func spawnNames(name string, count int) []string {
 	return out
 }
 
-func (s *Service) StartCombat(encounterID int64) (CombatView, error) {
+func (s *Service) StartCombat(encounterID int64, campaignID, sessionID *int64) (CombatView, error) {
 	view, err := s.GetEncounter(encounterID)
+	if err != nil {
+		return CombatView{}, err
+	}
+
+	campaign, session, err := s.resolveLinks(campaignID, sessionID)
 	if err != nil {
 		return CombatView{}, err
 	}
@@ -117,7 +130,11 @@ func (s *Service) StartCombat(encounterID int64) (CombatView, error) {
 			return fmt.Errorf("standing down the previous combat: %w", err)
 		}
 		var err error
-		row, err = q.CreateCombat(s.ctx, sql.NullInt64{Int64: encounterID, Valid: true})
+		row, err = q.CreateCombat(s.ctx, db.CreateCombatParams{
+			EncounterID: sql.NullInt64{Int64: encounterID, Valid: true},
+			CampaignID:  campaign,
+			SessionID:   session,
+		})
 		if err != nil {
 			return fmt.Errorf("starting combat: %w", err)
 		}
@@ -175,19 +192,28 @@ func (s *Service) ListCombats() ([]CombatSummary, error) {
 	if err != nil {
 		return nil, fmt.Errorf("listing combats: %w", err)
 	}
+	return s.combatSummaries(rows), nil
+}
+
+func (s *Service) combatSummaries(rows []db.Combat) []CombatSummary {
 	out := make([]CombatSummary, 0, len(rows))
 	for _, r := range rows {
+		campaignName, fear := s.campaignFear(r)
 		out = append(out, CombatSummary{
 			ID:            r.ID,
 			EncounterID:   int64Ptr(r.EncounterID),
 			EncounterName: s.encounterName(r.EncounterID),
-			Fear:          int(r.Fear),
+			CampaignID:    int64Ptr(r.CampaignID),
+			CampaignName:  campaignName,
+			SessionID:     int64Ptr(r.SessionID),
+			SessionLabel:  s.sessionLabel(r.SessionID),
+			Fear:          fear,
 			Active:        r.Active == 1,
 			CreatedAt:     r.CreatedAt,
 			UpdatedAt:     r.UpdatedAt,
 		})
 	}
-	return out, nil
+	return out
 }
 
 func (s *Service) EndCombat(id int64) (CombatView, error) {
@@ -231,6 +257,14 @@ func (s *Service) DeleteCombat(id int64) error {
 }
 
 func (s *Service) AdjustFear(combatID int64, delta int) (int, error) {
+	campaignID, err := s.combatCampaign(combatID)
+	if err != nil {
+		return 0, err
+	}
+	if campaignID != nil {
+		return s.AdjustCampaignFear(*campaignID, delta)
+	}
+
 	row, err := s.q.AdjustFear(s.ctx, db.AdjustFearParams{Delta: int64(delta), ID: combatID})
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, notFound("combat", fmt.Sprint(combatID))
@@ -242,6 +276,14 @@ func (s *Service) AdjustFear(combatID int64, delta int) (int, error) {
 }
 
 func (s *Service) SetFear(combatID int64, value int) (int, error) {
+	campaignID, err := s.combatCampaign(combatID)
+	if err != nil {
+		return 0, err
+	}
+	if campaignID != nil {
+		return s.SetCampaignFear(*campaignID, value)
+	}
+
 	row, err := s.q.SetFear(s.ctx, db.SetFearParams{Fear: int64(value), ID: combatID})
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, notFound("combat", fmt.Sprint(combatID))
@@ -250,6 +292,17 @@ func (s *Service) SetFear(combatID int64, value int) (int, error) {
 		return 0, fmt.Errorf("setting fear: %w", err)
 	}
 	return int(row.Fear), nil
+}
+
+func (s *Service) combatCampaign(combatID int64) (*int64, error) {
+	row, err := s.q.GetCombat(s.ctx, combatID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, notFound("combat", fmt.Sprint(combatID))
+	}
+	if err != nil {
+		return nil, fmt.Errorf("loading combat: %w", err)
+	}
+	return int64Ptr(row.CampaignID), nil
 }
 
 func (s *Service) SaveCombatant(in CombatantInput) (CombatantView, error) {
@@ -363,11 +416,16 @@ func (s *Service) hydrateCombat(row db.Combat) (CombatView, error) {
 		return CombatView{}, fmt.Errorf("loading combatants: %w", err)
 	}
 
+	campaignName, fear := s.campaignFear(row)
 	view := CombatView{
 		ID:            row.ID,
 		EncounterID:   int64Ptr(row.EncounterID),
 		EncounterName: s.encounterName(row.EncounterID),
-		Fear:          int(row.Fear),
+		CampaignID:    int64Ptr(row.CampaignID),
+		CampaignName:  campaignName,
+		SessionID:     int64Ptr(row.SessionID),
+		SessionLabel:  s.sessionLabel(row.SessionID),
+		Fear:          fear,
 		FearMax:       FearMax,
 		Active:        row.Active == 1,
 		Combatants:    make([]CombatantView, 0, len(rows)),
@@ -405,6 +463,72 @@ func (s *Service) resolveCombatant(r db.Combatant) CombatantView {
 	}
 	view.Adversary, view.Source = &card, source
 	return view
+}
+
+func (s *Service) campaignFear(row db.Combat) (string, int) {
+	if !row.CampaignID.Valid {
+		return "", int(row.Fear)
+	}
+	campaign, err := s.q.GetCampaign(s.ctx, row.CampaignID.Int64)
+	if err != nil {
+		return "", int(row.Fear)
+	}
+	return campaign.Name, int(campaign.CurrentFear)
+}
+
+func (s *Service) sessionLabel(id sql.NullInt64) string {
+	if !id.Valid {
+		return ""
+	}
+	row, err := s.q.GetSession(s.ctx, id.Int64)
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf("#%d %s", row.Number, row.Title)
+}
+
+func (s *Service) resolveLinks(campaignID, sessionID *int64) (sql.NullInt64, sql.NullInt64, error) {
+	campaign, session := nullInt64(campaignID), nullInt64(sessionID)
+	if sessionID == nil {
+		return campaign, session, nil
+	}
+
+	row, err := s.q.GetSession(s.ctx, *sessionID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return campaign, session, notFound("session", fmt.Sprint(*sessionID))
+	}
+	if err != nil {
+		return campaign, session, fmt.Errorf("loading session: %w", err)
+	}
+	return sql.NullInt64{Int64: row.CampaignID, Valid: true}, session, nil
+}
+
+func (s *Service) LinkCombat(combatID int64, campaignID, sessionID *int64) (CombatView, error) {
+	campaign, session, err := s.resolveLinks(campaignID, sessionID)
+	if err != nil {
+		return CombatView{}, err
+	}
+
+	row, err := s.q.SetCombatLinks(s.ctx, db.SetCombatLinksParams{
+		CampaignID: campaign,
+		SessionID:  session,
+		ID:         combatID,
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return CombatView{}, notFound("combat", fmt.Sprint(combatID))
+	}
+	if err != nil {
+		return CombatView{}, fmt.Errorf("linking combat: %w", err)
+	}
+	return s.hydrateCombat(row)
+}
+
+func (s *Service) CombatsForSession(sessionID int64) ([]CombatSummary, error) {
+	rows, err := s.q.ListCombatsForSession(s.ctx, sql.NullInt64{Int64: sessionID, Valid: true})
+	if err != nil {
+		return nil, fmt.Errorf("listing session combats: %w", err)
+	}
+	return s.combatSummaries(rows), nil
 }
 
 func (s *Service) encounterName(id sql.NullInt64) string {

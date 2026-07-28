@@ -1,6 +1,6 @@
 -- name: CreateCountdown :one
-INSERT INTO countdowns (name, value, max, kind)
-VALUES (?,?,?,?)
+INSERT INTO countdowns (name, value, max, kind, campaign_id)
+VALUES (?,?,?,?,?)
 RETURNING *;
 
 -- name: GetCountdown :one
@@ -9,6 +9,16 @@ WHERE id = ?;
 
 -- name: ListCountdowns :many
 SELECT * FROM countdowns
+ORDER BY created_at ASC;
+
+-- name: ListCountdownsForCampaign :many
+SELECT * FROM countdowns
+WHERE campaign_id = ?
+ORDER BY created_at ASC;
+
+-- name: ListUnassignedCountdowns :many
+SELECT * FROM countdowns
+WHERE campaign_id IS NULL
 ORDER BY created_at ASC;
 
 -- name: AdjustCountdown :one
@@ -22,8 +32,9 @@ RETURNING *;
 UPDATE countdowns SET
   name = sqlc.arg(name),
   "max" = sqlc.arg(max),
-  value = max(0, min(sqlc.arg(max), sqlc.arg(value))),
+  value = max(0, min(sqlc.arg(max), CAST(sqlc.arg(value) AS INTEGER))),
   kind = sqlc.arg(kind),
+  campaign_id = sqlc.arg(campaign_id),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = sqlc.arg(id)
 RETURNING *;

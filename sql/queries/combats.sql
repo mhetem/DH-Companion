@@ -1,6 +1,6 @@
 -- name: CreateCombat :one
-INSERT INTO combats (encounter_id)
-VALUES (?)
+INSERT INTO combats (encounter_id, campaign_id, session_id)
+VALUES (?,?,?)
 RETURNING *;
 
 -- name: GetCombat :one
@@ -22,6 +22,24 @@ SELECT * FROM combats
 WHERE encounter_id = ?
 ORDER BY created_at DESC;
 
+-- name: ListCombatsForCampaign :many
+SELECT * FROM combats
+WHERE campaign_id = ?
+ORDER BY created_at DESC;
+
+-- name: ListCombatsForSession :many
+SELECT * FROM combats
+WHERE session_id = ?
+ORDER BY created_at ASC;
+
+-- name: SetCombatLinks :one
+UPDATE combats SET
+  campaign_id = sqlc.arg(campaign_id),
+  session_id = sqlc.arg(session_id),
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = sqlc.arg(id)
+RETURNING *;
+
 -- name: AdjustFear :one
 UPDATE combats SET
   fear = max(0, min(12, fear + sqlc.arg(delta))),
@@ -31,7 +49,7 @@ RETURNING *;
 
 -- name: SetFear :one
 UPDATE combats SET
-  fear = max(0, min(12, sqlc.arg(fear))),
+  fear = max(0, min(12, CAST(sqlc.arg(fear) AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = sqlc.arg(id)
 RETURNING *;

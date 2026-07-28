@@ -77,29 +77,37 @@ func (s *Service) ListEncounters() ([]EncounterSummary, error) {
 	}
 	out := make([]EncounterSummary, 0, len(rows))
 	for _, r := range rows {
-		srdPicks, err := decodePicks(r.Adversaries)
+		summary, err := encounterSummary(r)
 		if err != nil {
 			return nil, err
 		}
-		customPicks, err := decodePicks(r.CustomAdversaries)
-		if err != nil {
-			return nil, err
-		}
-		total := 0
-		for _, p := range slices.Concat(srdPicks, customPicks) {
-			total += p.Count
-		}
-		out = append(out, EncounterSummary{
-			ID:              r.ID,
-			Name:            r.EncounterName,
-			PartyID:         int64Ptr(r.PartyID),
-			EnvironmentSlug: stringPtr(r.EnvironmentSlug),
-			TotalCount:      total,
-			CreatedAt:       r.CreatedAt,
-			UpdatedAt:       r.UpdatedAt,
-		})
+		out = append(out, summary)
 	}
 	return out, nil
+}
+
+func encounterSummary(r db.Encounter) (EncounterSummary, error) {
+	srdPicks, err := decodePicks(r.Adversaries)
+	if err != nil {
+		return EncounterSummary{}, err
+	}
+	customPicks, err := decodePicks(r.CustomAdversaries)
+	if err != nil {
+		return EncounterSummary{}, err
+	}
+	total := 0
+	for _, p := range slices.Concat(srdPicks, customPicks) {
+		total += p.Count
+	}
+	return EncounterSummary{
+		ID:              r.ID,
+		Name:            r.EncounterName,
+		PartyID:         int64Ptr(r.PartyID),
+		EnvironmentSlug: stringPtr(r.EnvironmentSlug),
+		TotalCount:      total,
+		CreatedAt:       r.CreatedAt,
+		UpdatedAt:       r.UpdatedAt,
+	}, nil
 }
 
 func (s *Service) GetEncounter(id int64) (rules.EncounterView, error) {

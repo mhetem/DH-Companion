@@ -8,6 +8,15 @@ import (
 	"database/sql"
 )
 
+type Campaign struct {
+	ID          int64
+	Name        string
+	Description string
+	CurrentFear int64
+	CreatedAt   string
+	UpdatedAt   string
+}
+
 type Combat struct {
 	ID          int64
 	EncounterID sql.NullInt64
@@ -15,6 +24,8 @@ type Combat struct {
 	Active      int64
 	CreatedAt   string
 	UpdatedAt   string
+	CampaignID  sql.NullInt64
+	SessionID   sql.NullInt64
 }
 
 type Combatant struct {
@@ -32,13 +43,14 @@ type Combatant struct {
 }
 
 type Countdown struct {
-	ID        int64
-	Name      string
-	Value     int64
-	Max       int64
-	Kind      string
-	CreatedAt string
-	UpdatedAt string
+	ID         int64
+	Name       string
+	Value      int64
+	Max        int64
+	Kind       string
+	CreatedAt  string
+	UpdatedAt  string
+	CampaignID sql.NullInt64
 }
 
 type CustomAdversary struct {
@@ -88,6 +100,16 @@ type Encounter struct {
 	PartyID           sql.NullInt64
 }
 
+type Note struct {
+	ID         int64
+	CampaignID int64
+	Kind       string
+	Title      string
+	Body       string
+	CreatedAt  string
+	UpdatedAt  string
+}
+
 type Party struct {
 	ID        int64
 	Name      string
@@ -95,6 +117,32 @@ type Party struct {
 	Tier      string
 	CreatedAt string
 	UpdatedAt string
+}
+
+type Search struct {
+	Entity     string
+	EntityID   string
+	CampaignID string
+	Slug       string
+	Title      string
+	Body       string
+}
+
+type Session struct {
+	ID         int64
+	CampaignID int64
+	Number     int64
+	Title      string
+	Date       string
+	Recap      string
+	CreatedAt  string
+	UpdatedAt  string
+}
+
+type SessionEncounter struct {
+	SessionID   int64
+	EncounterID int64
+	CreatedAt   string
 }
 
 type Setting struct {

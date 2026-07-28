@@ -1,8 +1,18 @@
 <script>
-  import { AdvanceCountdown, DeleteCountdown, ListCountdowns, SaveCountdown, errorMessage } from './api.js'
+  import {
+    AdvanceCountdown,
+    DeleteCountdown,
+    ListCountdownsForCampaign,
+    ListUnassignedCountdowns,
+    SaveCountdown,
+    errorMessage
+  } from './api.js'
 
-  // Clocks are global until Phase 4 gives them a campaign_id, so every fight sees
-  // every countdown.
+  // With a campaignId the panel shows that campaign's clocks and creates new ones
+  // against it. Without one it falls back to the clocks no campaign has claimed —
+  // anything made before Phase 4, or during a fight run outside a campaign.
+  let { campaignId = null } = $props()
+
   let clocks = $state([])
   let loading = $state(true)
   let error = $state('')
@@ -16,7 +26,7 @@
 
   async function refresh() {
     try {
-      clocks = (await ListCountdowns()) ?? []
+      clocks = (await (campaignId ? ListCountdownsForCampaign(campaignId) : ListUnassignedCountdowns())) ?? []
       error = ''
     } catch (e) {
       error = errorMessage(e)
@@ -31,7 +41,14 @@
     event.preventDefault()
     busy = true
     try {
-      await SaveCountdown({ id: null, name: form.name, value: 0, max: Number(form.max), kind: form.kind })
+      await SaveCountdown({
+        id: null,
+        campaignId,
+        name: form.name,
+        value: 0,
+        max: Number(form.max),
+        kind: form.kind
+      })
       form = blank()
       adding = false
       await refresh()

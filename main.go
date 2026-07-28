@@ -24,9 +24,11 @@ func main() {
 	app := NewApp(gmSvc)
 
 	err := wails.Run(&options.App{
-		Title:  "DH-Companion",
-		Width:  1024,
-		Height: 768,
+		Title:     "DH-Companion",
+		Width:     1920,
+		Height:    1080,
+		MinWidth:  1100,
+		MinHeight: 700,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

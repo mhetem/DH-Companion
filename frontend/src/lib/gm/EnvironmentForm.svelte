@@ -1,8 +1,10 @@
 <script>
   import { untrack } from 'svelte'
+  import CardBrowser from './CardBrowser.svelte'
   import FeatureEditor from './FeatureEditor.svelte'
   import EnvironmentDetail from './EnvironmentDetail.svelte'
   import {
+    BrowseEnvironments,
     CreateCustomEnvironment,
     ENVIRONMENT_TYPES,
     TIERS,
@@ -44,8 +46,27 @@
 
   let saving = $state(false)
   let error = $state('')
+  let pane = $state('preview')
 
   const preview = $derived({ ...form, source: 'custom' })
+
+  // Name and slug are left alone — the slug is derived from the name on create and
+  // immutable after, so copying one in would collide with the card it came from.
+  function useAsTemplate(card) {
+    if (!confirm(`Fill this form from “${card.name}”? Everything but the name is replaced.`)) return
+    form = {
+      ...form,
+      tier: card.tier,
+      type: card.type,
+      description: card.description,
+      difficulty: card.difficulty,
+      impulses: card.impulses,
+      potentialAdversaries: [...(card.potentialAdversaries ?? [])],
+      features: (card.features ?? []).map((f) => ({ ...f, questions: [...(f.questions ?? [])] }))
+    }
+    if (!form.name.trim()) form.name = `${card.name} (copy)`
+    pane = 'preview'
+  }
 
   function addAdversaryGroup() {
     form.potentialAdversaries.push('')
@@ -155,10 +176,45 @@
     </form>
 
     <aside>
-      <h3>Preview</h3>
-      <div class="preview">
-        <EnvironmentDetail card={preview} />
+      <div class="panetabs">
+        <button class="tabbtn" class:on={pane === 'preview'} type="button" onclick={() => (pane = 'preview')}>
+          Preview
+        </button>
+        <button class="tabbtn" class:on={pane === 'reference'} type="button" onclick={() => (pane = 'reference')}>
+          Reference
+        </button>
       </div>
+
+      {#if pane === 'preview'}
+        <div class="preview">
+          <EnvironmentDetail card={preview} />
+        </div>
+      {:else}
+        <div class="reference">
+          <CardBrowser
+            compact
+            types={ENVIRONMENT_TYPES}
+            load={BrowseEnvironments}
+            emptyLabel="No environments match these filters."
+          >
+            {#snippet row(item)}
+              <span class="rname">{item.name}</span>
+              <span class="rmeta">
+                Tier {item.tier} · {item.type}
+                {#if item.source === 'custom'}<span class="chip custom">Homebrew</span>{/if}
+              </span>
+            {/snippet}
+
+            {#snippet detail(item)}
+              <EnvironmentDetail card={item}>
+                {#snippet actions()}
+                  <button class="btn" type="button" onclick={() => useAsTemplate(item)}>Use as template</button>
+                {/snippet}
+              </EnvironmentDetail>
+            {/snippet}
+          </CardBrowser>
+        </div>
+      {/if}
     </aside>
   </div>
 </div>
@@ -270,17 +326,71 @@
   .start { align-self: flex-start; }
 
   aside {
-    width: 21rem;
+    display: flex;
+    flex-direction: column;
+    width: 23rem;
     flex-shrink: 0;
+    min-height: 0;
     padding: 1rem;
-    overflow-y: auto;
+    overflow: hidden;
+  }
+
+  .panetabs {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  .tabbtn {
+    padding: 0.25rem 0.7rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .tabbtn:hover { color: var(--text); }
+
+  .tabbtn.on {
+    border-color: var(--fear);
+    color: var(--fear);
+  }
+
+  .reference {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    margin-top: 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    overflow: hidden;
+  }
+
+  .rname {
+    display: block;
+    font-size: 0.85rem;
+  }
+
+  .rmeta {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    color: var(--muted);
   }
 
   .preview {
+    flex: 1;
+    min-height: 0;
     margin-top: 0.5rem;
     padding: 0.85rem;
     border: 1px solid var(--line);
     border-radius: 8px;
     background: var(--panel);
+    overflow-y: auto;
   }
 </style>

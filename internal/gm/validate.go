@@ -11,7 +11,10 @@ var (
 	validTiers            = []string{"1", "2", "3", "4"}
 	validAdversaryTypes   = []string{"Bruiser", "Horde", "Leader", "Minion", "Ranged", "Skulk", "Social", "Solo", "Standard", "Support"}
 	validEnvironmentTypes = []string{"Event", "Exploration", "Social", "Traversal"}
+	validNoteKinds        = []string{"npc", "location", "faction", "lore", "plot"}
 )
+
+const defaultNoteKind = "npc"
 
 func validateTier(tier string) error {
 	if !slices.Contains(validTiers, strings.TrimSpace(tier)) {
@@ -32,6 +35,21 @@ func validateEnvironmentType(t string) error {
 		return fmt.Errorf("environment type must be one of %s, got %q", strings.Join(validEnvironmentTypes, ", "), t)
 	}
 	return nil
+}
+
+func validateNoteKind(kind string) (string, error) {
+	k := strings.ToLower(strings.TrimSpace(kind))
+	if k == "" {
+		return defaultNoteKind, nil
+	}
+	if !slices.Contains(validNoteKinds, k) {
+		return "", fmt.Errorf("note kind must be one of %s, got %q", strings.Join(validNoteKinds, ", "), kind)
+	}
+	return k, nil
+}
+
+func (s *Service) NoteKinds() []string {
+	return slices.Clone(validNoteKinds)
 }
 
 func validateName(name string) (string, error) {

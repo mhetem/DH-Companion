@@ -15,7 +15,7 @@ UPDATE combats SET
   fear = max(0, min(12, fear + ?1)),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, encounter_id, fear, active, created_at, updated_at
+RETURNING id, encounter_id, fear, active, created_at, updated_at, campaign_id, session_id
 `
 
 type AdjustFearParams struct {
@@ -33,18 +33,26 @@ func (q *Queries) AdjustFear(ctx context.Context, arg AdjustFearParams) (Combat,
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CampaignID,
+		&i.SessionID,
 	)
 	return i, err
 }
 
 const createCombat = `-- name: CreateCombat :one
-INSERT INTO combats (encounter_id)
-VALUES (?)
-RETURNING id, encounter_id, fear, active, created_at, updated_at
+INSERT INTO combats (encounter_id, campaign_id, session_id)
+VALUES (?,?,?)
+RETURNING id, encounter_id, fear, active, created_at, updated_at, campaign_id, session_id
 `
 
-func (q *Queries) CreateCombat(ctx context.Context, encounterID sql.NullInt64) (Combat, error) {
-	row := q.db.QueryRowContext(ctx, createCombat, encounterID)
+type CreateCombatParams struct {
+	EncounterID sql.NullInt64
+	CampaignID  sql.NullInt64
+	SessionID   sql.NullInt64
+}
+
+func (q *Queries) CreateCombat(ctx context.Context, arg CreateCombatParams) (Combat, error) {
+	row := q.db.QueryRowContext(ctx, createCombat, arg.EncounterID, arg.CampaignID, arg.SessionID)
 	var i Combat
 	err := row.Scan(
 		&i.ID,
@@ -53,6 +61,8 @@ func (q *Queries) CreateCombat(ctx context.Context, encounterID sql.NullInt64) (
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CampaignID,
+		&i.SessionID,
 	)
 	return i, err
 }
@@ -80,7 +90,7 @@ func (q *Queries) DeleteCombat(ctx context.Context, id int64) error {
 }
 
 const getActiveCombat = `-- name: GetActiveCombat :one
-SELECT id, encounter_id, fear, active, created_at, updated_at FROM combats
+SELECT id, encounter_id, fear, active, created_at, updated_at, campaign_id, session_id FROM combats
 WHERE active = 1
 ORDER BY updated_at DESC
 LIMIT 1
@@ -96,12 +106,14 @@ func (q *Queries) GetActiveCombat(ctx context.Context) (Combat, error) {
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CampaignID,
+		&i.SessionID,
 	)
 	return i, err
 }
 
 const getCombat = `-- name: GetCombat :one
-SELECT id, encounter_id, fear, active, created_at, updated_at FROM combats
+SELECT id, encounter_id, fear, active, created_at, updated_at, campaign_id, session_id FROM combats
 WHERE id = ?
 `
 
@@ -115,12 +127,14 @@ func (q *Queries) GetCombat(ctx context.Context, id int64) (Combat, error) {
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CampaignID,
+		&i.SessionID,
 	)
 	return i, err
 }
 
 const listCombats = `-- name: ListCombats :many
-SELECT id, encounter_id, fear, active, created_at, updated_at FROM combats
+SELECT id, encounter_id, fear, active, created_at, updated_at, campaign_id, session_id FROM combats
 ORDER BY created_at DESC
 `
 
@@ -140,6 +154,46 @@ func (q *Queries) ListCombats(ctx context.Context) ([]Combat, error) {
 			&i.Active,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CampaignID,
+			&i.SessionID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCombatsForCampaign = `-- name: ListCombatsForCampaign :many
+SELECT id, encounter_id, fear, active, created_at, updated_at, campaign_id, session_id FROM combats
+WHERE campaign_id = ?
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListCombatsForCampaign(ctx context.Context, campaignID sql.NullInt64) ([]Combat, error) {
+	rows, err := q.db.QueryContext(ctx, listCombatsForCampaign, campaignID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Combat
+	for rows.Next() {
+		var i Combat
+		if err := rows.Scan(
+			&i.ID,
+			&i.EncounterID,
+			&i.Fear,
+			&i.Active,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CampaignID,
+			&i.SessionID,
 		); err != nil {
 			return nil, err
 		}
@@ -155,7 +209,7 @@ func (q *Queries) ListCombats(ctx context.Context) ([]Combat, error) {
 }
 
 const listCombatsForEncounter = `-- name: ListCombatsForEncounter :many
-SELECT id, encounter_id, fear, active, created_at, updated_at FROM combats
+SELECT id, encounter_id, fear, active, created_at, updated_at, campaign_id, session_id FROM combats
 WHERE encounter_id = ?
 ORDER BY created_at DESC
 `
@@ -176,6 +230,46 @@ func (q *Queries) ListCombatsForEncounter(ctx context.Context, encounterID sql.N
 			&i.Active,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CampaignID,
+			&i.SessionID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCombatsForSession = `-- name: ListCombatsForSession :many
+SELECT id, encounter_id, fear, active, created_at, updated_at, campaign_id, session_id FROM combats
+WHERE session_id = ?
+ORDER BY created_at ASC
+`
+
+func (q *Queries) ListCombatsForSession(ctx context.Context, sessionID sql.NullInt64) ([]Combat, error) {
+	rows, err := q.db.QueryContext(ctx, listCombatsForSession, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Combat
+	for rows.Next() {
+		var i Combat
+		if err := rows.Scan(
+			&i.ID,
+			&i.EncounterID,
+			&i.Fear,
+			&i.Active,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CampaignID,
+			&i.SessionID,
 		); err != nil {
 			return nil, err
 		}
@@ -195,7 +289,7 @@ UPDATE combats SET
   active = ?,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?
-RETURNING id, encounter_id, fear, active, created_at, updated_at
+RETURNING id, encounter_id, fear, active, created_at, updated_at, campaign_id, session_id
 `
 
 type SetCombatActiveParams struct {
@@ -213,20 +307,53 @@ func (q *Queries) SetCombatActive(ctx context.Context, arg SetCombatActiveParams
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CampaignID,
+		&i.SessionID,
+	)
+	return i, err
+}
+
+const setCombatLinks = `-- name: SetCombatLinks :one
+UPDATE combats SET
+  campaign_id = ?1,
+  session_id = ?2,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = ?3
+RETURNING id, encounter_id, fear, active, created_at, updated_at, campaign_id, session_id
+`
+
+type SetCombatLinksParams struct {
+	CampaignID sql.NullInt64
+	SessionID  sql.NullInt64
+	ID         int64
+}
+
+func (q *Queries) SetCombatLinks(ctx context.Context, arg SetCombatLinksParams) (Combat, error) {
+	row := q.db.QueryRowContext(ctx, setCombatLinks, arg.CampaignID, arg.SessionID, arg.ID)
+	var i Combat
+	err := row.Scan(
+		&i.ID,
+		&i.EncounterID,
+		&i.Fear,
+		&i.Active,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CampaignID,
+		&i.SessionID,
 	)
 	return i, err
 }
 
 const setFear = `-- name: SetFear :one
 UPDATE combats SET
-  fear = max(0, min(12, ?1)),
+  fear = max(0, min(12, CAST(?1 AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, encounter_id, fear, active, created_at, updated_at
+RETURNING id, encounter_id, fear, active, created_at, updated_at, campaign_id, session_id
 `
 
 type SetFearParams struct {
-	Fear interface{}
+	Fear int64
 	ID   int64
 }
 
@@ -240,6 +367,8 @@ func (q *Queries) SetFear(ctx context.Context, arg SetFearParams) (Combat, error
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CampaignID,
+		&i.SessionID,
 	)
 	return i, err
 }

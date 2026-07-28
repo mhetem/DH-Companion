@@ -11,6 +11,8 @@
   // restores the selection to the card that was just saved.
   // Bumping reloadToken re-runs the load — the parent needs it after a delete,
   // which leaves this component mounted with a stale list.
+  // compact stacks the list above the detail instead of sitting beside it, for the
+  // reference pane inside the homebrew forms where there is no room for two columns.
   let {
     types,
     load,
@@ -20,7 +22,8 @@
     onnew = null,
     newLabel = 'New',
     initialSlug = '',
-    reloadToken = 0
+    reloadToken = 0,
+    compact = false
   } = $props()
 
   let tier = $state('')
@@ -63,7 +66,7 @@
   const selected = $derived(visible.find((item) => item.slug === selectedSlug) ?? visible[0] ?? null)
 </script>
 
-<div class="browser">
+<div class="browser" class:compact>
   <div class="filters">
     <input type="search" placeholder="Search by name…" bind:value={search} />
     <select bind:value={tier} aria-label="Tier">
@@ -174,20 +177,30 @@
     width: 100%;
     padding: 0.45rem 0.55rem;
     border: 1px solid transparent;
+    border-left: 2px solid transparent;
     border-radius: 6px;
     background: transparent;
-    color: inherit;
+    color: var(--muted);
     font: inherit;
     text-align: left;
     cursor: pointer;
   }
 
-  .list button:hover { background: var(--panel); }
+  .list button:hover {
+    background: var(--panel);
+    color: var(--text);
+  }
 
+  /* The accent edge carries the selection so the fill can stay quiet — a block
+     bright enough to read against on its own would drown the row's own text. */
   .list button.selected {
     background: var(--panel-2);
     border-color: var(--line);
+    border-left-color: var(--fear);
+    color: var(--text);
   }
+
+  .list button.selected :global(:first-child) { font-weight: 600; }
 
   .empty,
   .placeholder {
@@ -196,10 +209,35 @@
     color: var(--muted);
   }
 
+  /* Capped for line length — at 1920 a card's features would otherwise run the
+     full width of the pane. */
   .detail {
     flex: 1;
     min-width: 0;
+    max-width: 60rem;
     padding: 1rem 1.25rem;
     overflow-y: auto;
   }
+
+  .compact .detail { max-width: none; }
+
+  .compact .filters {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .compact .filters input[type='search'] { flex: 1 0 100%; }
+  .compact .filters select { flex: 1; min-width: 0; }
+
+  .compact .split { flex-direction: column; }
+
+  .compact .list {
+    width: auto;
+    max-height: 11rem;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .compact .detail { padding: 0.75rem 0.85rem; }
 </style>

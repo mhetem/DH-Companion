@@ -53,6 +53,11 @@ func (a *App) startup(ctx context.Context) {
 		return
 	}
 	gm.Attach(a.gm, ctx, q, conn, catalog)
+
+	if err := a.gm.ReindexCards(); err != nil {
+		a.fatal(ctx, "Search index error", err)
+		return
+	}
 }
 
 func (a *App) fatal(ctx context.Context, title string, err error) {

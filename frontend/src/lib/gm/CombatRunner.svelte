@@ -3,6 +3,8 @@
     AdjustFear,
     EndCombat,
     GetActiveCombat,
+    LinkCombat,
+    ListCampaigns,
     ListCombats,
     ListEncounters,
     MarkHP,
@@ -15,11 +17,13 @@
     StartCombat,
     errorMessage
   } from './api.js'
+  import CombatLinks from './CombatLinks.svelte'
   import CombatantRow from './CombatantRow.svelte'
   import Countdowns from './Countdowns.svelte'
   import Dice from './Dice.svelte'
   import FearTracker from './FearTracker.svelte'
   import FeatureList from './FeatureList.svelte'
+  import Notes from './Notes.svelte'
 
   // The rollers are opt-in — the Dice section still stands on its own, this just
   // saves a trip out of the runner mid-fight. Remembered so it stays as you left it.
@@ -31,8 +35,16 @@
     localStorage.setItem(DICE_KEY, showDice ? '1' : '0')
   }
 
+  // A fight started against a campaign spends that campaign's Fear pool instead of
+  // its own, so the pick has to happen before the fight starts. Remembered, since a
+  // GM runs the same campaign week after week.
+  const CAMPAIGN_KEY = 'gm.runner.campaign'
+
   let combat = $state(null)
   let encounters = $state([])
+  let campaigns = $state([])
+  let campaignPick = $state(localStorage.getItem(CAMPAIGN_KEY) ?? '')
+  let sessionPick = $state('')
   let past = $state([])
   let loading = $state(true)
   let busy = $state(false)
@@ -53,9 +65,11 @@
   }
 
   async function loadPickers() {
-    const [enc, combats] = await Promise.all([ListEncounters(), ListCombats()])
+    const [enc, combats, camps] = await Promise.all([ListEncounters(), ListCombats(), ListCampaigns()])
     encounters = enc ?? []
     past = (combats ?? []).filter((c) => !c.active)
+    campaigns = camps ?? []
+    if (campaignPick && !campaigns.some((c) => String(c.id) === campaignPick)) campaignPick = ''
   }
 
   load()
@@ -78,7 +92,26 @@
     combat.combatants = combat.combatants.map((c) => (c.id === updated.id ? updated : c))
   }
 
-  const start = (id) => run(async () => { combat = await StartCombat(id) })
+  const start = (id) =>
+    run(async () => {
+      localStorage.setItem(CAMPAIGN_KEY, campaignPick)
+      combat = await StartCombat(
+        id,
+        campaignPick ? Number(campaignPick) : null,
+        sessionPick ? Number(sessionPick) : null
+      )
+    })
+
+  function pickLinks(campaignId, sessionId) {
+    campaignPick = campaignId === null ? '' : String(campaignId)
+    sessionPick = sessionId === null ? '' : String(sessionId)
+  }
+
+  const relink = (campaignId, sessionId) =>
+    run(async () => {
+      combat = await LinkCombat(combat.id, campaignId, sessionId)
+      localStorage.setItem(CAMPAIGN_KEY, combat.campaignId === null ? '' : String(combat.campaignId))
+    })
   const resume = (id) => run(async () => { combat = await ResumeCombat(id) })
 
   const end = () =>
@@ -124,6 +157,25 @@
       <p class="blurb">Start a fight from a saved encounter. Its adversaries spawn as combatants with their own HP and Stress.</p>
     </header>
 
+    {#if campaigns.length}
+      <section class="pick">
+        <h3>Run this fight for</h3>
+        <CombatLinks
+          {campaigns}
+          campaignId={campaignPick ? Number(campaignPick) : null}
+          sessionId={sessionPick ? Number(sessionPick) : null}
+          onchange={pickLinks}
+        />
+        <p class="note">
+          {#if campaignPick}
+            Fear comes out of the campaign's pool and carries on after the fight.
+          {:else}
+            Fear stays with this fight only.
+          {/if}
+        </p>
+      </section>
+    {/if}
+
     <section class="pick">
       <h3>Start from an encounter</h3>
       {#if !encounters.length}
@@ -151,7 +203,11 @@
             <li>
               <div class="who">
                 <span class="name">{c.encounterName || 'Untitled encounter'}</span>
-                <span class="meta">{c.createdAt.slice(0, 10)} · Fear {c.fear}</span>
+                <span class="meta">
+                  {c.createdAt.slice(0, 10)} · Fear {c.fear}
+                  {#if c.campaignName} · {c.campaignName}{/if}
+                  {#if c.sessionLabel} · {c.sessionLabel}{/if}
+                </span>
               </div>
               <button class="btn ghost" onclick={() => resume(c.id)} disabled={busy}>Resume</button>
             </li>
@@ -163,10 +219,35 @@
     <header class="live">
       <div>
         <h2>{combat.encounterName || 'Untitled encounter'}</h2>
-        <p class="blurb">{combat.combatants.length} in the fight · autosaved as you go</p>
+        <p class="blurb">
+          {combat.combatants.length} in the fight · autosaved as you go
+          {#if combat.campaignName} · {combat.campaignName}{/if}
+          {#if combat.sessionLabel} · {combat.sessionLabel}{/if}
+        </p>
       </div>
       <button class="btn ghost" onclick={end} disabled={busy}>End combat</button>
     </header>
+
+    {#if campaigns.length}
+      <details class="linkbox" open={!combat.campaignId}>
+        <summary>
+          {#if combat.sessionLabel}
+            Logged to {combat.campaignName} · {combat.sessionLabel}
+          {:else if combat.campaignName}
+            Part of {combat.campaignName} — not logged to a session
+          {:else}
+            Not linked to a campaign
+          {/if}
+        </summary>
+        <CombatLinks
+          {campaigns}
+          campaignId={combat.campaignId}
+          sessionId={combat.sessionId}
+          {busy}
+          onchange={relink}
+        />
+      </details>
+    {/if}
 
     <div class="grid">
       <section class="roster">
@@ -208,7 +289,11 @@
           </section>
         {/if}
 
-        <Countdowns />
+        <Countdowns campaignId={combat.campaignId} />
+
+        {#if combat.campaignId}
+          <Notes campaignId={combat.campaignId} compact />
+        {/if}
 
         <section class="dicepanel">
           <header class="phead">
@@ -351,6 +436,28 @@
   }
 
   .pick { margin-bottom: 1.25rem; }
+
+  .note {
+    margin: 0.3rem 0 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .linkbox {
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+
+  .linkbox summary {
+    font-size: 0.8rem;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .linkbox[open] summary { margin-bottom: 0.6rem; }
 
   .list {
     margin: 0.5rem 0 0;

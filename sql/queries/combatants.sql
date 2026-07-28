@@ -30,8 +30,8 @@ RETURNING *;
 
 -- name: SetCombatantVitals :one
 UPDATE combatants SET
-  hp_marked = max(0, min(hp_max, sqlc.arg(hp_marked))),
-  stress_marked = max(0, min(stress_max, sqlc.arg(stress_marked))),
+  hp_marked = max(0, min(hp_max, CAST(sqlc.arg(hp_marked) AS INTEGER))),
+  stress_marked = max(0, min(stress_max, CAST(sqlc.arg(stress_marked) AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = sqlc.arg(id)
 RETURNING *;

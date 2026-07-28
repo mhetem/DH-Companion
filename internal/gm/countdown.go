@@ -10,21 +10,23 @@ import (
 )
 
 type Countdown struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	Value     int    `json:"value"`
-	Max       int    `json:"max"`
-	Kind      string `json:"kind"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	ID         int64  `json:"id"`
+	CampaignID *int64 `json:"campaignId"`
+	Name       string `json:"name"`
+	Value      int    `json:"value"`
+	Max        int    `json:"max"`
+	Kind       string `json:"kind"`
+	CreatedAt  string `json:"createdAt"`
+	UpdatedAt  string `json:"updatedAt"`
 }
 
 type CountdownInput struct {
-	ID    *int64 `json:"id"`
-	Name  string `json:"name"`
-	Value int    `json:"value"`
-	Max   int    `json:"max"`
-	Kind  string `json:"kind"`
+	ID         *int64 `json:"id"`
+	CampaignID *int64 `json:"campaignId"`
+	Name       string `json:"name"`
+	Value      int    `json:"value"`
+	Max        int    `json:"max"`
+	Kind       string `json:"kind"`
 }
 
 func (in CountdownInput) validate() (CountdownInput, error) {
@@ -48,14 +50,23 @@ func (in CountdownInput) validate() (CountdownInput, error) {
 
 func countdownView(r db.Countdown) Countdown {
 	return Countdown{
-		ID:        r.ID,
-		Name:      r.Name,
-		Value:     int(r.Value),
-		Max:       int(r.Max),
-		Kind:      r.Kind,
-		CreatedAt: r.CreatedAt,
-		UpdatedAt: r.UpdatedAt,
+		ID:         r.ID,
+		CampaignID: int64Ptr(r.CampaignID),
+		Name:       r.Name,
+		Value:      int(r.Value),
+		Max:        int(r.Max),
+		Kind:       r.Kind,
+		CreatedAt:  r.CreatedAt,
+		UpdatedAt:  r.UpdatedAt,
 	}
+}
+
+func countdownViews(rows []db.Countdown) []Countdown {
+	out := make([]Countdown, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, countdownView(r))
+	}
+	return out
 }
 
 func (s *Service) ListCountdowns() ([]Countdown, error) {
@@ -63,11 +74,23 @@ func (s *Service) ListCountdowns() ([]Countdown, error) {
 	if err != nil {
 		return nil, fmt.Errorf("listing countdowns: %w", err)
 	}
-	out := make([]Countdown, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, countdownView(r))
+	return countdownViews(rows), nil
+}
+
+func (s *Service) ListCountdownsForCampaign(campaignID int64) ([]Countdown, error) {
+	rows, err := s.q.ListCountdownsForCampaign(s.ctx, sql.NullInt64{Int64: campaignID, Valid: true})
+	if err != nil {
+		return nil, fmt.Errorf("listing campaign countdowns: %w", err)
 	}
-	return out, nil
+	return countdownViews(rows), nil
+}
+
+func (s *Service) ListUnassignedCountdowns() ([]Countdown, error) {
+	rows, err := s.q.ListUnassignedCountdowns(s.ctx)
+	if err != nil {
+		return nil, fmt.Errorf("listing unassigned countdowns: %w", err)
+	}
+	return countdownViews(rows), nil
 }
 
 func (s *Service) GetCountdown(id int64) (Countdown, error) {
@@ -90,21 +113,23 @@ func (s *Service) SaveCountdown(in CountdownInput) (Countdown, error) {
 	var row db.Countdown
 	if in.ID == nil {
 		row, err = s.q.CreateCountdown(s.ctx, db.CreateCountdownParams{
-			Name:  in.Name,
-			Value: int64(in.Value),
-			Max:   int64(in.Max),
-			Kind:  in.Kind,
+			Name:       in.Name,
+			Value:      int64(in.Value),
+			Max:        int64(in.Max),
+			Kind:       in.Kind,
+			CampaignID: nullInt64(in.CampaignID),
 		})
 		if err != nil {
 			return Countdown{}, fmt.Errorf("creating countdown: %w", err)
 		}
 	} else {
 		row, err = s.q.UpdateCountdown(s.ctx, db.UpdateCountdownParams{
-			Name:  in.Name,
-			Max:   int64(in.Max),
-			Value: int64(in.Value),
-			Kind:  in.Kind,
-			ID:    *in.ID,
+			Name:       in.Name,
+			Max:        int64(in.Max),
+			Value:      int64(in.Value),
+			Kind:       in.Kind,
+			CampaignID: nullInt64(in.CampaignID),
+			ID:         *in.ID,
 		})
 		if errors.Is(err, sql.ErrNoRows) {
 			return Countdown{}, notFound("countdown", fmt.Sprint(*in.ID))

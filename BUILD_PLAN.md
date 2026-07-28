@@ -152,7 +152,10 @@ Notes on the frontend:
 - The two browsers share `CardBrowser.svelte`. Tier and type go down to the Go `Filter`;
   the name search stays client-side so typing doesn't re-cross the bridge.
 - The builder is a full-width view rather than a third column — the shell nav plus a
-  picker plus a summary rail already fills the 1024px default window.
+  picker plus a summary rail already filled the window it was designed against.
+  *(The window opened at 1024×768 then; it opens at 1920×1080 now, with a 1100×700 floor.
+  Prose-heavy panes — card detail, the campaign page — carry a `max-width` so lines stay
+  readable rather than running the full width.)*
 - The budget meter re-calls `ComputeBudget` on every edit (party, difficulty, roster) rather
   than reimplementing the math in JS. `difficulty` is a builder-local knob: `EncounterInput`
   has no column for it, so it shifts the live meter but isn't saved.
@@ -259,24 +262,158 @@ original motivation for the app; it ties the builder, runner, and notes into one
 
 Schema (island A, cont.):
 ```sql
-campaign(id, name, description, current_fear INTEGER DEFAULT 0, created_at, updated_at)
-session(id, campaign_id, number, title, date, recap TEXT, created_at)
-note(id, campaign_id, kind TEXT, title, body TEXT, created_at, updated_at) -- kind: npc|location|faction|lore|plot
-session_encounter(session_id, encounter_id)   -- link fights you ran to a session
--- backfill: add campaign_id to `countdown` (clocks belong to a campaign)
+campaigns(id, name, description, current_fear INTEGER DEFAULT 0, created_at, updated_at)
+sessions(id, campaign_id, number, title, date, recap TEXT, created_at, updated_at)
+notes(id, campaign_id, kind TEXT, title, body TEXT, created_at, updated_at) -- kind: npc|location|faction|lore|plot
+session_encounters(session_id, encounter_id, created_at)  -- encounters prepped for a session
+search(entity, entity_id, campaign_id, slug, title, body) -- fts5 virtual table
+-- backfill: campaign_id on `countdowns` (clocks belong to a campaign)
+-- backfill: campaign_id + session_id on `combats` (whose Fear, and which night it was run)
 ```
 **Fear graduates here** from per-combat (Phase 3) to per-campaign — it persists between
 fights, matching the rules. The runner reads/writes `campaign.current_fear` when a combat
 belongs to a campaign.
 
-- [ ] Campaign CRUD; a campaign owns its Fear, countdowns, sessions, and notes
-- [ ] Session log: numbered sessions with title/date/recap; link the encounters run that session
-- [ ] Notes: typed entries (NPC / location / faction / lore / plot thread), markdown body
-- [ ] Cross-link — jump from a running combat to the campaign's NPCs/notes; from a session, open its encounters
-- [ ] **SQLite FTS5 full-text search** across notes + adversaries + environments (one virtual table)
+- [x] Campaign CRUD; a campaign owns its Fear, countdowns, sessions, and notes
+- [x] Session log: numbered sessions with title/date/recap; link the encounters run that session
+- [x] Notes: typed entries (NPC / location / faction / lore / plot thread), markdown body
+- [x] Cross-link — jump from a running combat to the campaign's NPCs/notes; from a session, open its encounters
+- [x] **SQLite FTS5 full-text search** across notes + adversaries + environments (one virtual table)
+
+Notes on the schema:
+- **A campaign owns its sessions, notes, and countdowns** — those FKs are `ON DELETE CASCADE`
+  and `campaign_id` is `NOT NULL` on `sessions`/`notes`. `combats.campaign_id` is the
+  exception: nullable and `ON DELETE SET NULL`, so a fight outlives the campaign it was run
+  in, matching how Phase 3 keeps a combat whose encounter was deleted.
+- `countdowns.campaign_id` is nullable — clocks created before this phase have no campaign,
+  and `ListUnassignedCountdowns` is how they stay reachable.
+- `session_encounters` is keyed `PRIMARY KEY (session_id, encounter_id)`, so linking the
+  same fight twice is a no-op (`INSERT OR IGNORE`) rather than a duplicate row. Both sides
+  cascade — a link row with a deleted end is unreachable, not history worth keeping.
+- Sessions are `UNIQUE (campaign_id, number)`; `NextSessionNumber` hands out the next one
+  rather than the frontend guessing.
+- `notes.kind` is constrained in SQL (`CHECK (kind IN (...))`), unlike the Phase 2 tier/type
+  lists that live in `validate.go` — the set is closed by the rules and never came from SRD
+  data, so there is nothing for Go to disagree with.
+- Every new column is `NOT NULL` with a default, same rule as Phase 3. `campaigns.current_fear`
+  mirrors `combats.fear` exactly (`NOT NULL DEFAULT 0 CHECK (… BETWEEN 0 AND 12)`).
+- **Search is one fts5 table over mixed sources.** `notes` stay in sync through three
+  triggers; adversaries and environments are *not* trigger-fed, because SRD cards live in
+  `data/` json rather than a table. Go reindexes them (`ClearCardIndex` + `IndexCard`) from
+  the `BrowseAdversaries`/`BrowseEnvironments` union, which already resolves the
+  custom-shadows-SRD rule, so the index inherits it for free.
+- `entity`/`entity_id`/`campaign_id`/`slug` are `UNINDEXED` — they are payload for the
+  caller to route a hit back to its record, not search terms. `campaign_id` is what lets a
+  search scope notes to one campaign while still matching every card.
+- **The search read is hand-written Go, not sqlc.** sqlc 1.31.1 rejects every spelling of
+  the fts5 idiom — `search MATCH ?`, the qualified and aliased forms, the table-valued
+  `search(?)`, and a rowid subquery all fail with `column "search" does not exist`, because
+  its SQLite parser has no notion of a virtual table's hidden name column. Only
+  `title MATCH ?` parses, and that silently restricts the search to one column, which is
+  worse than useless for note bodies. So `gm.Search` in `internal/gm/search.go` issues the
+  query through `Service.conn` directly; only the index writes (`IndexCard`,
+  `ClearCardIndex`) go through sqlc, and those generate fine.
+- `matchExpr` quotes every token as its own phrase before it reaches `MATCH`. Raw input is
+  not a valid FTS5 expression — `sabine-the` parses as a column filter and errors with
+  `no such column: the`, and a stray `"` gives `unterminated string`. The last token also
+  gets a `*`, so hits narrow while the GM is still typing.
+- `CAST(… AS INTEGER)` around the clamped params in `AdjustCampaignFear`/`SetCampaignFear`
+  is the Phase 3 "Open" note's proposed fix for those inferring as `interface{}`.
+
+Notes on linking a fight:
+- A combat carries **both** `campaign_id` and `session_id`. They answer different
+  questions — whose Fear pool this fight spends, and which night it was actually run — and
+  a fight can have the first without the second (a skirmish between sessions).
+- **`session_encounters` and `combats.session_id` are not redundant.** The first is prep:
+  encounters you lined up for a session. The second is history: fights that really happened.
+  A session shows both lists, and they routinely differ — prepped fights the party walked
+  around, improvised fights that were never an encounter.
+- Picking a session **implies its campaign**, and `resolveLinks` overrides whatever campaign
+  the caller passed rather than letting the two disagree. `StartCombat` and `LinkCombat`
+  share it, so starting a linked fight and linking one afterwards can't drift apart. The
+  frontend's campaign select follows the session rather than fighting it.
+- `combats.session_id` is `ON DELETE SET NULL`, same reasoning as `encounter_id`: deleting a
+  session is editing your log, not erasing the fight. The combat stays in its campaign.
+- Links are editable **mid-fight**, not just at the start — the runner's header carries a
+  collapsed control that opens by default while the fight has no campaign.
+
+Notes on the homebrew reference pane:
+- The homebrew forms' right rail is now tabbed **Preview / Reference**, and Reference is
+  `CardBrowser` with a `compact` prop that stacks the list above the detail. That is the
+  third use of the compact-prop convention (`Dice`, `Notes`) and means the reference pane
+  filters and searches exactly like the real browser, because it *is* the real browser.
+- **"Use as template" copies everything except the name and slug.** Slugs derive from the
+  name on create and are immutable after, so copying one in would either collide with the
+  source card or, when editing, silently orphan encounters pointing at this one. The name is
+  only filled in — as "X (copy)" — when the field is still empty.
+
+Notes on the frontend:
+- **WebKitGTK paints `select` and number spinners as native widgets** and ignores
+  `background-color` on them, so they rendered as light system controls carrying the app's
+  light text — unreadable, and the one thing on screen that didn't look like the app.
+  `appearance: none` in `style.css` is what hands the painting back to CSS, at the cost of
+  having to draw the dropdown arrow (an inline SVG data URI, since data URIs can't read CSS
+  vars — that chevron is the one place `--muted` is hardcoded). The *open* dropdown is still
+  the platform's, which is why `option` / `option:checked` / `option:hover` are styled
+  separately. Worth knowing before the Player sheet grows its own selects.
+- **Campaigns is the first nav section**, and it owns the campaign picker plus three tabs
+  (Sessions / Notes / Countdowns) rather than three more nav entries — none of them mean
+  anything without a campaign selected. The last campaign opened is remembered in
+  `localStorage`, the same trick the runner uses for its dice panel.
+- The campaign's `FearTracker` is **the same component the runner uses**, pointed at
+  `AdjustCampaignFear`/`SetCampaignFear`. Between fights the GM adjusts Fear here; during a
+  fight the runner's tracker writes the same row.
+- `Countdowns.svelte` took a `campaignId` prop instead of being duplicated. With one it shows
+  and creates that campaign's clocks; without one it shows `ListUnassignedCountdowns` — so
+  clocks made before this phase, and fights run outside a campaign, still have a home.
+- `Notes.svelte` does the same with a `compact` prop, mirroring how `Dice` is reused in the
+  runner's rail. Compact is read-only and appears in the rail only when the fight belongs to
+  a campaign — that is the "jump from a running combat to the campaign's NPCs" cross-link.
+- The runner asks which campaign a fight is for **before** it starts, since that is what
+  decides whose Fear pool gets spent, and it says so inline. The pick is remembered.
+- Note bodies render through `markdown.js`, a ~90-line subset (headings, emphasis, code,
+  lists, blockquotes) written rather than pulled in as a dependency. It escapes first and
+  formats after, so a note containing `<script>` renders as text. Emphasis requires a word
+  boundary and a non-space after the marker, so `3 * 4` and `snake_case_word` survive.
+- **Search excerpts are escaped, not trusted.** `snippet()` wraps matches in `<mark>` but
+  returns the surrounding text exactly as indexed, and note bodies are indexed raw — so
+  `renderExcerpt` escapes everything and then lets only the highlight markers back through.
+  Card text is stripped at index time; note text is not, which is why this matters.
+- Search is its own nav section rather than a box inside Campaigns: it spans cards as well as
+  notes, and the cards belong to no campaign. The campaign selector there narrows *notes*
+  only, matching what `SearchInCampaign` does on the Go side.
+
+Notes on what landed (service layer):
+- Bridge types follow Phase 2/3: nothing returns a `db.*` row. `gm.Campaign`, `gm.Note`,
+  `gm.SessionSummary`/`gm.SessionView` and `gm.SearchHit` are the surface, with `*T` for
+  nullable columns. `SessionView` embeds `SessionSummary` and adds the linked encounters, so
+  lists stay one query and only the detail view fans out — the same split as
+  `CombatSummary`/`CombatView`.
+- **`StartCombat` now takes a `campaignID *int64`.** Passing nil keeps the Phase 3 behaviour
+  exactly: an unattached fight owns its own Fear.
+- **Fear graduation is a routing decision inside `AdjustFear`/`SetFear`.** They look up the
+  combat's `campaign_id` and, when set, write `campaigns.current_fear` instead of
+  `combats.fear`; `hydrateCombat` reads it back the same way. The frontend keeps calling the
+  same two methods with a combat id and never learns which table answered.
+- `SaveSession` calls `NextSessionNumber` when the input has no number, so the GM never picks
+  one. A collision on `UNIQUE (campaign_id, number)` comes back as "session N already exists
+  in this campaign" rather than a constraint error.
+- Note kinds are validated *and* normalised (`"NPC"` → `"npc"`) in `validate.go`, and
+  `Service.NoteKinds()` serves the list to the frontend — same one-definition rule as
+  `Roller.Sizes()`.
+- `ReindexCards` runs at startup and after every custom-card create/update/delete, rebuilding
+  all 148 cards in one transaction. That is cheap enough to beat tracking deltas, and it
+  reuses `BrowseAdversaries`/`BrowseEnvironments`, so the index inherits the
+  custom-shadows-SRD rule instead of restating it.
+- Indexed card text strips HTML before it reaches fts5. Feature descriptions carry inline
+  `<strong>`/`<em>`, and without stripping, every card would match a search for "strong".
+- `encounterSummary` was lifted out of `ListEncounters` so sessions can reuse it.
+- The three sqlc params that inferred as `interface{}` in Phase 3 (`SetFear`,
+  `SetCombatantVitals`, `UpdateCountdown.Value`) are `int64` now — the `CAST(… AS INTEGER)`
+  fix that the Phase 3 "Open" note proposed works, and it is applied to all of them.
 
 **Done when:** you can create a campaign, log a session with a recap linked to an encounter
-you ran, keep typed NPC/location notes, and full-text search across everything.
+you ran, keep typed NPC/location notes, and full-text search across everything. ✅
 
 ---
 

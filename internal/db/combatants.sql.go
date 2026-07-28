@@ -246,16 +246,16 @@ func (q *Queries) SetCombatantSpotlight(ctx context.Context, arg SetCombatantSpo
 
 const setCombatantVitals = `-- name: SetCombatantVitals :one
 UPDATE combatants SET
-  hp_marked = max(0, min(hp_max, ?1)),
-  stress_marked = max(0, min(stress_max, ?2)),
+  hp_marked = max(0, min(hp_max, CAST(?1 AS INTEGER))),
+  stress_marked = max(0, min(stress_max, CAST(?2 AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?3
 RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at
 `
 
 type SetCombatantVitalsParams struct {
-	HpMarked     interface{}
-	StressMarked interface{}
+	HpMarked     int64
+	StressMarked int64
 	ID           int64
 }
 

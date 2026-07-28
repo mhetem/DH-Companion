@@ -4,6 +4,8 @@ import {gm} from '../models';
 import {rules} from '../models';
 import {cards} from '../models';
 
+export function AdjustCampaignFear(arg1:number,arg2:number):Promise<number>;
+
 export function AdjustFear(arg1:number,arg2:number):Promise<number>;
 
 export function AdvanceCountdown(arg1:number,arg2:number):Promise<gm.Countdown>;
@@ -14,6 +16,8 @@ export function BrowseEnvironments(arg1:gm.Filter):Promise<Array<gm.BrowseEnviro
 
 export function ClearSpotlights(arg1:number):Promise<void>;
 
+export function CombatsForSession(arg1:number):Promise<Array<gm.CombatSummary>>;
+
 export function ComputeBudget(arg1:rules.EncounterSettings,arg2:Array<rules.EncounterAdversary>):Promise<rules.BudgetSummary>;
 
 export function CreateCustomAdversary(arg1:cards.Adversary):Promise<cards.Adversary>;
@@ -21,6 +25,8 @@ export function CreateCustomAdversary(arg1:cards.Adversary):Promise<cards.Advers
 export function CreateCustomEnvironment(arg1:cards.Environment):Promise<cards.Environment>;
 
 export function CreateParty(arg1:gm.PartyInput):Promise<gm.Party>;
+
+export function DeleteCampaign(arg1:number):Promise<void>;
 
 export function DeleteCombat(arg1:number):Promise<void>;
 
@@ -32,13 +38,19 @@ export function DeleteCustomEnvironment(arg1:string):Promise<void>;
 
 export function DeleteEncounter(arg1:number):Promise<void>;
 
+export function DeleteNote(arg1:number):Promise<void>;
+
 export function DeleteParty(arg1:number):Promise<void>;
+
+export function DeleteSession(arg1:number):Promise<void>;
 
 export function EndCombat(arg1:number):Promise<gm.CombatView>;
 
 export function GetActiveCombat():Promise<gm.CombatView>;
 
 export function GetAdversary(arg1:string):Promise<gm.BrowseAdversary>;
+
+export function GetCampaign(arg1:number):Promise<gm.Campaign>;
 
 export function GetCombat(arg1:number):Promise<gm.CombatView>;
 
@@ -52,11 +64,23 @@ export function GetEncounter(arg1:number):Promise<rules.EncounterView>;
 
 export function GetEnvironment(arg1:string):Promise<gm.BrowseEnvironment>;
 
+export function GetNote(arg1:number):Promise<gm.Note>;
+
 export function GetParty(arg1:number):Promise<gm.Party>;
+
+export function GetSession(arg1:number):Promise<gm.SessionView>;
+
+export function LinkCombat(arg1:number,arg2:any,arg3:any):Promise<gm.CombatView>;
+
+export function LinkEncounter(arg1:number,arg2:number):Promise<gm.SessionView>;
+
+export function ListCampaigns():Promise<Array<gm.Campaign>>;
 
 export function ListCombats():Promise<Array<gm.CombatSummary>>;
 
 export function ListCountdowns():Promise<Array<gm.Countdown>>;
+
+export function ListCountdownsForCampaign(arg1:number):Promise<Array<gm.Countdown>>;
 
 export function ListCustomAdversaries(arg1:gm.Filter):Promise<Array<cards.Adversary>>;
 
@@ -64,15 +88,29 @@ export function ListCustomEnvironments(arg1:gm.Filter):Promise<Array<cards.Envir
 
 export function ListEncounters():Promise<Array<gm.EncounterSummary>>;
 
+export function ListNotes(arg1:number):Promise<Array<gm.Note>>;
+
+export function ListNotesByKind(arg1:number,arg2:string):Promise<Array<gm.Note>>;
+
 export function ListParties():Promise<Array<gm.Party>>;
+
+export function ListSessions(arg1:number):Promise<Array<gm.SessionSummary>>;
+
+export function ListUnassignedCountdowns():Promise<Array<gm.Countdown>>;
 
 export function MarkHP(arg1:number,arg2:number):Promise<gm.CombatantView>;
 
 export function MarkStress(arg1:number,arg2:number):Promise<gm.CombatantView>;
 
+export function NoteKinds():Promise<Array<string>>;
+
+export function ReindexCards():Promise<void>;
+
 export function RemoveCombatant(arg1:number):Promise<void>;
 
 export function ResumeCombat(arg1:number):Promise<gm.CombatView>;
+
+export function SaveCampaign(arg1:gm.CampaignInput):Promise<gm.Campaign>;
 
 export function SaveCombatant(arg1:gm.CombatantInput):Promise<gm.CombatantView>;
 
@@ -80,13 +118,25 @@ export function SaveCountdown(arg1:gm.CountdownInput):Promise<gm.Countdown>;
 
 export function SaveEncounter(arg1:gm.EncounterInput):Promise<rules.EncounterView>;
 
+export function SaveNote(arg1:gm.NoteInput):Promise<gm.Note>;
+
+export function SaveSession(arg1:gm.SessionInput):Promise<gm.SessionView>;
+
+export function Search(arg1:string,arg2:number,arg3:number):Promise<Array<gm.SearchHit>>;
+
+export function SessionsForEncounter(arg1:number):Promise<Array<gm.SessionSummary>>;
+
+export function SetCampaignFear(arg1:number,arg2:number):Promise<number>;
+
 export function SetFear(arg1:number,arg2:number):Promise<number>;
 
 export function SetSpotlight(arg1:number,arg2:boolean):Promise<gm.CombatantView>;
 
 export function SetVitals(arg1:number,arg2:number,arg3:number):Promise<gm.CombatantView>;
 
-export function StartCombat(arg1:number):Promise<gm.CombatView>;
+export function StartCombat(arg1:number,arg2:any,arg3:any):Promise<gm.CombatView>;
+
+export function UnlinkEncounter(arg1:number,arg2:number):Promise<gm.SessionView>;
 
 export function UpdateCustomAdversary(arg1:cards.Adversary):Promise<cards.Adversary>;
 

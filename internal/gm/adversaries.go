@@ -131,7 +131,11 @@ func (s *Service) CreateCustomAdversary(a cards.Adversary) (cards.Adversary, err
 	if err != nil {
 		return cards.Adversary{}, fmt.Errorf("creating custom adversary: %w", err)
 	}
-	return toAdversary(r)
+	card, err := toAdversary(r)
+	if err != nil {
+		return card, err
+	}
+	return card, s.ReindexCards()
 }
 
 func (s *Service) UpdateCustomAdversary(a cards.Adversary) (cards.Adversary, error) {
@@ -166,12 +170,16 @@ func (s *Service) UpdateCustomAdversary(a cards.Adversary) (cards.Adversary, err
 	if err != nil {
 		return cards.Adversary{}, fmt.Errorf("updating custom adversary: %w", err)
 	}
-	return toAdversary(r)
+	card, err := toAdversary(r)
+	if err != nil {
+		return card, err
+	}
+	return card, s.ReindexCards()
 }
 
 func (s *Service) DeleteCustomAdversary(slug string) error {
 	if err := s.q.DeleteCustomAdversary(s.ctx, slug); err != nil {
 		return fmt.Errorf("deleting custom adversary: %w", err)
 	}
-	return nil
+	return s.ReindexCards()
 }

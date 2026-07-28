@@ -91,7 +91,11 @@ func (s *Service) GetCustomEnvironment(slug string) (cards.Environment, error) {
 	if err != nil {
 		return cards.Environment{}, fmt.Errorf("loading custom environment: %w", err)
 	}
-	return toEnvironment(r)
+	card, err := toEnvironment(r)
+	if err != nil {
+		return card, err
+	}
+	return card, s.ReindexCards()
 }
 
 func (s *Service) CreateCustomEnvironment(e cards.Environment) (cards.Environment, error) {
@@ -121,7 +125,11 @@ func (s *Service) CreateCustomEnvironment(e cards.Environment) (cards.Environmen
 	if err != nil {
 		return cards.Environment{}, fmt.Errorf("creating custom environment: %w", err)
 	}
-	return toEnvironment(r)
+	card, err := toEnvironment(r)
+	if err != nil {
+		return card, err
+	}
+	return card, s.ReindexCards()
 }
 
 func (s *Service) UpdateCustomEnvironment(e cards.Environment) (cards.Environment, error) {
@@ -150,12 +158,16 @@ func (s *Service) UpdateCustomEnvironment(e cards.Environment) (cards.Environmen
 	if err != nil {
 		return cards.Environment{}, fmt.Errorf("updating custom environment: %w", err)
 	}
-	return toEnvironment(r)
+	card, err := toEnvironment(r)
+	if err != nil {
+		return card, err
+	}
+	return card, s.ReindexCards()
 }
 
 func (s *Service) DeleteCustomEnvironment(slug string) error {
 	if err := s.q.DeleteCustomEnvironment(s.ctx, slug); err != nil {
 		return fmt.Errorf("deleting custom environment: %w", err)
 	}
-	return nil
+	return s.ReindexCards()
 }

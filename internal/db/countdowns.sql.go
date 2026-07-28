@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 const adjustCountdown = `-- name: AdjustCountdown :one
@@ -14,7 +15,7 @@ UPDATE countdowns SET
   value = max(0, min("max", value + ?1)),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, name, value, max, kind, created_at, updated_at
+RETURNING id, name, value, max, kind, created_at, updated_at, campaign_id
 `
 
 type AdjustCountdownParams struct {
@@ -33,21 +34,23 @@ func (q *Queries) AdjustCountdown(ctx context.Context, arg AdjustCountdownParams
 		&i.Kind,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CampaignID,
 	)
 	return i, err
 }
 
 const createCountdown = `-- name: CreateCountdown :one
-INSERT INTO countdowns (name, value, max, kind)
-VALUES (?,?,?,?)
-RETURNING id, name, value, max, kind, created_at, updated_at
+INSERT INTO countdowns (name, value, max, kind, campaign_id)
+VALUES (?,?,?,?,?)
+RETURNING id, name, value, max, kind, created_at, updated_at, campaign_id
 `
 
 type CreateCountdownParams struct {
-	Name  string
-	Value int64
-	Max   int64
-	Kind  string
+	Name       string
+	Value      int64
+	Max        int64
+	Kind       string
+	CampaignID sql.NullInt64
 }
 
 func (q *Queries) CreateCountdown(ctx context.Context, arg CreateCountdownParams) (Countdown, error) {
@@ -56,6 +59,7 @@ func (q *Queries) CreateCountdown(ctx context.Context, arg CreateCountdownParams
 		arg.Value,
 		arg.Max,
 		arg.Kind,
+		arg.CampaignID,
 	)
 	var i Countdown
 	err := row.Scan(
@@ -66,6 +70,7 @@ func (q *Queries) CreateCountdown(ctx context.Context, arg CreateCountdownParams
 		&i.Kind,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CampaignID,
 	)
 	return i, err
 }
@@ -81,7 +86,7 @@ func (q *Queries) DeleteCountdown(ctx context.Context, id int64) error {
 }
 
 const getCountdown = `-- name: GetCountdown :one
-SELECT id, name, value, max, kind, created_at, updated_at FROM countdowns
+SELECT id, name, value, max, kind, created_at, updated_at, campaign_id FROM countdowns
 WHERE id = ?
 `
 
@@ -96,12 +101,13 @@ func (q *Queries) GetCountdown(ctx context.Context, id int64) (Countdown, error)
 		&i.Kind,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CampaignID,
 	)
 	return i, err
 }
 
 const listCountdowns = `-- name: ListCountdowns :many
-SELECT id, name, value, max, kind, created_at, updated_at FROM countdowns
+SELECT id, name, value, max, kind, created_at, updated_at, campaign_id FROM countdowns
 ORDER BY created_at ASC
 `
 
@@ -122,6 +128,83 @@ func (q *Queries) ListCountdowns(ctx context.Context) ([]Countdown, error) {
 			&i.Kind,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CampaignID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCountdownsForCampaign = `-- name: ListCountdownsForCampaign :many
+SELECT id, name, value, max, kind, created_at, updated_at, campaign_id FROM countdowns
+WHERE campaign_id = ?
+ORDER BY created_at ASC
+`
+
+func (q *Queries) ListCountdownsForCampaign(ctx context.Context, campaignID sql.NullInt64) ([]Countdown, error) {
+	rows, err := q.db.QueryContext(ctx, listCountdownsForCampaign, campaignID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Countdown
+	for rows.Next() {
+		var i Countdown
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Value,
+			&i.Max,
+			&i.Kind,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CampaignID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUnassignedCountdowns = `-- name: ListUnassignedCountdowns :many
+SELECT id, name, value, max, kind, created_at, updated_at, campaign_id FROM countdowns
+WHERE campaign_id IS NULL
+ORDER BY created_at ASC
+`
+
+func (q *Queries) ListUnassignedCountdowns(ctx context.Context) ([]Countdown, error) {
+	rows, err := q.db.QueryContext(ctx, listUnassignedCountdowns)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Countdown
+	for rows.Next() {
+		var i Countdown
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Value,
+			&i.Max,
+			&i.Kind,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CampaignID,
 		); err != nil {
 			return nil, err
 		}
@@ -140,19 +223,21 @@ const updateCountdown = `-- name: UpdateCountdown :one
 UPDATE countdowns SET
   name = ?1,
   "max" = ?2,
-  value = max(0, min(?2, ?3)),
+  value = max(0, min(?2, CAST(?3 AS INTEGER))),
   kind = ?4,
+  campaign_id = ?5,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-WHERE id = ?5
-RETURNING id, name, value, max, kind, created_at, updated_at
+WHERE id = ?6
+RETURNING id, name, value, max, kind, created_at, updated_at, campaign_id
 `
 
 type UpdateCountdownParams struct {
-	Name  string
-	Max   int64
-	Value interface{}
-	Kind  string
-	ID    int64
+	Name       string
+	Max        int64
+	Value      int64
+	Kind       string
+	CampaignID sql.NullInt64
+	ID         int64
 }
 
 func (q *Queries) UpdateCountdown(ctx context.Context, arg UpdateCountdownParams) (Countdown, error) {
@@ -161,6 +246,7 @@ func (q *Queries) UpdateCountdown(ctx context.Context, arg UpdateCountdownParams
 		arg.Max,
 		arg.Value,
 		arg.Kind,
+		arg.CampaignID,
 		arg.ID,
 	)
 	var i Countdown
@@ -172,6 +258,7 @@ func (q *Queries) UpdateCountdown(ctx context.Context, arg UpdateCountdownParams
 		&i.Kind,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CampaignID,
 	)
 	return i, err
 }

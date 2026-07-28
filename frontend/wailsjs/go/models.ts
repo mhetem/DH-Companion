@@ -321,10 +321,54 @@ export namespace gm {
 		    return a;
 		}
 	}
+	export class Campaign {
+	    id: number;
+	    name: string;
+	    description: string;
+	    currentFear: number;
+	    fearMax: number;
+	    createdAt: string;
+	    updatedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Campaign(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.currentFear = source["currentFear"];
+	        this.fearMax = source["fearMax"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
+	export class CampaignInput {
+	    id?: number;
+	    name: string;
+	    description: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CampaignInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	    }
+	}
 	export class CombatSummary {
 	    id: number;
 	    encounterId?: number;
 	    encounterName: string;
+	    campaignId?: number;
+	    campaignName: string;
+	    sessionId?: number;
+	    sessionLabel: string;
 	    fear: number;
 	    active: boolean;
 	    createdAt: string;
@@ -339,6 +383,10 @@ export namespace gm {
 	        this.id = source["id"];
 	        this.encounterId = source["encounterId"];
 	        this.encounterName = source["encounterName"];
+	        this.campaignId = source["campaignId"];
+	        this.campaignName = source["campaignName"];
+	        this.sessionId = source["sessionId"];
+	        this.sessionLabel = source["sessionLabel"];
 	        this.fear = source["fear"];
 	        this.active = source["active"];
 	        this.createdAt = source["createdAt"];
@@ -405,6 +453,10 @@ export namespace gm {
 	    id: number;
 	    encounterId?: number;
 	    encounterName: string;
+	    campaignId?: number;
+	    campaignName: string;
+	    sessionId?: number;
+	    sessionLabel: string;
 	    fear: number;
 	    fearMax: number;
 	    active: boolean;
@@ -422,6 +474,10 @@ export namespace gm {
 	        this.id = source["id"];
 	        this.encounterId = source["encounterId"];
 	        this.encounterName = source["encounterName"];
+	        this.campaignId = source["campaignId"];
+	        this.campaignName = source["campaignName"];
+	        this.sessionId = source["sessionId"];
+	        this.sessionLabel = source["sessionLabel"];
 	        this.fear = source["fear"];
 	        this.fearMax = source["fearMax"];
 	        this.active = source["active"];
@@ -474,6 +530,7 @@ export namespace gm {
 	
 	export class Countdown {
 	    id: number;
+	    campaignId?: number;
 	    name: string;
 	    value: number;
 	    max: number;
@@ -488,6 +545,7 @@ export namespace gm {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
+	        this.campaignId = source["campaignId"];
 	        this.name = source["name"];
 	        this.value = source["value"];
 	        this.max = source["max"];
@@ -498,6 +556,7 @@ export namespace gm {
 	}
 	export class CountdownInput {
 	    id?: number;
+	    campaignId?: number;
 	    name: string;
 	    value: number;
 	    max: number;
@@ -510,6 +569,7 @@ export namespace gm {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
+	        this.campaignId = source["campaignId"];
 	        this.name = source["name"];
 	        this.value = source["value"];
 	        this.max = source["max"];
@@ -608,6 +668,50 @@ export namespace gm {
 	        this.type = source["type"];
 	    }
 	}
+	export class Note {
+	    id: number;
+	    campaignId: number;
+	    kind: string;
+	    title: string;
+	    body: string;
+	    createdAt: string;
+	    updatedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Note(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.campaignId = source["campaignId"];
+	        this.kind = source["kind"];
+	        this.title = source["title"];
+	        this.body = source["body"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
+	export class NoteInput {
+	    id?: number;
+	    campaignId: number;
+	    kind: string;
+	    title: string;
+	    body: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new NoteInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.campaignId = source["campaignId"];
+	        this.kind = source["kind"];
+	        this.title = source["title"];
+	        this.body = source["body"];
+	    }
+	}
 	export class Party {
 	    id: number;
 	    name: string;
@@ -645,6 +749,127 @@ export namespace gm {
 	        this.size = source["size"];
 	        this.tier = source["tier"];
 	    }
+	}
+	
+	export class SearchHit {
+	    entity: string;
+	    entityId: number;
+	    campaignId: number;
+	    slug: string;
+	    title: string;
+	    excerpt: string;
+	    score: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SearchHit(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entity = source["entity"];
+	        this.entityId = source["entityId"];
+	        this.campaignId = source["campaignId"];
+	        this.slug = source["slug"];
+	        this.title = source["title"];
+	        this.excerpt = source["excerpt"];
+	        this.score = source["score"];
+	    }
+	}
+	export class SessionInput {
+	    id?: number;
+	    campaignId: number;
+	    number: number;
+	    title: string;
+	    date: string;
+	    recap: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SessionInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.campaignId = source["campaignId"];
+	        this.number = source["number"];
+	        this.title = source["title"];
+	        this.date = source["date"];
+	        this.recap = source["recap"];
+	    }
+	}
+	export class SessionSummary {
+	    id: number;
+	    campaignId: number;
+	    number: number;
+	    title: string;
+	    date: string;
+	    recap: string;
+	    createdAt: string;
+	    updatedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SessionSummary(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.campaignId = source["campaignId"];
+	        this.number = source["number"];
+	        this.title = source["title"];
+	        this.date = source["date"];
+	        this.recap = source["recap"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
+	export class SessionView {
+	    id: number;
+	    campaignId: number;
+	    number: number;
+	    title: string;
+	    date: string;
+	    recap: string;
+	    createdAt: string;
+	    updatedAt: string;
+	    encounters: EncounterSummary[];
+	    combats: CombatSummary[];
+	
+	    static createFrom(source: any = {}) {
+	        return new SessionView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.campaignId = source["campaignId"];
+	        this.number = source["number"];
+	        this.title = source["title"];
+	        this.date = source["date"];
+	        this.recap = source["recap"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	        this.encounters = this.convertValues(source["encounters"], EncounterSummary);
+	        this.combats = this.convertValues(source["combats"], CombatSummary);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }
