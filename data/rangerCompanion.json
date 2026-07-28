@@ -1,0 +1,129 @@
+{
+    "rangerCompanion": {
+        "name": "Ranger Companion",
+        "type": "Companion",
+        "description": "When you choose the Beastbound Ranger subclass, take a companion sheet. This sheet is for tracking important information about your character's companion and can be tucked beneath the right side of your character sheet for ease of viewing.",
+        "startingEvasion": "10",
+        "startingDamageDie": "d6",
+        "startingRange": "Melee",
+        "startingExperienceModifier": "+2",
+        "setup": [
+            {
+                "common": "",
+                "title": "Step 1: Name Your Companion",
+                "type": "Setup",
+                "description": "Work with the GM to decide what kind of animal you have as your companion. Give them a name and add a picture of them to the companion sheet."
+            },
+            {
+                "common": "",
+                "title": "Step 2: Write Their Evasion",
+                "type": "Setup",
+                "description": "Fill in their Evasion, which starts at 10."
+            },
+            {
+                "common": "",
+                "title": "Step 3: Choose Their Companion Experience",
+                "type": "Setup",
+                "description": "Create two Experiences for your companion based on their training and the history you have together.\n\nStart with +2 in both Experiences. Whenever you gain a new Experience, your companion also gains one. All new Experiences start at +2."
+            },
+            {
+                "common": "",
+                "title": "Step 4: Choose Their Attack and Record Damage Die",
+                "type": "Setup",
+                "description": "Finally, describe your companion's method of dealing damage (their standard attack) and record it in the \"Attack & Damage\" section. At level 1, your companion's damage die is a <strong>d6</strong> and their range is Melee."
+            }
+        ],
+        "exampleExperiences": [
+            "Bold Distraction",
+            "Expert Climber",
+            "Fetch",
+            "Friendly",
+            "Guardian of the Forest",
+            "Horrifying",
+            "Intimidating",
+            "Loyal Until the End",
+            "Navigation",
+            "Nimble",
+            "Nobody Left Behind",
+            "On High Alert",
+            "Protective",
+            "Royal Companion",
+            "Scout",
+            "Service Animal",
+            "Trusted Mount",
+            "Vigilant",
+            "We Always Find Them",
+            "You Can't Hit What You Can't Find"
+        ],
+        "rules": [
+            {
+                "common": "",
+                "title": "Using Spellcast Rolls, Hope, and Experiences",
+                "type": "Rule",
+                "description": "Make a Spellcast Roll to connect with your companion and command them to take action. <strong>Spend a Hope</strong> to add an applicable Companion Experience to the roll. On a success with Hope, if your next action builds on their success, you gain advantage on the roll."
+            },
+            {
+                "common": "",
+                "title": "Attacking with Your Companion",
+                "type": "Rule",
+                "description": "When you command your companion to attack, they gain any benefits that would normally only apply to you (such as the effects of \"Ranger's Focus\"). On a success, their damage roll uses your Proficiency and their damage die."
+            },
+            {
+                "common": "",
+                "title": "Taking Damage as Stress",
+                "type": "Rule",
+                "description": "- When your companion would take any amount of damage, they mark a Stress. When they mark their last Stress, they drop out of the scene (by hiding, fleeing, or a similar action). They remain unavailable until the start of your next long rest, where they return with 1 Stress cleared.\n- When you choose a downtime move that clears Stress on yourself, your companion clears an equal number of Stress."
+            }
+        ],
+        "levelUpOptions": [
+            {
+                "common": "",
+                "title": "Intelligent",
+                "type": "Level-Up Option",
+                "description": "Your companion gains a permanent +1 bonus to a Companion Experience of your choice."
+            },
+            {
+                "common": "",
+                "title": "Light in the Dark",
+                "type": "Level-Up Option",
+                "description": "Use this as an additional Hope slot your character can mark."
+            },
+            {
+                "common": "",
+                "title": "Creature Comfort",
+                "type": "Level-Up Option",
+                "description": "Once per rest, when you take time during a quiet moment to give your companion love and attention, you can gain a Hope or you can both clear a Stress."
+            },
+            {
+                "common": "",
+                "title": "Armored",
+                "type": "Level-Up Option",
+                "description": "When your companion takes damage, you can <strong>mark one of your Armor Slots</strong> instead of marking one of their Stress."
+            },
+            {
+                "common": "",
+                "title": "Vicious",
+                "type": "Level-Up Option",
+                "description": "Increase your companion's damage dice or range by one step (d6 to d8, Close to Far, etc.)."
+            },
+            {
+                "common": "",
+                "title": "Resilient",
+                "type": "Level-Up Option",
+                "description": "Your companion gains an additional Stress slot."
+            },
+            {
+                "common": "",
+                "title": "Bonded",
+                "type": "Level-Up Option",
+                "description": "When you mark your last Hit Point, your companion rushes to your side to comfort you. Roll a number of <strong>d6s</strong> equal to the unmarked Stress slots they have and mark them. If any roll a 6, your companion helps you up. Clear your last Hit Point and return to the scene."
+            },
+            {
+                "common": "",
+                "title": "Aware",
+                "type": "Level-Up Option",
+                "description": "Your companion gains a permanent +2 bonus to their Evasion."
+            }
+        ]
+    }
+}
