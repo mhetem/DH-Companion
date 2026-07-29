@@ -558,20 +558,3 @@ this, are in [NOTICE.md](NOTICE.md).
 Daggerheart™ is a trademark of Critical Role, LLC. This is an independent, unofficial tool,
 not sponsored by or affiliated with Darrington Press or Critical Role.
 
-### If you fork or redistribute this
-
-`data/embed.go` compiles the SRD json into the binary, so **shipping a build means
-redistributing Public Game Content**. The DPCGL's Permitted Formats (§1.9) are print, video,
-podcasts and DRP-whitelisted virtual tabletops; general desktop applications are not on the
-list, and it expressly excludes "video games, and any other audiovisual medium not expressly
-permitted."
-
-Note that giving it away free does not change this. §1.8 defines Sharing as making content
-available to the public by any means, and §2.1(b) applies the format limit to Sharing and
-selling alike. The exemption that does apply needs *private* **and** non-commercial —
-"private, non-commercial play among friends, family, or gaming groups in a personal
-setting." Running this yourself or handing it to your table is squarely outside the
-license's reach; a public repo is not.
-
-This project ships in that position knowingly. If you build on it, make your own call. This
-is not legal advice.
