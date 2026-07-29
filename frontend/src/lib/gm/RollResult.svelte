@@ -4,9 +4,16 @@
   let { value = 0, max = 20, crit = false, compact = false, big = false, animate = true } = $props()
 
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+
+  // Capturing the initial values is the point: `still` decides once whether to animate
+  // at all, and the two below seed the tumble that the effect then drives. Re-reading
+  // the props here would restart the animation under a result already on screen.
+  // svelte-ignore state_referenced_locally
   const still = !animate || reduced
 
+  // svelte-ignore state_referenced_locally
   let shown = $state(still ? value : 1)
+  // svelte-ignore state_referenced_locally
   let settled = $state(still)
 
   $effect(() => {

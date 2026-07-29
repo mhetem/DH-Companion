@@ -70,7 +70,9 @@ type LevelUpPlan struct {
 	NewTier              bool                   `json:"newTier"`
 	Achievements         []string               `json:"achievements"`
 	NeedsNewExperience   bool                   `json:"needsNewExperience"`
+	Proficiency          int                    `json:"proficiency"`
 	ProficiencyBonus     int                    `json:"proficiencyBonus"`
+	MaxProficiency       int                    `json:"maxProficiency"`
 	ClearsMarkedTraits   bool                   `json:"clearsMarkedTraits"`
 	AdvancementsRequired int                    `json:"advancementsRequired"`
 	ThresholdIncrease    int                    `json:"thresholdIncrease"`
@@ -167,6 +169,8 @@ func (s *Service) PlanLevelUp(characterID int64) (LevelUpPlan, error) {
 		NewTier:              newTier,
 		Achievements:         []string{},
 		NeedsNewExperience:   newTier && rules.NewExperience,
+		Proficiency:          int(row.Proficiency),
+		MaxProficiency:       MaxProficiency,
 		ClearsMarkedTraits:   newTier && rules.ClearsMarkedTraits,
 		AdvancementsRequired: s.catalog.Leveling.AdvancementsPerLevel,
 		ThresholdIncrease:    s.catalog.Leveling.ThresholdIncreasePerLevel,
@@ -186,6 +190,11 @@ func (s *Service) PlanLevelUp(characterID int64) (LevelUpPlan, error) {
 		if !slices.Contains(marked, k) {
 			unmarked++
 		}
+	}
+
+	proficiency := int(row.Proficiency)
+	if newTier {
+		proficiency += rules.ProficiencyBonus
 	}
 
 	for _, a := range rules.Advancements {
@@ -210,6 +219,10 @@ func (s *Service) PlanLevelUp(characterID int64) (LevelUpPlan, error) {
 		if opt.Available && a.Effect.Traits > 0 && unmarked < a.Effect.Traits {
 			opt.Available = false
 			opt.Reason = "not enough unmarked traits"
+		}
+		if opt.Available && a.Effect.Proficiency > 0 && proficiency >= MaxProficiency {
+			opt.Available = false
+			opt.Reason = fmt.Sprintf("Proficiency is already at %d", MaxProficiency)
 		}
 		if opt.Available && a.Effect.SubclassUpgrade > 0 && int(row.SubclassMastery) >= 3 {
 			opt.Available = false
@@ -272,7 +285,7 @@ func (s *Service) ApplyLevelUp(in LevelUpInput) (Sheet, error) {
 		if rules.ClearsMarkedTraits {
 			marked = []string{}
 		}
-		proficiency += rules.ProficiencyBonus
+		proficiency = clamp(proficiency+rules.ProficiencyBonus, 1, MaxProficiency)
 	}
 
 	spent := 0
@@ -348,7 +361,10 @@ func (s *Service) ApplyLevelUp(in LevelUpInput) (Sheet, error) {
 			summary = append(summary, "extra domain card")
 		}
 		if e.Proficiency > 0 {
-			proficiency = clamp(proficiency+e.Proficiency, 1, 6)
+			if proficiency >= MaxProficiency {
+				return Sheet{}, fmt.Errorf("your Proficiency is already at %d", MaxProficiency)
+			}
+			proficiency = clamp(proficiency+e.Proficiency, 1, MaxProficiency)
 			summary = append(summary, fmt.Sprintf("+%d Proficiency", e.Proficiency))
 		}
 		if e.SubclassUpgrade > 0 {

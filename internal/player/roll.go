@@ -154,7 +154,7 @@ func (s *Service) RollDamage(characterID int64, sides int, bonus int, critical b
 	if err != nil {
 		return DamageResult{}, err
 	}
-	count := clamp(int(row.Proficiency), 1, 6)
+	count := clamp(int(row.Proficiency), 1, MaxProficiency)
 	modifier := bonus
 	if critical {
 		modifier += count * int(die)

@@ -4,6 +4,7 @@
   import DualityDice from './DualityDice.svelte'
   import Experiences from './Experiences.svelte'
   import LevelUp from './LevelUp.svelte'
+  import LoadoutCards from './LoadoutCards.svelte'
   import ResourceTrack from './ResourceTrack.svelte'
   import RestSheet from './RestSheet.svelte'
   import { active } from './active.svelte.js'
@@ -92,6 +93,14 @@
     restReport = result
   }
 
+  // A swap returns the character and the whole loadout, so the sheet takes both
+  // rather than guessing which card moved where. The outcome line reuses the rest
+  // report's slot — a swap and a rest are the same kind of "here's what happened".
+  function swapped(result) {
+    sheet = { ...sheet, ...result.character, loadout: result.loadout.loadout, vault: result.loadout.vault }
+    restReport = { swap: true, outcomes: [result.outcome] }
+  }
+
   function levelled(updated) {
     sheet = updated
     levelling = false
@@ -149,7 +158,9 @@
 
     {#if restReport}
       <div class="rest">
-        <span class="rest-title">{restReport.long ? 'Long rest' : 'Short rest'}</span>
+        <span class="rest-title">
+          {restReport.swap ? 'Domain cards' : restReport.long ? 'Long rest' : 'Short rest'}
+        </span>
         <ul>
           {#each restReport.outcomes as outcome, i (i)}<li>{outcome}</li>{/each}
         </ul>
@@ -215,6 +226,21 @@
         <p class="hint">
           Damage at or above Major marks 2 HP, at or above Severe marks 3. Below Major marks 1.
         </p>
+      </section>
+
+      <section class="card wide">
+        <h3>
+          Loadout
+          <span class="aside">{sheet.loadout.length}/{sheet.loadoutMax} active · {sheet.vault.length} vaulted</span>
+        </h3>
+        <LoadoutCards
+          characterId={sheet.id}
+          loadout={sheet.loadout}
+          vault={sheet.vault}
+          loadoutMax={sheet.loadoutMax}
+          stressRoom={sheet.stressMax - sheet.stressMarked}
+          onswap={swapped}
+        />
       </section>
 
       <section class="card wide">
@@ -289,7 +315,13 @@
     oncancel={() => (levelling = false)}
   />
 
-  <RestSheet bind:open={resting} long={restLong} characterId={sheet.id} onrested={rested} />
+  <RestSheet
+    bind:open={resting}
+    long={restLong}
+    characterId={sheet.id}
+    onrested={rested}
+    onswap={(result) => (sheet = { ...sheet, ...result.character, loadout: result.loadout.loadout, vault: result.loadout.vault })}
+  />
 {/if}
 
 <style>

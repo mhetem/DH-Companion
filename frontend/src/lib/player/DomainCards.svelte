@@ -98,6 +98,10 @@
           {character?.name} draws on {character?.domains?.join(' & ') || '—'}.
           Your loadout holds {loadout.loadoutMax}; everything else sits in the vault.
         </p>
+        <p class="blurb">
+          This page manages the collection and charges no Recall Cost. Swapping
+          mid-session — on the sheet, or on a rest — is where the Stress is spent.
+        </p>
       </div>
       <div class="tallies">
         <span class="tally" class:full>{loadout.loadout.length}/{loadout.loadoutMax} in loadout</span>

@@ -1,7 +1,16 @@
 <script>
   import Modal from '../Modal.svelte'
+  import SrdText from '../SrdText.svelte'
   import { player } from '../../../wailsjs/go/models'
-  import { ApplyLevelUp, ListClasses, PlanLevelUp, errorMessage, signed, traitLabel } from './api.js'
+  import {
+    ApplyLevelUp,
+    ListClasses,
+    PlanLevelUp,
+    errorMessage,
+    recallCost,
+    signed,
+    traitLabel
+  } from './api.js'
 
   let { open = $bindable(false), characterId, onapplied, oncancel } = $props()
 
@@ -26,6 +35,13 @@
   const markedNow = $derived([...(plan?.markedTraits ?? []), ...picks.flatMap((p) => p.traits ?? [])])
 
   const cardsChosen = $derived([levelCard, ...picks.map((p) => p.domainCardSlug)].filter(Boolean))
+
+  // Picking a card by name alone meant levelling up blind. The select stays the
+  // control — a stable option list is what keeps the binding from desyncing — and
+  // the card it lands on is rendered underneath so you can read it before committing.
+  function cardBySlug(slug) {
+    return plan?.availableCards.find((c) => c.slug === slug) ?? null
+  }
 
   // What's still missing, in words. A disabled button with no reason attached is the
   // thing that made this screen feel broken — every gate below now says so out loud,
@@ -170,6 +186,20 @@
   }
 </script>
 
+{#snippet cardPreview(slug)}
+  {@const card = cardBySlug(slug)}
+  {#if card}
+    <div class="preview">
+      <span class="preview-name">{card.name}</span>
+      <span class="preview-meta">
+        {card.domain} · Level {card.level} · {card.type}
+        {#if recallCost(card)}· Recall {recallCost(card)}{/if}
+      </span>
+      <SrdText text={card.description} />
+    </div>
+  {/if}
+{/snippet}
+
 <Modal bind:open label="Level up" width="46rem">
   {#if loading}
     <p class="empty">Working out what you can take…</p>
@@ -181,6 +211,8 @@
       <h2>Level {plan.fromLevel} → {plan.toLevel}</h2>
       <p class="sub">
         {plan.tierName}{#if plan.newTier} · new tier{/if} · pick {required} advancements
+        · Proficiency {plan.proficiency}{#if plan.proficiencyBonus}
+          → {Math.min(plan.proficiency + plan.proficiencyBonus, plan.maxProficiency)}{/if}
       </p>
     </header>
 
@@ -296,6 +328,7 @@
                     {/each}
                   </select>
                 </label>
+                {@render cardPreview(pick.domainCardSlug)}
               {/if}
 
               {#if option?.effect.multiclass}
@@ -336,6 +369,7 @@
           </option>
         {/each}
       </select>
+      {@render cardPreview(levelCard)}
       <p class="hint">
         New cards go straight into your loadout while there's room, and to the vault after that.
         Both damage thresholds go up by {plan.thresholdIncrease}.
@@ -527,6 +561,23 @@
   .chip:disabled {
     cursor: default;
     opacity: 0.4;
+  }
+
+  .preview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--gold-deep);
+    border-radius: 8px;
+    background: var(--panel-2);
+  }
+
+  .preview-name { font-size: 0.9rem; }
+
+  .preview-meta {
+    font-size: 0.72rem;
+    color: var(--muted);
   }
 
   .pair {

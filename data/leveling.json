@@ -81,6 +81,14 @@
           "slots": 1,
           "cost": 1,
           "effect": { "subclassUpgrade": 1 }
+        },
+        {
+          "id": "proficiency",
+          "label": "Permanently gain +1 to your Proficiency",
+          "description": "Proficiency is how many damage dice you roll. Once per tier, on top of the +1 you get for entering one.",
+          "slots": 1,
+          "cost": 1,
+          "effect": { "proficiency": 1 }
         }
       ]
     },
@@ -156,8 +164,8 @@
         {
           "id": "proficiency",
           "label": "Permanently gain +1 to your Proficiency",
-          "description": "",
-          "slots": 2,
+          "description": "Proficiency is how many damage dice you roll. Once per tier, on top of the +1 you get for entering one.",
+          "slots": 1,
           "cost": 1,
           "effect": { "proficiency": 1 }
         },
@@ -243,8 +251,8 @@
         {
           "id": "proficiency",
           "label": "Permanently gain +1 to your Proficiency",
-          "description": "",
-          "slots": 2,
+          "description": "Proficiency is how many damage dice you roll. Once per tier, on top of the +1 you get for entering one.",
+          "slots": 1,
           "cost": 1,
           "effect": { "proficiency": 1 }
         },

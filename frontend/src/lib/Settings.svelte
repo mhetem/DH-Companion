@@ -74,7 +74,10 @@
       const report = await ImportLibrary()
       if (!report) return ''
       onreload?.()
-      const counts = [
+      // Annotated as tuples: inferred from the literal, each row widens to
+      // (string | number)[] and the count can't be compared against a number.
+      /** @type {[number, string, string][]} */
+      const rows = [
         [report.parties, 'party', 'parties'],
         [report.customAdversaries, 'adversary', 'adversaries'],
         [report.customEnvironments, 'environment', 'environments'],
@@ -84,6 +87,7 @@
         [report.notes, 'note', 'notes'],
         [report.countdowns, 'countdown', 'countdowns']
       ]
+      const counts = rows
         .filter(([n]) => n > 0)
         .map(([n, one, many]) => `${n} ${n === 1 ? one : many}`)
       let msg = counts.length ? `Imported ${counts.join(', ')}.` : 'Nothing new to import.'

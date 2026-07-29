@@ -1968,7 +1968,9 @@ export namespace player {
 	    newTier: boolean;
 	    achievements: string[];
 	    needsNewExperience: boolean;
+	    proficiency: number;
 	    proficiencyBonus: number;
+	    maxProficiency: number;
 	    clearsMarkedTraits: boolean;
 	    advancementsRequired: number;
 	    thresholdIncrease: number;
@@ -1995,7 +1997,9 @@ export namespace player {
 	        this.newTier = source["newTier"];
 	        this.achievements = source["achievements"];
 	        this.needsNewExperience = source["needsNewExperience"];
+	        this.proficiency = source["proficiency"];
 	        this.proficiencyBonus = source["proficiencyBonus"];
+	        this.maxProficiency = source["maxProficiency"];
 	        this.clearsMarkedTraits = source["clearsMarkedTraits"];
 	        this.advancementsRequired = source["advancementsRequired"];
 	        this.thresholdIncrease = source["thresholdIncrease"];
@@ -2371,6 +2375,62 @@ export namespace player {
 	        this.loadoutMax = source["loadoutMax"];
 	        this.levelUps = this.convertValues(source["levelUps"], LevelUpRecord);
 	        this.canLevelUp = source["canLevelUp"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SwapInput {
+	    characterId: number;
+	    recall: string;
+	    vault: string;
+	    resting: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new SwapInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.characterId = source["characterId"];
+	        this.recall = source["recall"];
+	        this.vault = source["vault"];
+	        this.resting = source["resting"];
+	    }
+	}
+	export class SwapResult {
+	    character: Character;
+	    loadout: Loadout;
+	    recallCost: number;
+	    stressMarked: number;
+	    outcome: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SwapResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.character = this.convertValues(source["character"], Character);
+	        this.loadout = this.convertValues(source["loadout"], Loadout);
+	        this.recallCost = source["recallCost"];
+	        this.stressMarked = source["stressMarked"];
+	        this.outcome = source["outcome"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

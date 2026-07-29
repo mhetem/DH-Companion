@@ -218,6 +218,10 @@ export function SetVitals(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['player']['Service']['SetVitals'](arg1, arg2, arg3, arg4, arg5);
 }
 
+export function SwapDomainCard(arg1) {
+  return window['go']['player']['Service']['SwapDomainCard'](arg1);
+}
+
 export function TierForLevel(arg1) {
   return window['go']['player']['Service']['TierForLevel'](arg1);
 }

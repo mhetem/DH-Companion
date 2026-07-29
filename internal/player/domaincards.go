@@ -27,6 +27,21 @@ type Loadout struct {
 	Allowance  int          `json:"allowance"`
 }
 
+type SwapInput struct {
+	CharacterID int64  `json:"characterId"`
+	Recall      string `json:"recall"`
+	Vault       string `json:"vault"`
+	Resting     bool   `json:"resting"`
+}
+
+type SwapResult struct {
+	Character    Character `json:"character"`
+	Loadout      Loadout   `json:"loadout"`
+	RecallCost   int       `json:"recallCost"`
+	StressMarked int       `json:"stressMarked"`
+	Outcome      string    `json:"outcome"`
+}
+
 func (s *Service) domainCardView(r db.CharacterDomainCard) DomainCard {
 	out := DomainCard{ID: r.ID, CardSlug: r.CardSlug, Location: r.Location}
 	card, ok := s.catalog.DomainCard(r.CardSlug)
@@ -203,6 +218,148 @@ func (s *Service) RemoveDomainCard(characterID int64, slug string) (Loadout, err
 		return Loadout{}, fmt.Errorf("removing domain card: %w", err)
 	}
 	return s.GetLoadout(characterID)
+}
+
+func (s *Service) SwapDomainCard(in SwapInput) (SwapResult, error) {
+	row, err := s.character(in.CharacterID)
+	if err != nil {
+		return SwapResult{}, err
+	}
+
+	inSlug := strings.TrimSpace(in.Recall)
+	outSlug := strings.TrimSpace(in.Vault)
+	if inSlug == "" {
+		return SwapResult{}, fmt.Errorf("choose a vault card to bring in")
+	}
+	if inSlug == outSlug {
+		return SwapResult{}, fmt.Errorf("that is the same card")
+	}
+
+	incoming, err := s.q.GetCharacterDomainCard(s.ctx, db.GetCharacterDomainCardParams{
+		CharacterID: in.CharacterID,
+		CardSlug:    inSlug,
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return SwapResult{}, notFound("domain card", inSlug)
+	}
+	if err != nil {
+		return SwapResult{}, fmt.Errorf("loading domain card: %w", err)
+	}
+	if incoming.Location != "vault" {
+		return SwapResult{}, fmt.Errorf("%s is already in your loadout", s.domainCardName(inSlug))
+	}
+
+	if outSlug != "" {
+		outgoing, err := s.q.GetCharacterDomainCard(s.ctx, db.GetCharacterDomainCardParams{
+			CharacterID: in.CharacterID,
+			CardSlug:    outSlug,
+		})
+		if errors.Is(err, sql.ErrNoRows) {
+			return SwapResult{}, notFound("domain card", outSlug)
+		}
+		if err != nil {
+			return SwapResult{}, fmt.Errorf("loading domain card: %w", err)
+		}
+		if outgoing.Location != "loadout" {
+			return SwapResult{}, fmt.Errorf("%s is not in your loadout", s.domainCardName(outSlug))
+		}
+	} else {
+		held, err := s.q.CountCharacterLoadout(s.ctx, in.CharacterID)
+		if err != nil {
+			return SwapResult{}, fmt.Errorf("counting loadout: %w", err)
+		}
+		if held >= LoadoutMax {
+			return SwapResult{}, fmt.Errorf("your loadout already holds %d cards — choose one to vault", LoadoutMax)
+		}
+	}
+
+	recall := s.recallCost(inSlug)
+	cost := recall
+	if in.Resting {
+		cost = 0
+	}
+	if room := int(row.StressMax) - int(row.StressMarked); cost > room {
+		return SwapResult{}, fmt.Errorf(
+			"recalling %s costs %d Stress and you have %d left — swap it on a rest instead",
+			s.domainCardName(inSlug), cost, room,
+		)
+	}
+
+	err = s.tx(func(q *db.Queries) error {
+		if outSlug != "" {
+			if _, err := q.SetDomainCardLocation(s.ctx, db.SetDomainCardLocationParams{
+				Location:    "vault",
+				CharacterID: in.CharacterID,
+				CardSlug:    outSlug,
+			}); err != nil {
+				return fmt.Errorf("vaulting domain card: %w", err)
+			}
+		}
+		if _, err := q.SetDomainCardLocation(s.ctx, db.SetDomainCardLocationParams{
+			Location:    "loadout",
+			CharacterID: in.CharacterID,
+			CardSlug:    inSlug,
+		}); err != nil {
+			return fmt.Errorf("recalling domain card: %w", err)
+		}
+		if cost > 0 {
+			if _, err := q.AdjustCharacterStress(s.ctx, db.AdjustCharacterStressParams{
+				Delta: int64(cost),
+				ID:    in.CharacterID,
+			}); err != nil {
+				return fmt.Errorf("marking stress: %w", err)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return SwapResult{}, err
+	}
+
+	character, err := s.GetCharacter(in.CharacterID)
+	if err != nil {
+		return SwapResult{}, err
+	}
+	loadout, err := s.GetLoadout(in.CharacterID)
+	if err != nil {
+		return SwapResult{}, err
+	}
+
+	outcome := "Recalled " + s.domainCardName(inSlug)
+	if outSlug != "" {
+		outcome += ", vaulting " + s.domainCardName(outSlug)
+	}
+	switch {
+	case in.Resting && recall > 0:
+		outcome += fmt.Sprintf(" — free on a rest (Recall Cost %d)", recall)
+	case cost > 0:
+		outcome += fmt.Sprintf(" — marked %d Stress", cost)
+	default:
+		outcome += " — no Recall Cost"
+	}
+
+	return SwapResult{
+		Character:    character,
+		Loadout:      loadout,
+		RecallCost:   recall,
+		StressMarked: cost,
+		Outcome:      outcome,
+	}, nil
+}
+
+func (s *Service) domainCardName(slug string) string {
+	if card, ok := s.catalog.DomainCard(slug); ok {
+		return card.Name
+	}
+	return slug
+}
+
+func (s *Service) recallCost(slug string) int {
+	card, ok := s.catalog.DomainCard(slug)
+	if !ok {
+		return 0
+	}
+	return clamp(leadingInt(card.RecallCost, 0), 0, 20)
 }
 
 func (s *Service) assertLoadoutRoom(characterID int64) error {

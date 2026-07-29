@@ -111,6 +111,8 @@ export function SetItemEquipped(arg1:number,arg2:boolean):Promise<Array<player.I
 
 export function SetVitals(arg1:number,arg2:number,arg3:number,arg4:number,arg5:number):Promise<player.Character>;
 
+export function SwapDomainCard(arg1:player.SwapInput):Promise<player.SwapResult>;
+
 export function TierForLevel(arg1:number):Promise<number>;
 
 export function ToggleCompanionUpgrade(arg1:number,arg2:string):Promise<player.CompanionView>;

@@ -3,6 +3,7 @@
   import FeatureList from '../gm/FeatureList.svelte'
   import RollResult from '../gm/RollResult.svelte'
   import ResourceTrack from './ResourceTrack.svelte'
+  import { player } from '../../../wailsjs/go/models'
   import { active } from './active.svelte.js'
   import {
     DeleteCompanion,
@@ -93,20 +94,24 @@
 
   async function save() {
     await run(() =>
-      SaveCompanion({
-        characterId: id,
-        name: form.name,
-        evasion: Number(form.evasion),
-        damageDie: form.damageDie,
-        attackRange: form.attackRange,
-        attack: form.attack,
-        stressMax: Number(form.stressMax),
-        experiences: form.experiences
-          .filter((e) => e.name.trim())
-          .map((e) => ({ name: e.name, modifier: Number(e.modifier) })),
-        upgrades: form.upgrades,
-        notes: form.notes
-      })
+      // Through the generated class, the same as LevelUpInput and EncounterInput —
+      // a bare object literal isn't assignable to it.
+      SaveCompanion(
+        player.CompanionInput.createFrom({
+          characterId: id,
+          name: form.name,
+          evasion: Number(form.evasion),
+          damageDie: form.damageDie,
+          attackRange: form.attackRange,
+          attack: form.attack,
+          stressMax: Number(form.stressMax),
+          experiences: form.experiences
+            .filter((e) => e.name.trim())
+            .map((e) => ({ name: e.name, modifier: Number(e.modifier) })),
+          upgrades: form.upgrades,
+          notes: form.notes
+        })
+      )
     )
     if (!error) editing = false
   }

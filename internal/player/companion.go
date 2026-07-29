@@ -278,7 +278,7 @@ func (s *Service) RollCompanionDamage(characterID int64, bonus int, critical boo
 	if err != nil {
 		return DamageResult{}, err
 	}
-	count := clamp(view.Proficiency, 1, 6)
+	count := clamp(view.Proficiency, 1, MaxProficiency)
 	modifier := bonus
 	if critical {
 		modifier += count * int(sides)

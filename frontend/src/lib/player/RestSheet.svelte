@@ -1,14 +1,20 @@
 <script>
   import Modal from '../Modal.svelte'
-  import { Rest, RestAllowance, RestMoves, errorMessage } from './api.js'
+  import LoadoutCards from './LoadoutCards.svelte'
+  import { GetLoadout, Rest, RestAllowance, RestMoves, errorMessage } from './api.js'
 
-  let { open = $bindable(false), long = false, characterId, onrested } = $props()
+  let { open = $bindable(false), long = false, characterId, onrested, onswap } = $props()
 
   let moves = $state([])
   let allowed = $state(2)
   let loading = $state(false)
   let saving = $state(false)
   let error = $state('')
+
+  // Swapping domain cards isn't a downtime move — it doesn't spend one of your two
+  // or three picks. It's here because a rest is when the Recall Cost is waived, and
+  // it writes immediately rather than waiting on the rest being taken.
+  let loadout = $state(null)
 
   // A move can be taken more than once — two goes at Tend to Wounds is a legal short
   // rest — so this counts picks per move rather than being a set of checkboxes.
@@ -18,19 +24,26 @@
   const room = $derived(allowed - taken)
 
   $effect(() => {
-    if (!open) return
+    if (!open || !characterId) return
     const isLong = long
+    const target = characterId
     loading = true
     error = ''
     counts = {}
-    Promise.all([RestMoves(isLong), RestAllowance(isLong)])
-      .then(([list, n]) => {
+    Promise.all([RestMoves(isLong), RestAllowance(isLong), GetLoadout(target)])
+      .then(([list, n, l]) => {
         moves = list ?? []
         allowed = n
+        loadout = l
       })
       .catch((e) => (error = errorMessage(e)))
       .finally(() => (loading = false))
   })
+
+  function swapped(result) {
+    loadout = result.loadout
+    onswap?.(result)
+  }
 
   function add(id) {
     if (room <= 0) return
@@ -91,6 +104,24 @@
         </li>
       {/each}
     </ul>
+
+    {#if loadout}
+      <section class="swap">
+        <h3>
+          Swap domain cards
+          <span class="free">free on a rest</span>
+        </h3>
+        <LoadoutCards
+          compact
+          resting
+          {characterId}
+          loadout={loadout.loadout}
+          vault={loadout.vault}
+          loadoutMax={loadout.loadoutMax}
+          onswap={swapped}
+        />
+      </section>
+    {/if}
   {/if}
 
   <div class="foot">
@@ -126,6 +157,31 @@
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  .swap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .swap h3 {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+  }
+
+  .free {
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--hope);
   }
 
   .moves li {

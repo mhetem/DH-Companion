@@ -10,6 +10,7 @@ const (
 	HopeMax             = 6
 	LoadoutMax          = 5
 	MaxLevel            = 10
+	MaxProficiency      = 6
 	StartingHope        = 2
 	StartingArmor       = 0
 	StartingDomainCards = 2
@@ -31,9 +32,10 @@ func (s *Service) ItemKinds() []string { return slices.Clone(validItemKinds) }
 
 func (s *Service) Limits() map[string]int {
 	return map[string]int{
-		"hopeMax":    HopeMax,
-		"loadoutMax": LoadoutMax,
-		"maxLevel":   MaxLevel,
+		"hopeMax":        HopeMax,
+		"loadoutMax":     LoadoutMax,
+		"maxLevel":       MaxLevel,
+		"maxProficiency": MaxProficiency,
 	}
 }
 

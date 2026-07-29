@@ -55,6 +55,7 @@ export {
   SetGold,
   SetItemEquipped,
   SetVitals,
+  SwapDomainCard,
   ToggleCompanionUpgrade,
   Traits,
   Transform
@@ -130,6 +131,12 @@ export function signed(n) {
 export function featuresUpTo(features = [], mastery = 1) {
   const unlocked = MASTERY_LABELS.slice(0, Math.max(1, Math.min(3, mastery)))
   return features.filter((f) => !MASTERY_LABELS.includes(f.type) || unlocked.includes(f.type))
+}
+
+// Recall Cost is printed on the card as text, and a card that doesn't charge one
+// carries "0" rather than an empty string.
+export function recallCost(card) {
+  return Number(card?.recallCost) || 0
 }
 
 export function goldLabel(gold) {

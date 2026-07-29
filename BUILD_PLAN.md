@@ -700,6 +700,63 @@ Notes on the frontend:
   domain cards. It is deliberately *not* used for anything the user typed: homebrew
   descriptions, a character's background and note bodies all stay escaped.
 
+Notes on the release pass:
+- **Proficiency was only ever the automatic tier bump.** `data/leveling.json` listed the
+  "+1 Proficiency" advancement in tiers 3 and 4 at two slots each and not at all in tier 2,
+  so a character at levels 2–4 had no way to spend a pick on it and the number sat wherever
+  the tier put it. It is offered in **every tier that has advancements, at one slot** now —
+  once per tier, with the tier-entry +1 riding on top. This is the "worth a second pair of
+  eyes" caveat above cashing in: one value per tier in a data file, no code to touch.
+- **That makes the cap reachable, so it is enforced rather than clamped.** 1 to start, three
+  tier bumps and three advancement picks is 7, against a `CHECK (proficiency BETWEEN 1 AND 6)`.
+  `MaxProficiency` is the one definition (it replaces four hardcoded `6`s in `leveling.go`,
+  `roll.go` and `companion.go`); `PlanLevelUp` greys the option out with "Proficiency is
+  already at 6", and `ApplyLevelUp` refuses instead of clamping silently, so a pick can't be
+  spent on nothing. The plan carries `proficiency`/`maxProficiency` across the bridge and the
+  modal header reads "Proficiency 2 → 3".
+- **The level-up card pickers show what the card does.** Choosing off a `<select>` by name
+  meant levelling up blind against 189 cards. The select stays — a stable option list is what
+  keeps the binding from desyncing, per the note above — and whichever card it lands on
+  renders underneath through `SrdText`, for the level card and the extra-card advancement
+  alike. Reading a card still costs a selection; a browsable list would mean replacing the
+  control, and the desync note is the reason not to.
+- **The sheet grew a Loadout section**, full card text and all. The loadout is the five cards
+  whose effects you can actually use, so it belongs on the page you have open during a
+  session; Domain Cards stays the place to manage the collection.
+
+Notes on Recall Cost:
+- **It is a real cost now, and it is the whole rules difference between the two swap paths.**
+  Moving a card from the vault into your loadout marks Stress equal to its Recall Cost, and
+  that cost is waived during a rest. `SwapDomainCard` is the one method that knows this;
+  `resting` is a field on `SwapInput` rather than two methods, because everything else about
+  the swap is identical.
+- **`MoveDomainCard` deliberately still charges nothing.** Domain Cards is collection
+  management — reorganising after a level-up is not a mid-session recall — and making it
+  charge would tax reshuffling your own cards. The page says so inline, and points at the
+  sheet and the rest for the path that does cost. The alternative, one charging method with a
+  free-mode flag reached from two screens, buries the rule in a boolean nobody reads.
+- **The swap runs in one transaction** and needs no new SQL: vault the outgoing card, recall
+  the incoming one, mark the Stress. `SetDomainCardLocation` and `AdjustCharacterStress`
+  already existed, and the Stress write goes through the existing SQL clamp.
+- **Affordability is checked before the transaction opens**, so a swap you can't pay for is
+  refused with the arithmetic in the message ("costs 1 Stress and you have 0 left — swap it
+  on a rest instead") rather than half-applying or clamping the Stress track at its maximum.
+  The frontend greys the same picks out, but only when it has a character loaded to check
+  against — the rest sheet doesn't, and doesn't need to, since resting is free.
+- **`SwapResult` carries `recallCost` and `stressMarked` separately.** They differ exactly
+  when you're resting, which is what lets the outcome line say "free on a rest (Recall Cost
+  2)" instead of pretending the card was free all along.
+- `SwapInput`'s fields are `recall` and `vault`, not `in`/`out` — they name the two rules
+  verbs, and `in` as a generated TypeScript field name was a warning waiting to happen.
+- **`LoadoutCards.svelte` is one component in two places**, taking the `compact` prop the
+  project already uses for `Dice`, `Notes`, `CardBrowser` and `DualityDice`: full card text on
+  the sheet, rows only inside the rest sheet. Swaps write immediately in both, so a swap taken
+  in the rest dialog is **not** one of your two or three downtime moves — the rest is when the
+  cost is waived, not a move you spend. The dialog says so.
+- Both hosts feed the result back up: `SwapDomainCard` returns the character *and* the whole
+  loadout, so the sheet re-renders Stress and both card lists from what the database holds
+  rather than guessing which card moved. That is the Phase 3 auto-save property again.
+
 **Done when:** you can build a character, manage loadout/vault, roll with your traits, and track resources in play. ✅
 
 ---
@@ -976,18 +1033,108 @@ Notes on the frontend:
   Campaigns and Encounters — use `EmptyState` instead; the rest sit under a heading in a
   section that is already doing the explaining, where a line is right.
 
+Notes on `npm run check`:
+- **It reported 67 errors and 2 warnings and now reports none.** CI never ran it — `ci.yml`
+  does `gofmt`, `go vet`, `go test` and `wails build`, and a Vite build doesn't type-check —
+  so the count had been climbing unseen since Phase 0. Worth adding to CI now that it's clean,
+  which is the only way it stays clean.
+- **65 of the 67 were one line in `wailsjs/runtime/runtime.js`**, repeated: it reaches for
+  `window.runtime` and nothing declared it. The fix is a `Window` interface in
+  `src/vite-env.d.ts` typed as `typeof import('../wailsjs/runtime/runtime')`, so the
+  declaration is the generated module's own shape and the two can't drift. **Fixing the
+  generated file itself would have been pointless** — `wails build` overwrites it. The
+  bindings under `wailsjs/go/` needed nothing: they use `window['go'][...]`, and element
+  access on `Window` is already untyped.
+- `Settings.svelte`'s import report built rows as array literals, so each widened to
+  `(string | number)[]` and `.filter(([n]) => n > 0)` was comparing a `string | number`
+  against a number. A `@type` annotation naming them tuples is the whole fix; the rows had to
+  be lifted into their own `const` because the annotation can't attach to a literal that's
+  mid-chain.
+- `Companion.svelte` was the one caller still passing a bare object literal to a bound method
+  taking a struct. It goes through `player.CompanionInput.createFrom` now, like
+  `LevelUpInput` and `EncounterInput` — identical JSON on the wire, a real type at the call.
+- **The two warnings were correct about the code and wrong about the intent.**
+  `RollResult.svelte` reads `animate` and `value` at the top level on purpose: the roll is
+  already resolved when it mounts, and re-reading the props would restart the tumble under a
+  result already on screen. They're `// svelte-ignore state_referenced_locally` with the
+  reason written above them, rather than restructured to satisfy the check.
+
 ---
 
-## Phase 7 — Stretch: LAN session sharing
+## Phase 7 — Roadmap: the first update after release
 
-**Goal:** the senior-signal feature — real-time, read-only session view for players.
+**Goal:** what goes in the release *after* 1.0. Phases 0–6 are done and shipped, and the app
+is complete without any of this. Nothing below is a prerequisite for anything above it.
 
-- [ ] GM's app runs a lightweight WebSocket server (opt-in, bound to the local network)
-- [ ] Broadcasts live **Fear, countdowns, and spotlight** as they change
-- [ ] Players on the same Wi-Fi connect (URL/QR) to a read-only session view
-- [ ] Graceful degrade — everything still works fully offline if nobody connects
+Ordered by what a user hits first, not by how interesting it is to build.
 
-**Done when:** a second device on the LAN watches Fear and countdowns update live as the GM runs a fight. Clearly optional; nothing else depends on it.
+### Rules the sheet still leaves to the player
+
+- [ ] **Armor and weapon datasets.** `data/` has no armor or weapon json, which is why the
+      wizard asks for Armor Score and both damage thresholds outright and the damage roller
+      takes a die size by hand. Both are printed tables. With them, equipping a weapon sets
+      the damage die and equipping armor sets the thresholds, and Inventory becomes a picker
+      that still accepts free text — the sheet's last big pile of manual transcription.
+- [ ] **Taking damage.** The Defenses card prints the threshold rule and leaves the
+      arithmetic to the player. A "took N damage" box that marks the right number of Hit
+      Points is the smallest automation still missing from the sheet.
+- [ ] **Death moves** — Blaze of Glory, Avoid Death, Risk It All. Not modelled at all: a
+      character at full HP marks is just a character with a full track.
+- [ ] **The level-up card pool is a level behind a multiclass.** `PlanLevelUp.availableCards`
+      comes from the domains you hold *now*, so picking multiclass and a level card in the
+      same level-up won't offer the new class's domain. `ApplyLevelUp` already accepts it —
+      it validates against the post-multiclass domains — so this is a picker fix, not a rules
+      one.
+
+### GM side
+
+- [ ] **LAN session sharing** — the old Phase 7, still the most interesting thing on the
+      list. The GM's app runs an opt-in WebSocket server bound to the local network and
+      broadcasts **Fear, countdowns and spotlight** as they change; players on the same Wi-Fi
+      open a read-only view by URL or QR. Everything degrades gracefully — the app behaves
+      exactly as it does now when nobody connects.
+      **Done when:** a second device on the LAN watches Fear and countdowns update live as
+      the GM runs a fight.
+- [ ] **A party view for the GM.** There is no read of the players' sheets, because GM and
+      Player are deliberately separate schema islands and reaching across them would undo
+      that. LAN sharing is the honest way to bridge the two; a cross-island query is not.
+- [ ] **Positions in the runner.** It tracks HP, Stress and spotlight but has no sense of
+      where anyone is standing. Not a battle map — a scratch surface per combat would do.
+
+### Distribution
+
+- [ ] **Code signing.** The release notes say the builds are unsigned, so macOS Gatekeeper
+      and Windows SmartScreen both warn on first run. Certificates cost money and an Apple
+      Developer account; until then the warning is documented rather than fixed.
+- [ ] **Real self-update.** Phase 6 shipped an update *check* — a button that compares tags
+      and opens the download page. Replacing the running executable needs a third-party
+      updater and signing to be safe, in that order, so this one waits on the line above it.
+- [ ] **Character share codes.** `internal/share` already encodes one homebrew adversary or
+      environment as `HILT1:<base64url(zlib(json))>`. A character is a bigger object with
+      child tables, but the format is versioned and the decode path is already defensive
+      about what arrives from a stranger.
+
+### The licensing question
+
+- [ ] **Move the SRD out of the binary.** `data/embed.go` compiles the SRD json in, so a
+      public release Shares Public Game Content in a format the DPCGL doesn't permit — see
+      the licensing note below. The decision was to ship anyway and deal with it if DRP ever
+      objects. The two ways out are asking DRP to whitelist the app, or having `internal/srd`
+      read a `data/` directory the user supplies so the release ships code only. That is real
+      work, not a docs fix, which is why it belongs on a roadmap rather than in a hurry.
+
+### Housekeeping
+
+- [ ] **`SHORTCUTS` in `keys.js` isn't checked against anything.** It feeds the `?` sheet
+      while the components bind their key strings by hand, so the two can drift silently.
+- [ ] **`DualityDice` and `GMDice` carry no json tags**, so they cross the bridge with
+      capitalised field names (`Hope`, `Result`, `Msg`) unlike every other type in the app.
+- [ ] **Countdowns predating Phase 4 have no campaign.** `ListUnassignedCountdowns` is how
+      they stay reachable; a one-time "assign these to a campaign" prompt would let that
+      query retire.
+
+**Done when:** there is a v1.1 tag. Which of these it carries is a decision for the day it
+is cut, not today.
 
 ---
 
