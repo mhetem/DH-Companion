@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/mhetem/DH-Companion/actions/workflows/ci.yml/badge.svg)](https://github.com/mhetem/DH-Companion/actions/workflows/ci.yml)
 
-> 🚧 **Work in progress.** The GM side is complete and usable. The Player side is
-> navigation-only — see [Status](#status).
+> 🚧 **Work in progress.** Both sides of the table are complete and usable. What's left is
+> the optional LAN session view — see [Status](#status).
 
 A **[Daggerheart](https://www.daggerheart.com/)™ Compatible** desktop companion for both
 sides of the table. Build encounters against a live battle-point budget, run the fight with
@@ -59,9 +59,32 @@ database.
 
 ### Player
 
-Navigation-only for now. The SRD data it needs — domain cards, classes, ancestries,
-communities, beastforms — is already loaded and addressable; the sheet, loadout/vault and
-duality roller are Phase 5.
+- **Character creation** — a seven-step wizard through class, subclass, ancestry, community
+  and traits, with the SRD text for every option shown beside the picker.
+- **The sheet** — traits, live-tracked Hit Points, Stress, Hope and armor slots, Evasion and
+  both damage thresholds, gold in handfuls/bags/chests, and your class, subclass, ancestry
+  and community features on the page.
+- **Loadout and vault** — you know two domain cards at level 1 and one more per level; five
+  of them can sit in your loadout at a time, the rest in the vault. The pool only ever offers
+  cards in your domains at or below your level.
+- **Inventory** — gear and consumables, with one primary weapon, one secondary and one set of
+  armor equipped at a time, plus a one-press way to add your class's starting items.
+- **Levelling** — the tier advancement table with its slot boxes, remembering what you spent
+  at earlier levels in the same tier, and applying the tier achievements at 2, 5 and 8.
+- **Duality dice** — 2d12 read as Hope and Fear with your trait and Experience modifiers.
+  A roll with Hope grants you a Hope and a critical also clears a Stress, written to your
+  sheet as part of the roll. Damage rolls use your Proficiency as the dice count. The roller
+  sits in a collapsible block on the sheet as well as in its own section, and **clicking any
+  trait rolls it**.
+- **Rests** — choose your downtime moves (two on a short rest, three on a long one) rather
+  than clearing everything by default, and each one reports the roll behind it.
+- **Beastform** for druids — every form at your tier or lower with its trait and Evasion
+  bonuses, attack and features. Transforming marks a Stress and shows your effective Evasion
+  while you're in it.
+- **Companion sheet** for Beastbound rangers — name, Evasion, attack, damage die and range,
+  a Stress track, Companion Experiences, and the level-up options as a checklist. Damage
+  rolls use your Proficiency and their die.
+- **Gold** lives on the Inventory page, counted in handfuls, bags and chests.
 
 ### Both
 
@@ -138,7 +161,7 @@ wails build -nsis                       # Windows: build/bin/DH-Companion-amd64-
 
 ## Usage
 
-1. **Pick a side of the table.** Game Master or Player. It's remembered, and the header
+1. **Pick a side of the table.** Game Master or Player. Every launch asks, and the header
    switches at any time.
 2. **Create a party** (Parties) — size and tier. Nothing in the budget meter means anything
    until one exists.
@@ -398,7 +421,7 @@ on first run.
 | 2 | GM: encounter builder, browsers, homebrew editors, budget meter | ✅ |
 | 3 | GM: live combat runner, Fear, countdowns, autosave | ✅ |
 | 4 | GM: campaigns, session log, typed notes, FTS5 search | ✅ |
-| 5 | Player: character sheet, loadout/vault, leveling, duality dice | ⬜ |
+| 5 | Player: character sheet, loadout/vault, leveling, duality dice | ✅ |
 | 6 | CI, packaging, releases, data portability, share codes | ✅ |
 | 7 | Stretch: LAN session sharing (read-only player view) | ⬜ |
 

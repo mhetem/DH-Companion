@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mhetem/DH-Companion/internal/gm"
+	"github.com/mhetem/DH-Companion/internal/player"
 	"github.com/mhetem/DH-Companion/internal/srd"
 	"github.com/mhetem/DH-Companion/internal/update"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -120,6 +121,7 @@ func (a *App) reopen() error {
 		a.catalog = catalog
 	}
 	gm.Attach(a.gm, a.ctx, q, conn, catalog)
+	player.Attach(a.player, a.ctx, q, conn, catalog)
 	if err := a.gm.ReindexCards(); err != nil {
 		return fmt.Errorf("rebuilding the search index: %w", err)
 	}

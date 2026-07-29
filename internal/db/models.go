@@ -17,6 +17,66 @@ type Campaign struct {
 	UpdatedAt   string
 }
 
+type Character struct {
+	ID                     int64
+	Name                   string
+	Pronouns               string
+	ClassSlug              string
+	SubclassSlug           string
+	SubclassMastery        int64
+	MulticlassSlug         string
+	MulticlassSubclassSlug string
+	AncestrySlug           string
+	CommunitySlug          string
+	Level                  int64
+	Proficiency            int64
+	Agility                int64
+	Strength               int64
+	Finesse                int64
+	Instinct               int64
+	Presence               int64
+	Knowledge              int64
+	MarkedTraits           string
+	HpMax                  int64
+	HpMarked               int64
+	StressMax              int64
+	StressMarked           int64
+	Hope                   int64
+	Evasion                int64
+	ArmorScore             int64
+	ArmorMarked            int64
+	ThresholdMajor         int64
+	ThresholdSevere        int64
+	GoldHandfuls           int64
+	GoldBags               int64
+	GoldChests             int64
+	Background             string
+	Connections            string
+	Notes                  string
+	CreatedAt              string
+	UpdatedAt              string
+	BeastformSlug          string
+}
+
+type CharacterDomainCard struct {
+	ID          int64
+	CharacterID int64
+	CardSlug    string
+	Location    string
+	CreatedAt   string
+	UpdatedAt   string
+}
+
+type CharacterLevelup struct {
+	ID          int64
+	CharacterID int64
+	Level       int64
+	Tier        int64
+	Choices     string
+	Summary     string
+	CreatedAt   string
+}
+
 type Combat struct {
 	ID          int64
 	EncounterID sql.NullInt64
@@ -40,6 +100,23 @@ type Combatant struct {
 	Spotlight     int64
 	CreatedAt     string
 	UpdatedAt     string
+}
+
+type Companion struct {
+	ID           int64
+	CharacterID  int64
+	Name         string
+	Evasion      int64
+	DamageDie    string
+	AttackRange  string
+	Attack       string
+	StressMax    int64
+	StressMarked int64
+	Experiences  string
+	Upgrades     string
+	Notes        string
+	CreatedAt    string
+	UpdatedAt    string
 }
 
 type Countdown struct {
@@ -98,6 +175,27 @@ type Encounter struct {
 	CreatedAt         string
 	UpdatedAt         string
 	PartyID           sql.NullInt64
+}
+
+type Experience struct {
+	ID          int64
+	CharacterID int64
+	Name        string
+	Modifier    int64
+	CreatedAt   string
+	UpdatedAt   string
+}
+
+type InventoryItem struct {
+	ID          int64
+	CharacterID int64
+	Name        string
+	Kind        string
+	Qty         int64
+	Equipped    int64
+	Detail      string
+	CreatedAt   string
+	UpdatedAt   string
 }
 
 type Note struct {

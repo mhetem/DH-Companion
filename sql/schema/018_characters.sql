@@ -1,0 +1,43 @@
+-- +goose Up
+CREATE TABLE characters (
+    id                       INTEGER PRIMARY KEY AUTOINCREMENT,
+    name                     TEXT NOT NULL,
+    pronouns                 TEXT NOT NULL DEFAULT '',
+    class_slug               TEXT NOT NULL DEFAULT '',
+    subclass_slug            TEXT NOT NULL DEFAULT '',
+    subclass_mastery         INTEGER NOT NULL DEFAULT 1 CHECK (subclass_mastery BETWEEN 1 AND 3),
+    multiclass_slug          TEXT NOT NULL DEFAULT '',
+    multiclass_subclass_slug TEXT NOT NULL DEFAULT '',
+    ancestry_slug            TEXT NOT NULL DEFAULT '',
+    community_slug           TEXT NOT NULL DEFAULT '',
+    level                    INTEGER NOT NULL DEFAULT 1 CHECK (level BETWEEN 1 AND 10),
+    proficiency              INTEGER NOT NULL DEFAULT 1 CHECK (proficiency BETWEEN 1 AND 6),
+    agility                  INTEGER NOT NULL DEFAULT 0 CHECK (agility BETWEEN -3 AND 12),
+    strength                 INTEGER NOT NULL DEFAULT 0 CHECK (strength BETWEEN -3 AND 12),
+    finesse                  INTEGER NOT NULL DEFAULT 0 CHECK (finesse BETWEEN -3 AND 12),
+    instinct                 INTEGER NOT NULL DEFAULT 0 CHECK (instinct BETWEEN -3 AND 12),
+    presence                 INTEGER NOT NULL DEFAULT 0 CHECK (presence BETWEEN -3 AND 12),
+    knowledge                INTEGER NOT NULL DEFAULT 0 CHECK (knowledge BETWEEN -3 AND 12),
+    marked_traits            TEXT NOT NULL DEFAULT '[]',
+    hp_max                   INTEGER NOT NULL DEFAULT 6 CHECK (hp_max BETWEEN 1 AND 20),
+    hp_marked                INTEGER NOT NULL DEFAULT 0 CHECK (hp_marked BETWEEN 0 AND hp_max),
+    stress_max               INTEGER NOT NULL DEFAULT 6 CHECK (stress_max BETWEEN 1 AND 20),
+    stress_marked            INTEGER NOT NULL DEFAULT 0 CHECK (stress_marked BETWEEN 0 AND stress_max),
+    hope                     INTEGER NOT NULL DEFAULT 2 CHECK (hope BETWEEN 0 AND 6),
+    evasion                  INTEGER NOT NULL DEFAULT 10 CHECK (evasion BETWEEN 0 AND 30),
+    armor_score              INTEGER NOT NULL DEFAULT 0 CHECK (armor_score BETWEEN 0 AND 20),
+    armor_marked             INTEGER NOT NULL DEFAULT 0 CHECK (armor_marked BETWEEN 0 AND armor_score),
+    threshold_major          INTEGER NOT NULL DEFAULT 0 CHECK (threshold_major BETWEEN 0 AND 99),
+    threshold_severe         INTEGER NOT NULL DEFAULT 0 CHECK (threshold_severe BETWEEN 0 AND 99),
+    gold_handfuls            INTEGER NOT NULL DEFAULT 0 CHECK (gold_handfuls BETWEEN 0 AND 9),
+    gold_bags                INTEGER NOT NULL DEFAULT 0 CHECK (gold_bags BETWEEN 0 AND 9),
+    gold_chests              INTEGER NOT NULL DEFAULT 0 CHECK (gold_chests BETWEEN 0 AND 99),
+    background               TEXT NOT NULL DEFAULT '',
+    connections              TEXT NOT NULL DEFAULT '',
+    notes                    TEXT NOT NULL DEFAULT '',
+    created_at               TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    updated_at               TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+) STRICT;
+
+-- +goose Down
+DROP TABLE characters;

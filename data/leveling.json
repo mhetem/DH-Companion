@@ -1,0 +1,262 @@
+{
+  "advancementsPerLevel": 2,
+  "thresholdIncreasePerLevel": 1,
+  "domainCardsPerLevel": 1,
+  "tiers": [
+    {
+      "tier": 1,
+      "name": "Tier 1",
+      "levels": [1],
+      "newExperience": false,
+      "proficiencyBonus": 0,
+      "clearsMarkedTraits": false,
+      "achievements": [],
+      "advancements": []
+    },
+    {
+      "tier": 2,
+      "name": "Tier 2",
+      "levels": [2, 3, 4],
+      "newExperience": true,
+      "proficiencyBonus": 1,
+      "clearsMarkedTraits": true,
+      "achievements": [
+        "Take a new Experience at +2.",
+        "Permanently gain +1 to your Proficiency.",
+        "Clear any marked character traits."
+      ],
+      "advancements": [
+        {
+          "id": "trait-boost",
+          "label": "Increase two unmarked character traits by +1 and mark them",
+          "description": "Marked traits can't be raised again until your marks are cleared on entering a new tier.",
+          "slots": 3,
+          "cost": 1,
+          "effect": { "traits": 2 }
+        },
+        {
+          "id": "hp-slot",
+          "label": "Permanently gain one Hit Point slot",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "hpSlots": 1 }
+        },
+        {
+          "id": "stress-slot",
+          "label": "Permanently gain one Stress slot",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "stressSlots": 1 }
+        },
+        {
+          "id": "experience-bonus",
+          "label": "Permanently gain a +1 bonus to two Experiences",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "experiences": 2, "experienceBonus": 1 }
+        },
+        {
+          "id": "domain-card",
+          "label": "Choose an additional domain card at your level or lower",
+          "description": "This is on top of the card you gain for levelling up.",
+          "slots": 1,
+          "cost": 1,
+          "effect": { "domainCards": 1 }
+        },
+        {
+          "id": "evasion",
+          "label": "Permanently gain +1 to your Evasion",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "evasion": 1 }
+        },
+        {
+          "id": "subclass-upgrade",
+          "label": "Take an upgraded subclass card",
+          "description": "Unlocks your subclass's Specialization, then its Mastery.",
+          "slots": 1,
+          "cost": 1,
+          "effect": { "subclassUpgrade": 1 }
+        }
+      ]
+    },
+    {
+      "tier": 3,
+      "name": "Tier 3",
+      "levels": [5, 6, 7],
+      "newExperience": true,
+      "proficiencyBonus": 1,
+      "clearsMarkedTraits": true,
+      "achievements": [
+        "Take a new Experience at +2.",
+        "Permanently gain +1 to your Proficiency.",
+        "Clear any marked character traits."
+      ],
+      "advancements": [
+        {
+          "id": "trait-boost",
+          "label": "Increase two unmarked character traits by +1 and mark them",
+          "description": "Marked traits can't be raised again until your marks are cleared on entering a new tier.",
+          "slots": 3,
+          "cost": 1,
+          "effect": { "traits": 2 }
+        },
+        {
+          "id": "hp-slot",
+          "label": "Permanently gain one Hit Point slot",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "hpSlots": 1 }
+        },
+        {
+          "id": "stress-slot",
+          "label": "Permanently gain one Stress slot",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "stressSlots": 1 }
+        },
+        {
+          "id": "experience-bonus",
+          "label": "Permanently gain a +1 bonus to two Experiences",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "experiences": 2, "experienceBonus": 1 }
+        },
+        {
+          "id": "domain-card",
+          "label": "Choose an additional domain card at your level or lower",
+          "description": "This is on top of the card you gain for levelling up.",
+          "slots": 1,
+          "cost": 1,
+          "effect": { "domainCards": 1 }
+        },
+        {
+          "id": "evasion",
+          "label": "Permanently gain +1 to your Evasion",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "evasion": 1 }
+        },
+        {
+          "id": "subclass-upgrade",
+          "label": "Take an upgraded subclass card",
+          "description": "Unlocks your subclass's Specialization, then its Mastery.",
+          "slots": 1,
+          "cost": 1,
+          "effect": { "subclassUpgrade": 1 }
+        },
+        {
+          "id": "proficiency",
+          "label": "Permanently gain +1 to your Proficiency",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "proficiency": 1 }
+        },
+        {
+          "id": "multiclass",
+          "label": "Multiclass",
+          "description": "Choose an additional class, take its foundation subclass card, and gain access to its domains at your level or lower.",
+          "slots": 1,
+          "cost": 2,
+          "effect": { "multiclass": true }
+        }
+      ]
+    },
+    {
+      "tier": 4,
+      "name": "Tier 4",
+      "levels": [8, 9, 10],
+      "newExperience": true,
+      "proficiencyBonus": 1,
+      "clearsMarkedTraits": true,
+      "achievements": [
+        "Take a new Experience at +2.",
+        "Permanently gain +1 to your Proficiency.",
+        "Clear any marked character traits."
+      ],
+      "advancements": [
+        {
+          "id": "trait-boost",
+          "label": "Increase two unmarked character traits by +1 and mark them",
+          "description": "Marked traits can't be raised again until your marks are cleared on entering a new tier.",
+          "slots": 3,
+          "cost": 1,
+          "effect": { "traits": 2 }
+        },
+        {
+          "id": "hp-slot",
+          "label": "Permanently gain one Hit Point slot",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "hpSlots": 1 }
+        },
+        {
+          "id": "stress-slot",
+          "label": "Permanently gain one Stress slot",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "stressSlots": 1 }
+        },
+        {
+          "id": "experience-bonus",
+          "label": "Permanently gain a +1 bonus to two Experiences",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "experiences": 2, "experienceBonus": 1 }
+        },
+        {
+          "id": "domain-card",
+          "label": "Choose an additional domain card at your level or lower",
+          "description": "This is on top of the card you gain for levelling up.",
+          "slots": 1,
+          "cost": 1,
+          "effect": { "domainCards": 1 }
+        },
+        {
+          "id": "evasion",
+          "label": "Permanently gain +1 to your Evasion",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "evasion": 1 }
+        },
+        {
+          "id": "subclass-upgrade",
+          "label": "Take an upgraded subclass card",
+          "description": "Unlocks your subclass's Specialization, then its Mastery.",
+          "slots": 1,
+          "cost": 1,
+          "effect": { "subclassUpgrade": 1 }
+        },
+        {
+          "id": "proficiency",
+          "label": "Permanently gain +1 to your Proficiency",
+          "description": "",
+          "slots": 2,
+          "cost": 1,
+          "effect": { "proficiency": 1 }
+        },
+        {
+          "id": "multiclass",
+          "label": "Multiclass",
+          "description": "Choose an additional class, take its foundation subclass card, and gain access to its domains at your level or lower.",
+          "slots": 1,
+          "cost": 2,
+          "effect": { "multiclass": true }
+        }
+      ]
+    }
+  ]
+}

@@ -14,8 +14,6 @@ export function ExportDatabase():Promise<string>;
 
 export function ExportLibrary():Promise<string>;
 
-export function GetRole():Promise<string>;
-
 export function GetUIScale():Promise<number>;
 
 export function ImportDatabase():Promise<string>;
@@ -23,8 +21,6 @@ export function ImportDatabase():Promise<string>;
 export function ImportLibrary():Promise<gm.ImportReport>;
 
 export function OpenReleasesPage(arg1:string):Promise<void>;
-
-export function SetRole(arg1:string):Promise<void>;
 
 export function SetUIScale(arg1:number):Promise<void>;
 

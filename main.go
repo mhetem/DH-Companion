@@ -5,6 +5,7 @@ import (
 
 	"github.com/mhetem/DH-Companion/internal/dice"
 	"github.com/mhetem/DH-Companion/internal/gm"
+	"github.com/mhetem/DH-Companion/internal/player"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -20,10 +21,11 @@ func main() {
 	// Each module is bound as its own struct, so the frontend reaches the GM
 	// methods at window.go.gm.Service.* instead of piling them onto App.
 	gmSvc := gm.New()
+	playerSvc := player.New()
 	// The roller holds no state and needs no startup wiring — it's bound purely
 	// to reach the pure roll functions from JS at window.go.dice.Roller.*.
 	roller := dice.NewRoller()
-	app := NewApp(gmSvc)
+	app := NewApp(gmSvc, playerSvc)
 
 	err := wails.Run(&options.App{
 		Title:     "Hilt",
@@ -40,6 +42,7 @@ func main() {
 		Bind: []interface{}{
 			app,
 			gmSvc,
+			playerSvc,
 			roller,
 		},
 	})

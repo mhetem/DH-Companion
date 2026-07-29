@@ -20,7 +20,48 @@ const (
 	classesFile      = "classes.json"
 	beastformsFile   = "beastforms.json"
 	companionsFile   = "rangerCompanion.json"
+	levelingFile     = "leveling.json"
 )
+
+type AdvancementEffect struct {
+	Traits          int  `json:"traits"`
+	Evasion         int  `json:"evasion"`
+	HPSlots         int  `json:"hpSlots"`
+	StressSlots     int  `json:"stressSlots"`
+	Experiences     int  `json:"experiences"`
+	ExperienceBonus int  `json:"experienceBonus"`
+	DomainCards     int  `json:"domainCards"`
+	Proficiency     int  `json:"proficiency"`
+	SubclassUpgrade int  `json:"subclassUpgrade"`
+	Multiclass      bool `json:"multiclass"`
+}
+
+type Advancement struct {
+	ID          string            `json:"id"`
+	Label       string            `json:"label"`
+	Description string            `json:"description"`
+	Slots       int               `json:"slots"`
+	Cost        int               `json:"cost"`
+	Effect      AdvancementEffect `json:"effect"`
+}
+
+type Tier struct {
+	Tier               int           `json:"tier"`
+	Name               string        `json:"name"`
+	Levels             []int         `json:"levels"`
+	NewExperience      bool          `json:"newExperience"`
+	ProficiencyBonus   int           `json:"proficiencyBonus"`
+	ClearsMarkedTraits bool          `json:"clearsMarkedTraits"`
+	Achievements       []string      `json:"achievements"`
+	Advancements       []Advancement `json:"advancements"`
+}
+
+type Leveling struct {
+	AdvancementsPerLevel      int    `json:"advancementsPerLevel"`
+	ThresholdIncreasePerLevel int    `json:"thresholdIncreasePerLevel"`
+	DomainCardsPerLevel       int    `json:"domainCardsPerLevel"`
+	Tiers                     []Tier `json:"tiers"`
+}
 
 type Catalog struct {
 	Adversaries  map[string]cards.Adversary
@@ -28,9 +69,10 @@ type Catalog struct {
 	DomainCards  map[string]cards.DomainCard
 	Ancestries   map[string]cards.Ancestry
 	Communities  map[string]cards.Community
-	Classes      map[string]cards.Class
+	Classes      map[string]cards.CharacterClass
 	Beastforms   map[string]cards.Beastform
 	Companions   map[string]cards.Companion
+	Leveling     Leveling
 }
 
 func Load(fsys fs.FS) (*Catalog, error) {
@@ -40,7 +82,7 @@ func Load(fsys fs.FS) (*Catalog, error) {
 		DomainCards:  map[string]cards.DomainCard{},
 		Ancestries:   map[string]cards.Ancestry{},
 		Communities:  map[string]cards.Community{},
-		Classes:      map[string]cards.Class{},
+		Classes:      map[string]cards.CharacterClass{},
 		Beastforms:   map[string]cards.Beastform{},
 		Companions:   map[string]cards.Companion{},
 	}
@@ -117,7 +159,20 @@ func Load(fsys fs.FS) (*Catalog, error) {
 		c.Companions[slug] = p
 	}
 
+	if err := decodeFile(fsys, levelingFile, &c.Leveling); err != nil {
+		return nil, err
+	}
+
 	return c, nil
+}
+
+func (c *Catalog) Tier(tier int) (Tier, bool) {
+	for _, t := range c.Leveling.Tiers {
+		if t.Tier == tier {
+			return t, true
+		}
+	}
+	return Tier{}, false
 }
 
 func Default() (*Catalog, error) { return Load(data.FS) }
@@ -230,13 +285,13 @@ func (c *Catalog) ListCommunities() []cards.Community {
 	return out
 }
 
-func (c *Catalog) Class(slug string) (cards.Class, bool) {
+func (c *Catalog) Class(slug string) (cards.CharacterClass, bool) {
 	k, ok := c.Classes[slug]
 	return k, ok
 }
 
-func (c *Catalog) ListClasses() []cards.Class {
-	out := make([]cards.Class, 0, len(c.Classes))
+func (c *Catalog) ListClasses() []cards.CharacterClass {
+	out := make([]cards.CharacterClass, 0, len(c.Classes))
 	for _, k := range c.Classes {
 		out = append(out, k)
 	}
@@ -246,8 +301,8 @@ func (c *Catalog) ListClasses() []cards.Class {
 
 // ClassesByDomain returns the classes that draw on the given domain. Every domain
 // backs exactly two classes.
-func (c *Catalog) ClassesByDomain(domain string) []cards.Class {
-	var out []cards.Class
+func (c *Catalog) ClassesByDomain(domain string) []cards.CharacterClass {
+	var out []cards.CharacterClass
 	for _, k := range c.ListClasses() {
 		for _, d := range k.Domains {
 			if d == domain {
@@ -260,13 +315,13 @@ func (c *Catalog) ClassesByDomain(domain string) []cards.Class {
 }
 
 // Subclass finds a subclass by its own slug, across every class.
-func (c *Catalog) Subclass(slug string) (cards.Class, cards.Subclass, bool) {
+func (c *Catalog) Subclass(slug string) (cards.CharacterClass, cards.Subclass, bool) {
 	for _, k := range c.ListClasses() {
 		if s, ok := k.Subclass(slug); ok {
 			return k, s, true
 		}
 	}
-	return cards.Class{}, cards.Subclass{}, false
+	return cards.CharacterClass{}, cards.Subclass{}, false
 }
 
 func (c *Catalog) Beastform(slug string) (cards.Beastform, bool) {

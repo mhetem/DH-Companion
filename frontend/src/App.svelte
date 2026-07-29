@@ -1,39 +1,32 @@
 <script>
-  import { GetRole, GetUIScale, SetRole } from '../wailsjs/go/main/App.js'
+  import { GetUIScale } from '../wailsjs/go/main/App.js'
   import { applyScale } from './lib/display.js'
   import RolePicker from './lib/RolePicker.svelte'
   import Header from './lib/Header.svelte'
   import GmShell from './lib/GmShell.svelte'
   import PlayerShell from './lib/PlayerShell.svelte'
 
-  let role = $state('')      // '' until a role is chosen — first run shows the picker
+  // The role is never remembered — every launch opens on the picker. It's a view,
+  // not an account, and starting from the choice keeps a shared machine honest.
+  let role = $state('')
   let loading = $state(true)
   let error = $state('')
 
   let scale = $state(100)
   let reloadToken = $state(0)
 
-  // Load the last-used role before painting anything, so a returning user never
-  // sees the picker flash — and the saved scale alongside it, so the first frame is
+  // The saved scale still loads before the first paint, so the picker itself is
   // already at the right size rather than visibly resettling.
-  Promise.all([GetRole(), GetUIScale()])
-    .then(([savedRole, savedScale]) => {
-      role = savedRole
+  GetUIScale()
+    .then((savedScale) => {
       scale = savedScale
       applyScale(savedScale)
     })
     .catch((e) => (error = String(e)))
     .finally(() => (loading = false))
 
-  async function pick(next) {
-    const previous = role
+  function pick(next) {
     role = next
-    try {
-      await SetRole(next)
-    } catch (e) {
-      error = String(e)
-      role = previous
-    }
   }
 </script>
 

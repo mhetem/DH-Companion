@@ -12,7 +12,7 @@ the sqlc workflow) and drops everything web/multi-user.
 |---|---|
 | Framework | Wails v2, Go backend + Svelte frontend |
 | Storage | SQLite (local file), `sqlc` for queries, `goose` for migrations |
-| Auth | **None.** Role is a switchable view (GM / Player), not a login. Last-used role is remembered; switch anytime without losing data |
+| Auth | **None.** Role is a switchable view (GM / Player), not a login. Every launch opens on the picker; switch anytime without losing data |
 | GM ↔ Player data | **Fully separate.** Two schema islands in one DB, no shared records |
 | Shipping | Two modules, independently buildable. GM first (mostly a port), Player second (greenfield) |
 
@@ -52,12 +52,22 @@ dh-companion/
 - [x] `sqlc.yaml`: engine `sqlite`, point at `sql/schema` + `sql/queries`
 - [x] DB bootstrap: open `~/DH-Companion/data.db` (override with `DH_DATA_DIR`), run goose migrations on startup.
       **Both schema islands (GM + Player) always exist regardless of current role** — nothing is role-scoped.
-- [x] `settings` table (`key TEXT PRIMARY KEY, value TEXT`) — stores `last_role` (a preference, not a gate)
-- [x] Frontend: on launch, open the last-used role's shell; first run shows the picker
-- [x] **Persistent "switch role" affordance** (header) available anytime — flips the view, updates `last_role`, touches no data
-- [x] Bound methods: `GetRole()`, `SetRole(role)`
+- [x] `settings` table (`key TEXT PRIMARY KEY, value TEXT`) — window size and UI scale
+- [x] Frontend: on launch, always show the role picker
+- [x] **Persistent "switch role" affordance** (header) available anytime — flips the view, touches no data
+- [x] Bound methods: `GetRole()`, `SetRole(role)` — *removed; see below*
 
-**Done when:** app launches into your last role; you can switch GM↔Player at will; data built in either mode survives the switch and relaunch.
+**Done when:** you can switch GM↔Player at will; data built in either mode survives the switch and relaunch. ✅
+
+Notes on the role, revised:
+- **The role is no longer remembered.** Every launch opens on the picker. `last_role`,
+  `GetRole` and `SetRole` are gone, and switching from the header is now purely a frontend
+  state change — nothing about a role reaches the database. The `settings` table stays for
+  `window_size` and `ui_scale`.
+- The reasoning that made it a stored preference — "returning users shouldn't see the picker
+  flash" — assumed one person per install. Two people sharing a machine, or one person who
+  GMs one night and plays the next, get the choice put in front of them instead of landing in
+  whichever shell they closed last. A pre-existing `last_role` row is simply ignored.
 
 ---
 
@@ -157,7 +167,7 @@ Notes on the frontend:
   1100×700 floor. Prose-heavy panes — card detail, the campaign page — carry a `max-width`
   so lines stay readable rather than running the full width.)*
 - **Window size is a user setting**, stored in `settings` as `window_size` = `"WxH"` next to
-  `last_role`. The header picker offers HD → 4K, and `shutdown` records whatever size the
+  `ui_scale`. The header picker offers HD → 4K, and `shutdown` records whatever size the
   window was left at, so dragging the frame is remembered the same way picking a preset is.
   Sizes are clamped against `ScreenGetAll` — a preset larger than the display shrinks to fit
   and is marked unavailable in the picker rather than opening off-screen. `Screen.Size` is
@@ -450,26 +460,247 @@ you ran, keep typed NPC/location notes, and full-text search across everything. 
 
 Schema (island B):
 ```sql
-character(id, name, class, subclass, ancestry, community, level,
-          agility, strength, finesse, instinct, presence, knowledge,
-          hp_max, hp_marked, stress_max, stress_marked, hope,
-          evasion, armor_score, threshold_major, threshold_severe, gold,
-          created_at, updated_at)
-character_domain_card(id, character_id, card_slug, location)  -- 'loadout' | 'vault'
-inventory_item(id, character_id, name, qty, kind, equipped)
-experience(id, character_id, name, modifier)
+characters(id, name, pronouns, class_slug, subclass_slug, subclass_mastery,
+           multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug,
+           level, proficiency,
+           agility, strength, finesse, instinct, presence, knowledge, marked_traits,
+           hp_max, hp_marked, stress_max, stress_marked, hope,
+           evasion, armor_score, armor_marked, threshold_major, threshold_severe,
+           gold_handfuls, gold_bags, gold_chests, beastform_slug,
+           background, connections, notes, created_at, updated_at)
+character_domain_cards(id, character_id, card_slug, location)  -- 'loadout' | 'vault'
+inventory_items(id, character_id, name, kind, qty, equipped, detail)
+experiences(id, character_id, name, modifier)
+character_levelups(id, character_id, level, tier, choices TEXT, summary)
+companions(id, character_id UNIQUE, name, evasion, damage_die, attack_range, attack,
+           stress_max, stress_marked, experiences TEXT, upgrades TEXT, notes)
 ```
 
-- [ ] SRD data: domain cards, class/subclass features, ancestries, communities (source + load into `data/`)
-- [ ] Character CRUD + create wizard (class → subclass → ancestry → community → traits)
-- [ ] Sheet view: traits, live-tracked HP/Stress/Hope, evasion/armor/thresholds, gold
-- [ ] **Loadout (max 5) vs. Vault** domain-card management (drag/move, enforce cap)
-- [ ] Inventory + equipment
-- [ ] Experiences (name + modifier)
-- [ ] Leveling flow across tiers (1, 2–4, 5–7, 8–10)
-- [ ] **Duality dice** widget wired to Hope — a roll with Hope grants a Hope; apply Experience/trait modifiers
+- [x] SRD data: domain cards, class/subclass features, ancestries, communities (source + load into `data/`)
+- [x] Character CRUD + create wizard (class → subclass → ancestry → community → traits)
+- [x] Sheet view: traits, live-tracked HP/Stress/Hope, evasion/armor/thresholds, gold
+- [x] **Loadout (max 5) vs. Vault** domain-card management (drag/move, enforce cap)
+- [x] Inventory + equipment
+- [x] Experiences (name + modifier)
+- [x] Leveling flow across tiers (1, 2–4, 5–7, 8–10)
+- [x] **Duality dice** widget wired to Hope — a roll with Hope grants a Hope; apply Experience/trait modifiers
+- [x] **Beastform** (druid) and the **companion sheet** (Beastbound ranger) — the two
+      subclass features that need pages of their own
 
-**Done when:** you can build a character, manage loadout/vault, roll with your traits, and track resources in play.
+Notes on the schema:
+- Tables are **plural** and every column is `NOT NULL` with a default, same two rules as
+  Phase 3. There is not a single nullable column in island B — an unbuilt character has
+  `class_slug = ''`, not `NULL`, so the frontend never sees a null where a blank is meant.
+- **Five columns the original sketch didn't have, each because a rules feature needs it.**
+  `proficiency` is the damage-dice count and rises on tier entry. `subclass_mastery` (1–3)
+  is which of Foundation/Specialization/Mastery you've unlocked, so the sheet can show only
+  the cards you actually have. `marked_traits` is a json array — the trait advancement marks
+  what it raises and the marks clear on entering a new tier, which is the whole reason a
+  trait can't be raised twice in a tier. `multiclass_slug` / `multiclass_subclass_slug` carry
+  the tier 3+ multiclass advancement, and they're what widens the domain-card pool.
+- **Gold is three columns, not one.** The sheet counts handfuls, bags and chests, ten to the
+  next, so `CHECK (gold_handfuls BETWEEN 0 AND 9)` is the carry rule written down.
+- `hope` has no `hope_max` column. Six is a constant of the rules, not a per-character value,
+  so it's `player.HopeMax` and rides out on the view as `hopeMax` — exactly how `FearMax`
+  works on the GM side.
+- **Clamping happens in SQL**, continuing Phase 3: HP, Stress, Hope, armor slots, gold and
+  item quantities are all written as `max(lo, min(hi, …))`, with `CAST(… AS INTEGER)` around
+  the parameter from the start — the Phase 3 "Open" note's fix, applied on the way in rather
+  than after the fact. The `CHECK` constraints are the backstop.
+- Every child table is `ON DELETE CASCADE` on `character_id`: unlike a combat, which outlives
+  its encounter, a loadout has no meaning without the character holding it.
+- `character_domain_cards` is `UNIQUE (character_id, card_slug)` — one copy of a card per
+  character, and `location` is the only thing that moves.
+- `character_levelups` is `UNIQUE (character_id, level)` and stores the raw choices as json.
+  **That json is not a log, it's the source of truth for the slot counts** — an advancement
+  can be taken a limited number of times *per tier*, so answering "can I take this again"
+  means reading back what was taken at every earlier level in the same tier.
+
+Notes on the leveling rules:
+- **The advancement table is data, not code**: `data/leveling.json`, loaded by the same
+  `internal/srd` loader as everything else in `data/`, into `srd.Leveling` / `srd.Tier` /
+  `srd.Advancement`. It's the only reference dataset that isn't card-shaped, which is why the
+  types live in `srd` rather than `cards`.
+- An advancement is `{slots, cost, effect}`. `slots` is how many times it can be taken in the
+  tier; `cost` is how many of the level's two advancement picks it consumes (multiclass is
+  the only one that costs two). `effect` is a flat struct of mechanical deltas, so adding an
+  option is a data edit and the apply code doesn't change.
+- **The numbers in that file are transcribed from the SRD and worth a second pair of eyes.**
+  The structure — two advancements a level, +1 to both thresholds, a domain card at or below
+  your level, and the tier-entry achievements at 2/5/8 — is what the code enforces; the
+  per-option slot counts are just values in the file, so correcting one is a one-line data
+  change with no code to touch.
+- `ApplyLevelUp` runs in one transaction and applies things **in rules order**: tier
+  achievements first (clear marked traits, +1 Proficiency, new Experience), then the two
+  advancements, then thresholds, then the domain card. The order matters — clearing marks
+  first is what lets a trait raised in the last tier be raised again in this one.
+- **The plan is computed, not remembered.** `PlanLevelUp` returns each option with
+  `used`/`remaining`/`available` plus a `reason` when it's off, so the UI greys out
+  "upgraded subclass card" at mastery and "multiclass" once you've multiclassed without
+  restating any of that logic in JS. Everything it reports is re-validated on apply — the
+  frontend is not trusted with the caps.
+- **Known gap:** the plan's `availableCards` is computed from the domains you have *now*, so
+  picking multiclass and a level card in the same level-up won't offer the new class's
+  domain that level. The backend accepts it (it validates against the post-multiclass
+  domains); only the picker is a level behind.
+
+Notes on the two subclass pages:
+- **Beastform and Companion are nav sections that only exist for the characters that have
+  them.** `PlayerShell` reads the open character and splices them in — a bard has no
+  Beastform page rather than an empty one. Everything else in the nav is fixed.
+- **`beastform_slug` is a column on `characters`, not a table.** You are in one form or
+  none, and the form itself is SRD data — so the character stores which one and the
+  catalog supplies the rest. Transforming marks a Stress (the class feature's cost) through
+  the existing clamped `AdjustCharacterStress`; dropping out is free, which is why it isn't
+  a straight toggle.
+- Effective Evasion while transformed is computed, not stored: base + the form's
+  `evasionBonus`. The trait bonus and attack line are shown rather than folded into the
+  sheet's numbers — they apply to specific rolls, and quietly rewriting a trait would be
+  worse than showing what to add.
+- The beastform list stays visible for non-druids as reference; only the Transform buttons
+  are gated, and `Transform` re-checks the class and the tier server-side.
+- **The companion is its own table, keyed `character_id UNIQUE`** — one companion per
+  ranger, cascading on delete. Its Experiences and taken level-up options are JSON TEXT
+  columns rather than two more tables: both are short lists edited as a unit, and the
+  project already stores card features and encounter picks this way.
+- **The level-up options are a checklist, not an engine.** Ticking *Vicious* records that
+  you took it; it doesn't step the damage die, because "increase by one step" is a choice
+  between die and range, and *Aware*/*Resilient* would then need un-applying on untick.
+  The pane says so and the fields are editable.
+- `RollCompanionDamage` is its own method because the dice count is the **ranger's**
+  Proficiency while the die is the **companion's** — the rule that makes commanding them
+  worth doing, and easy to get wrong by hand.
+- **Gold moved to Inventory.** It is what you carry, it sits next to the gear it buys, and
+  the sheet's stat cards were the wrong shape for three steppers — `Gold.svelte` is the
+  extracted component so it renders identically wherever it lands.
+
+Notes on the Wails binding warnings:
+- **`cards.Class` is `cards.CharacterClass`.** Wails' TypeScript generator lowercases every
+  type name and compares it against the JS reserved-word list, so `Class` tripped
+  *"Usage of reserved keyword found and not supported"*. It only ever warned — the generated
+  `export class Class` is legal TypeScript — but the rename costs nothing and the build is
+  quiet. Nothing user-visible changed; `Catalog.Class(slug)` keeps its name, since the check
+  is on type names only.
+- **`player.PlanOption` no longer embeds `srd.Advancement`.** Wails flattened the embedded
+  fields correctly but couldn't resolve `srd.AdvancementEffect` — no bound method returns an
+  `srd` type directly, so it isn't in `KnownStructs` — and emitted `effect: any` with a
+  *"Not found"* line. The option now spells its fields out and carries a `player.Effect`
+  mirroring the SRD one, converted by `effectView`. Runtime JSON is identical; the generated
+  types are real instead of `any`.
+
+Notes on what landed (service layer):
+- `internal/player.Service` is bound as its own Wails struct alongside `gm.Service`, so the
+  frontend calls `window.go.player.Service.*`. `player.Attach` is a package function for the
+  same reason `gm.Attach` is — a method would publish `context.Context` and `*sql.DB` into
+  the generated TypeScript. Both `startup` and `portable.go`'s `reopen` attach it, so a
+  database restore re-points the Player module too.
+- Nothing returns a `db.*` row, same as every phase before it. `player.Character`,
+  `player.Sheet`, `player.Loadout`, `player.Item`, `player.Experience`, `player.LevelUpPlan`
+  and `player.Roll` are the bridge types. `Sheet` embeds `Character` and adds the resolved
+  class/subclass/ancestry/community cards plus loadout, vault, gear and Experiences — the
+  same summary/detail split as `CombatSummary`/`CombatView`.
+- **A character knows two domain cards at level 1**, not five. The loadout cap (5) and how
+  many cards you own at all are different limits, and only the first was enforced at first.
+  `Loadout` now carries `held` and `allowance`, where allowance is `2 + one per level-up +
+  one per extra-card advancement taken` — derived from the level-up records rather than
+  stored, so it can't drift from the history. Removing a card frees the slot back up, and a
+  character who somehow holds more than their allowance simply can't add another.
+- **Slugs are resolved, never stored twice.** A character holds `class_slug`; the name, the
+  domains and the spellcast trait are looked up in the catalog on the way out. A domain card
+  whose slug no longer resolves comes back `unresolved: true` rather than failing the sheet,
+  matching how Phase 2 handles a deleted custom card.
+- HP and Evasion default from the class card (`startingHitPoints`, `startingEvasion`) when
+  the wizard leaves them at zero. Those are text in the SRD json, so `leadingInt` takes the
+  leading digit run — the same problem `parseStat` solves for adversaries in Phase 3.
+- **Armor Score and both thresholds have no defaults**, because in the rules they come from
+  the armor you're wearing and `data/` has no armor dataset. The wizard asks for them
+  outright and says where to read them off.
+- **Only one primary weapon, secondary weapon or piece of armor can be equipped at a time.**
+  `UnequipInventoryKind` runs before the equip, so the exclusivity is enforced on the way in
+  rather than validated afterwards; consumables and plain items are unlimited.
+- `AddClassItems` pulls the class's starting kit straight off the card, so a new character
+  isn't typing in two items the SRD already lists.
+- **Rest is a choice of downtime moves, not a button that clears things.** `RestMoves(long)`
+  serves the list — Tend to Wounds, Clear Stress, Repair Armor, Prepare on a short rest; the
+  "all" versions plus Work on a Project on a long one — and `RestAllowance(long)` the budget
+  (2 short, 3 long). `Rest(RestInput)` applies exactly the moves you picked and nothing else,
+  so a short rest spent on Repair Armor and Prepare leaves your Hit Points where they were.
+  A move can be taken **more than once**: two goes at Tend to Wounds is a legal short rest, so
+  `moves` is a list with repeats rather than a set.
+  Each move returns its own prose outcome with the roll that produced it (`1d4 + tier`), which
+  is why `RestResult.Outcomes` is a list and not one sentence. An earlier pass had `Rest(id,
+  long)` clear HP and Stress automatically; that invented a rule the SRD doesn't have.
+- **`RollDuality` is the one method that both rolls and writes.** It resolves the roll, then
+  writes the Hope and Stress it earned in the same call and returns the updated character, so
+  "a roll with Hope grants a Hope" can't be forgotten by a caller. A critical grants a Hope
+  *and* clears a Stress; a roll with Fear grants nothing, because the Fear pool is the GM's
+  and this app never reaches across the two islands.
+- `Roll` carries `modifierParts`, so the UI can show *why* the modifier is +4 rather than
+  just that it is. The roller in `internal/dice` stays pure and untouched — this is a wrapper
+  around `DualityDiceRoll`, not a second implementation.
+- `RollDamage` uses the character's Proficiency as the dice count, and a critical adds the
+  maximum value of those dice on top of the roll.
+
+Notes on the frontend:
+- **Which character is open is shared state, not a prop.** Five nav sections work on one
+  character, so `player/active.svelte.js` exports a `$state` object backed by `localStorage`
+  — the same "remember the last thing" trick Campaigns uses, but as a rune so switching
+  sections doesn't drop the selection. Characters is the first nav entry because everything
+  after it is empty until something is picked there.
+- The wizard is seven steps (Identity → Class → Subclass → Ancestry → Community → Traits →
+  Defenses) and doubles as the edit form. Each step shows the SRD text for what you're
+  choosing next to the picker, through the **same `FeatureList` the GM browsers use** — class
+  features, subclass cards, ancestry and community features are all `cards.Feature`, so there
+  was nothing to write.
+- Picking a class clears the subclass. A subclass belongs to exactly one class, so leaving it
+  set would silently produce an invalid pair the backend then rejects.
+- The Traits step checks the **spread, not the individual values**: sort the six and compare
+  against sorted `[2,1,1,0,0,-1]`. That accepts any assignment of the array and rejects
+  spending it twice, without caring which trait got what.
+- `ResourceTrack` is the pip row behind HP, Stress, Hope and armor slots. **Marked counts up**,
+  the same direction the GM runner settled on in Phase 3, and clicking the pip you're already
+  on clears down to it rather than being a no-op.
+- Every vitals mutator returns the whole character and the pane assigns it, so the sheet
+  renders what the database holds — Phase 3's auto-save property, inherited for free.
+- **Domain Cards is three columns, not drag-and-drop**: loadout, vault, and the pool of cards
+  you can still take. Buttons move a card between the first two; the cap is shown as a tally
+  that turns gold when full, and Equip is disabled rather than failing. The pool comes from
+  `AvailableDomainCards`, which already applies "your domains, at or below your level, not
+  already held", so the UI never offers a card the backend would refuse.
+- **A disabled "Level up" button now says why.** `blockers` is a list of what's still
+  missing in plain words ("Choose 1 more trait", "Name your new Experience"), rendered above
+  the footer and, per pick, inside the pick itself; `complete` is just "no blockers". The
+  gate was correct before but silent, and a two-trait advancement with one trait chosen
+  looked finished.
+- **The two domain-card selects render every card and `disabled` the ones already spoken
+  for**, rather than filtering them out of the list. Filtering made each select's option list
+  depend on its own bound value, which is the classic way to desync a `<select>` binding —
+  options being removed and re-added under a live selection. A stable list can't.
+- `LevelUp` is a `Modal`, and it renders the advancement table as its printed slot boxes —
+  filled for what earlier levels used, filled again for what you're picking now. Options that
+  need a follow-up choice (which traits, which Experiences, which card, which class) grow that
+  choice inline under "Your picks" rather than opening another dialog.
+- The Dice pane takes the `compact` prop convention that `Dice`, `Notes` and `CardBrowser`
+  established. Results flash centre-screen and fade, reusing `RollResult` from the GM side —
+  the tumble is theatre over an already-resolved roll, and it honours `prefers-reduced-motion`
+  because that component already did.
+- **The sheet hosts the dice panel in a collapsible block**, remembered in `localStorage` the
+  same way the runner remembers its own. Standalone it loads its own character; embedded it
+  takes `character` and `experiences` as props and reports writes back through `onupdate`, so
+  the sheet and the panel can't drift apart when a roll spends Hope or clears Stress. The
+  panel hides its own Hope/Stress tracks when embedded, since Resources is already on the page.
+- **Every trait on the sheet is a roll button.** Clicking one opens the dice block if it's
+  closed and calls the panel's exported `rollTrait`, so the modifier breakdown, the flash and
+  the log are the same ones the dice section shows rather than a second, thinner roll path.
+  The block is rendered whether open or closed — collapsed is a `hidden` attribute, not an
+  unmount — so `bind:this` is always live and there is no tick to wait on.
+- **`SrdText` is the one place SRD prose is rendered.** Catalog descriptions carry inline
+  `<strong>`/`<em>` exactly like feature text does, and rendering them through normal
+  interpolation printed the tags on the page — visible on Mixed Ancestry and on 151 of the
+  domain cards. It is deliberately *not* used for anything the user typed: homebrew
+  descriptions, a character's background and note bodies all stay escaped.
+
+**Done when:** you can build a character, manage loadout/vault, roll with your traits, and track resources in play. ✅
 
 ---
 

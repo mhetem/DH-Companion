@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"embed"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/mhetem/DH-Companion/internal/db"
 	"github.com/mhetem/DH-Companion/internal/gm"
+	"github.com/mhetem/DH-Companion/internal/player"
 	"github.com/mhetem/DH-Companion/internal/srd"
 	"github.com/pressly/goose/v3"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -23,10 +23,6 @@ import (
 var migrations embed.FS
 
 const (
-	RoleGM     = "gm"
-	RolePlayer = "player"
-
-	settingLastRole   = "last_role"
 	settingWindowSize = "window_size"
 	settingUIScale    = "ui_scale"
 
@@ -60,11 +56,12 @@ type App struct {
 	q       *db.Queries
 	conn    *sql.DB
 	gm      *gm.Service
+	player  *player.Service
 	catalog *srd.Catalog
 }
 
-func NewApp(gmSvc *gm.Service) *App {
-	return &App{gm: gmSvc}
+func NewApp(gmSvc *gm.Service, playerSvc *player.Service) *App {
+	return &App{gm: gmSvc, player: playerSvc}
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -83,6 +80,7 @@ func (a *App) startup(ctx context.Context) {
 	}
 	a.catalog = catalog
 	gm.Attach(a.gm, ctx, q, conn, catalog)
+	player.Attach(a.player, ctx, q, conn, catalog)
 
 	if err := a.gm.ReindexCards(); err != nil {
 		a.fatal(ctx, "Search index error", err)
@@ -232,24 +230,6 @@ func (a *App) shutdown(ctx context.Context) {
 	if a.conn != nil {
 		a.conn.Close()
 	}
-}
-
-func (a *App) GetRole() (string, error) {
-	role, err := a.q.GetSetting(a.ctx, settingLastRole)
-	if errors.Is(err, sql.ErrNoRows) {
-		return "", nil
-	}
-	if err != nil {
-		return "", err
-	}
-	return role, nil
-}
-
-func (a *App) SetRole(role string) error {
-	if role != RoleGM && role != RolePlayer {
-		return fmt.Errorf("unknown role %q", role)
-	}
-	return a.q.SetSetting(a.ctx, db.SetSettingParams{Key: settingLastRole, Value: role})
 }
 
 func dataDir(dir string) (string, error) {

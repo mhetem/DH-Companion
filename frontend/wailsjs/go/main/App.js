@@ -22,10 +22,6 @@ export function ExportLibrary() {
   return window['go']['main']['App']['ExportLibrary']();
 }
 
-export function GetRole() {
-  return window['go']['main']['App']['GetRole']();
-}
-
 export function GetUIScale() {
   return window['go']['main']['App']['GetUIScale']();
 }
@@ -40,10 +36,6 @@ export function ImportLibrary() {
 
 export function OpenReleasesPage(arg1) {
   return window['go']['main']['App']['OpenReleasesPage'](arg1);
-}
-
-export function SetRole(arg1) {
-  return window['go']['main']['App']['SetRole'](arg1);
 }
 
 export function SetUIScale(arg1) {

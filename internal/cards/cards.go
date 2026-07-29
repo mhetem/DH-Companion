@@ -101,7 +101,7 @@ type Subclass struct {
 	Features       []Feature `json:"features"`
 }
 
-type Class struct {
+type CharacterClass struct {
 	Meta
 	Domains             []string   `json:"domains"`
 	StartingEvasion     string     `json:"startingEvasion"`
@@ -114,7 +114,7 @@ type Class struct {
 	Connections         []string   `json:"connections"`
 }
 
-func (c Class) Subclass(slug string) (Subclass, bool) {
+func (c CharacterClass) Subclass(slug string) (Subclass, bool) {
 	for _, s := range c.Subclasses {
 		if s.Slug == slug {
 			return s, true
