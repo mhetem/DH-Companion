@@ -101,6 +101,48 @@ func (s *Service) SaveCampaign(in CampaignInput) (Campaign, error) {
 	return campaignView(row), nil
 }
 
+type MasterNote struct {
+	CampaignID int64  `json:"campaignId"`
+	Body       string `json:"body"`
+	UpdatedAt  string `json:"updatedAt"`
+}
+
+func (s *Service) GetMasterNote(campaignID int64) (MasterNote, error) {
+	row, err := s.q.GetCampaignMasterNote(s.ctx, campaignID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return MasterNote{}, notFound("campaign", fmt.Sprint(campaignID))
+	}
+	if err != nil {
+		return MasterNote{}, fmt.Errorf("loading master note: %w", err)
+	}
+	return MasterNote{
+		CampaignID: campaignID,
+		Body:       row.MasterNote,
+		UpdatedAt:  row.MasterNoteUpdatedAt,
+	}, nil
+}
+
+func (s *Service) SaveMasterNote(campaignID int64, body string) (MasterNote, error) {
+	if campaignID <= 0 {
+		return MasterNote{}, fmt.Errorf("a master note needs a campaign")
+	}
+	row, err := s.q.SetCampaignMasterNote(s.ctx, db.SetCampaignMasterNoteParams{
+		MasterNote: body,
+		ID:         campaignID,
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return MasterNote{}, notFound("campaign", fmt.Sprint(campaignID))
+	}
+	if err != nil {
+		return MasterNote{}, fmt.Errorf("saving master note: %w", err)
+	}
+	return MasterNote{
+		CampaignID: campaignID,
+		Body:       row.MasterNote,
+		UpdatedAt:  row.MasterNoteUpdatedAt,
+	}, nil
+}
+
 func (s *Service) DeleteCampaign(id int64) error {
 	if err := s.q.DeleteCampaign(s.ctx, id); err != nil {
 		return fmt.Errorf("deleting campaign: %w", err)

@@ -33,6 +33,17 @@ UPDATE campaigns SET
 WHERE id = sqlc.arg(id)
 RETURNING *;
 
+-- name: GetCampaignMasterNote :one
+SELECT master_note, master_note_updated_at FROM campaigns
+WHERE id = ?;
+
+-- name: SetCampaignMasterNote :one
+UPDATE campaigns SET
+  master_note = sqlc.arg(master_note),
+  master_note_updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = sqlc.arg(id)
+RETURNING master_note, master_note_updated_at;
+
 -- name: DeleteCampaign :exec
 DELETE FROM campaigns
 WHERE id = ?;

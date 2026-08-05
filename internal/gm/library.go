@@ -43,6 +43,7 @@ type LibraryCampaign struct {
 	Name        string             `json:"name"`
 	Description string             `json:"description"`
 	CurrentFear int                `json:"currentFear"`
+	MasterNote  string             `json:"masterNote"`
 	Sessions    []LibrarySession   `json:"sessions"`
 	Notes       []LibraryNote      `json:"notes"`
 	Countdowns  []LibraryCountdown `json:"countdowns"`
@@ -149,10 +150,15 @@ func (s *Service) buildLibrary() (Library, error) {
 		return Library{}, err
 	}
 	for _, c := range campaigns {
+		master, err := s.GetMasterNote(c.ID)
+		if err != nil {
+			return Library{}, err
+		}
 		entry := LibraryCampaign{
 			Name:        c.Name,
 			Description: c.Description,
 			CurrentFear: c.CurrentFear,
+			MasterNote:  master.Body,
 			Sessions:    []LibrarySession{},
 			Notes:       []LibraryNote{},
 			Countdowns:  []LibraryCountdown{},
@@ -345,6 +351,12 @@ func (s *Service) importLibrary(lib Library) (ImportReport, error) {
 		if c.CurrentFear > 0 {
 			if _, err := s.SetCampaignFear(campaign.ID, c.CurrentFear); err != nil {
 				report.Skipped = append(report.Skipped, fmt.Sprintf("campaign %q fear: %v", c.Name, err))
+			}
+		}
+
+		if c.MasterNote != "" {
+			if _, err := s.SaveMasterNote(campaign.ID, c.MasterNote); err != nil {
+				report.Skipped = append(report.Skipped, fmt.Sprintf("campaign %q master note: %v", c.Name, err))
 			}
 		}
 

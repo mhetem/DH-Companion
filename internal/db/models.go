@@ -9,12 +9,14 @@ import (
 )
 
 type Campaign struct {
-	ID          int64
-	Name        string
-	Description string
-	CurrentFear int64
-	CreatedAt   string
-	UpdatedAt   string
+	ID                  int64
+	Name                string
+	Description         string
+	CurrentFear         int64
+	CreatedAt           string
+	UpdatedAt           string
+	MasterNote          string
+	MasterNoteUpdatedAt string
 }
 
 type Character struct {

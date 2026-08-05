@@ -126,6 +126,10 @@ export function GetEnvironment(arg1) {
   return window['go']['gm']['Service']['GetEnvironment'](arg1);
 }
 
+export function GetMasterNote(arg1) {
+  return window['go']['gm']['Service']['GetMasterNote'](arg1);
+}
+
 export function GetNote(arg1) {
   return window['go']['gm']['Service']['GetNote'](arg1);
 }
@@ -244,6 +248,10 @@ export function SaveCountdown(arg1) {
 
 export function SaveEncounter(arg1) {
   return window['go']['gm']['Service']['SaveEncounter'](arg1);
+}
+
+export function SaveMasterNote(arg1, arg2) {
+  return window['go']['gm']['Service']['SaveMasterNote'](arg1, arg2);
 }
 
 export function SaveNote(arg1) {

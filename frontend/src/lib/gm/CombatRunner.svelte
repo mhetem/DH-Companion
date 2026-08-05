@@ -24,6 +24,7 @@
   import Dice from './Dice.svelte'
   import FearTracker from './FearTracker.svelte'
   import FeatureList from './FeatureList.svelte'
+  import MasterNote from './MasterNote.svelte'
   import Notes from './Notes.svelte'
 
   // The rollers are opt-in — the Dice section still stands on its own, this just
@@ -351,8 +352,14 @@
 
         <Countdowns campaignId={combat.campaignId} />
 
+        <!-- Keyed on the campaign: relinking a live fight swaps which campaign the
+             rail is reading, and the master note is a write surface — it must not
+             carry the previous campaign's text into the new one. -->
         {#if combat.campaignId}
-          <Notes campaignId={combat.campaignId} compact />
+          {#key combat.campaignId}
+            <MasterNote campaignId={combat.campaignId} compact />
+            <Notes campaignId={combat.campaignId} compact />
+          {/key}
         {/if}
 
         <section class="dicepanel">

@@ -14,7 +14,7 @@ UPDATE campaigns SET
   current_fear = max(0, min(12, current_fear + CAST(?1 AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, name, description, current_fear, created_at, updated_at
+RETURNING id, name, description, current_fear, created_at, updated_at, master_note, master_note_updated_at
 `
 
 type AdjustCampaignFearParams struct {
@@ -32,6 +32,8 @@ func (q *Queries) AdjustCampaignFear(ctx context.Context, arg AdjustCampaignFear
 		&i.CurrentFear,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MasterNote,
+		&i.MasterNoteUpdatedAt,
 	)
 	return i, err
 }
@@ -39,7 +41,7 @@ func (q *Queries) AdjustCampaignFear(ctx context.Context, arg AdjustCampaignFear
 const createCampaign = `-- name: CreateCampaign :one
 INSERT INTO campaigns (name, description)
 VALUES (?,?)
-RETURNING id, name, description, current_fear, created_at, updated_at
+RETURNING id, name, description, current_fear, created_at, updated_at, master_note, master_note_updated_at
 `
 
 type CreateCampaignParams struct {
@@ -57,6 +59,8 @@ func (q *Queries) CreateCampaign(ctx context.Context, arg CreateCampaignParams) 
 		&i.CurrentFear,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MasterNote,
+		&i.MasterNoteUpdatedAt,
 	)
 	return i, err
 }
@@ -72,7 +76,7 @@ func (q *Queries) DeleteCampaign(ctx context.Context, id int64) error {
 }
 
 const getCampaign = `-- name: GetCampaign :one
-SELECT id, name, description, current_fear, created_at, updated_at FROM campaigns
+SELECT id, name, description, current_fear, created_at, updated_at, master_note, master_note_updated_at FROM campaigns
 WHERE id = ?
 `
 
@@ -86,12 +90,31 @@ func (q *Queries) GetCampaign(ctx context.Context, id int64) (Campaign, error) {
 		&i.CurrentFear,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MasterNote,
+		&i.MasterNoteUpdatedAt,
 	)
 	return i, err
 }
 
+const getCampaignMasterNote = `-- name: GetCampaignMasterNote :one
+SELECT master_note, master_note_updated_at FROM campaigns
+WHERE id = ?
+`
+
+type GetCampaignMasterNoteRow struct {
+	MasterNote          string
+	MasterNoteUpdatedAt string
+}
+
+func (q *Queries) GetCampaignMasterNote(ctx context.Context, id int64) (GetCampaignMasterNoteRow, error) {
+	row := q.db.QueryRowContext(ctx, getCampaignMasterNote, id)
+	var i GetCampaignMasterNoteRow
+	err := row.Scan(&i.MasterNote, &i.MasterNoteUpdatedAt)
+	return i, err
+}
+
 const listCampaigns = `-- name: ListCampaigns :many
-SELECT id, name, description, current_fear, created_at, updated_at FROM campaigns
+SELECT id, name, description, current_fear, created_at, updated_at, master_note, master_note_updated_at FROM campaigns
 ORDER BY updated_at DESC
 `
 
@@ -111,6 +134,8 @@ func (q *Queries) ListCampaigns(ctx context.Context) ([]Campaign, error) {
 			&i.CurrentFear,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.MasterNote,
+			&i.MasterNoteUpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -130,7 +155,7 @@ UPDATE campaigns SET
   current_fear = max(0, min(12, CAST(?1 AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, name, description, current_fear, created_at, updated_at
+RETURNING id, name, description, current_fear, created_at, updated_at, master_note, master_note_updated_at
 `
 
 type SetCampaignFearParams struct {
@@ -148,7 +173,34 @@ func (q *Queries) SetCampaignFear(ctx context.Context, arg SetCampaignFearParams
 		&i.CurrentFear,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MasterNote,
+		&i.MasterNoteUpdatedAt,
 	)
+	return i, err
+}
+
+const setCampaignMasterNote = `-- name: SetCampaignMasterNote :one
+UPDATE campaigns SET
+  master_note = ?1,
+  master_note_updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = ?2
+RETURNING master_note, master_note_updated_at
+`
+
+type SetCampaignMasterNoteParams struct {
+	MasterNote string
+	ID         int64
+}
+
+type SetCampaignMasterNoteRow struct {
+	MasterNote          string
+	MasterNoteUpdatedAt string
+}
+
+func (q *Queries) SetCampaignMasterNote(ctx context.Context, arg SetCampaignMasterNoteParams) (SetCampaignMasterNoteRow, error) {
+	row := q.db.QueryRowContext(ctx, setCampaignMasterNote, arg.MasterNote, arg.ID)
+	var i SetCampaignMasterNoteRow
+	err := row.Scan(&i.MasterNote, &i.MasterNoteUpdatedAt)
 	return i, err
 }
 
@@ -158,7 +210,7 @@ UPDATE campaigns SET
   description = ?,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?
-RETURNING id, name, description, current_fear, created_at, updated_at
+RETURNING id, name, description, current_fear, created_at, updated_at, master_note, master_note_updated_at
 `
 
 type UpdateCampaignParams struct {
@@ -177,6 +229,8 @@ func (q *Queries) UpdateCampaign(ctx context.Context, arg UpdateCampaignParams) 
 		&i.CurrentFear,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MasterNote,
+		&i.MasterNoteUpdatedAt,
 	)
 	return i, err
 }

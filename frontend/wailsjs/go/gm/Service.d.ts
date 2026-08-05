@@ -66,6 +66,8 @@ export function GetEncounter(arg1:number):Promise<rules.EncounterView>;
 
 export function GetEnvironment(arg1:string):Promise<gm.BrowseEnvironment>;
 
+export function GetMasterNote(arg1:number):Promise<gm.MasterNote>;
+
 export function GetNote(arg1:number):Promise<gm.Note>;
 
 export function GetParty(arg1:number):Promise<gm.Party>;
@@ -125,6 +127,8 @@ export function SaveCombatant(arg1:gm.CombatantInput):Promise<gm.CombatantView>;
 export function SaveCountdown(arg1:gm.CountdownInput):Promise<gm.Countdown>;
 
 export function SaveEncounter(arg1:gm.EncounterInput):Promise<rules.EncounterView>;
+
+export function SaveMasterNote(arg1:number,arg2:string):Promise<gm.MasterNote>;
 
 export function SaveNote(arg1:gm.NoteInput):Promise<gm.Note>;
 

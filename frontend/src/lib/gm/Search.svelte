@@ -3,7 +3,16 @@
   import { renderExcerpt } from './markdown.js'
 
   const LIMIT = 50
-  const ENTITY_LABELS = { note: 'Note', adversary: 'Adversary', environment: 'Environment' }
+  const ENTITY_LABELS = {
+    note: 'Note',
+    master: 'Master note',
+    adversary: 'Adversary',
+    environment: 'Environment'
+  }
+
+  // The two campaign-scoped entities — the scope select narrows these and leaves
+  // the cards alone, matching what gm.Search does on the Go side.
+  const CAMPAIGN_ENTITIES = ['note', 'master']
 
   let query = $state('')
   let scope = $state(0)
@@ -58,7 +67,7 @@
 <div class="search">
   <header>
     <h2>Search</h2>
-    <p class="blurb">One index over your notes and every adversary and environment card, SRD or homebrew.</p>
+    <p class="blurb">One index over your notes, your campaigns' master notes, and every adversary and environment card, SRD or homebrew.</p>
   </header>
 
   {#if error}
@@ -92,14 +101,16 @@
       {#each hits as hit (keyOf(hit))}
         <li>
           <button class="row" onclick={() => toggle(hit)}>
-            <span class="chip" class:note={hit.entity === 'note'}>{ENTITY_LABELS[hit.entity] ?? hit.entity}</span>
+            <span class="chip" class:note={CAMPAIGN_ENTITIES.includes(hit.entity)}>{ENTITY_LABELS[hit.entity] ?? hit.entity}</span>
             <span class="name">{hit.title}</span>
             <span class="excerpt">{@html renderExcerpt(hit.excerpt)}</span>
           </button>
           {#if openKey === keyOf(hit)}
             <div class="body">
               <p class="full">{@html renderExcerpt(hit.excerpt)}</p>
-              {#if hit.entity === 'note'}
+              {#if hit.entity === 'master'}
+                <p class="hint">The master note of “{hit.title}” — open that campaign to read or edit it in full.</p>
+              {:else if hit.entity === 'note'}
                 <p class="hint">Open this campaign's Notes tab to read or edit it in full.</p>
               {:else}
                 <p class="hint">Card slug <code>{hit.slug}</code> — find it in the {ENTITY_LABELS[hit.entity]?.toLowerCase()} browser.</p>

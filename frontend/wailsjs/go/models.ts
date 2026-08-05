@@ -1038,6 +1038,22 @@ export namespace gm {
 	        this.skipped = source["skipped"];
 	    }
 	}
+	export class MasterNote {
+	    campaignId: number;
+	    body: string;
+	    updatedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new MasterNote(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.campaignId = source["campaignId"];
+	        this.body = source["body"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
 	export class Note {
 	    id: number;
 	    campaignId: number;

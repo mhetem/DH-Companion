@@ -64,11 +64,15 @@ database.
   card quick-view, a 0–12 Fear tracker, countdown clocks, the environment on hand as GM
   prompts, and the dice rollers in the rail. State autosaves as you go, so closing the app
   mid-fight is safe.
-- **Campaigns** — the connective tissue. A campaign owns its Fear, its numbered session log
-  (with recaps and the encounters prepped for and actually run that night), its typed notes
-  (NPC / location / faction / lore / plot, markdown body), and its countdown clocks.
-- **Full-text search** over notes, adversaries and environments in one SQLite FTS5 index,
-  with highlighted excerpts.
+- **Campaigns** — the connective tissue. A campaign owns its Fear, its **master note**, its
+  numbered session log (with recaps and the encounters prepped for and actually run that
+  night), its typed notes (NPC / location / faction / lore / plot, markdown body), and its
+  countdown clocks.
+- **The master note** — one free-form markdown page per campaign for the running timeline,
+  saved as you type. It's the campaign's landing tab, and it sits in the combat runner's rail
+  too, still editable, so the timeline is on hand mid-fight.
+- **Full-text search** over notes, master notes, adversaries and environments in one SQLite
+  FTS5 index, with highlighted excerpts.
 - **Dice** — a GM d20 with advantage/disadvantage and modifiers, plus a damage roller.
   Duality dice are deliberately absent: only players roll Hope and Fear.
 
@@ -439,7 +443,7 @@ current database to `data-replaced-<timestamp>.db`, then swaps and reopens.
 ### Library export/import
 
 Readable JSON covering parties, homebrew cards, encounters, and campaigns with their
-sessions, notes and clocks. Import **adds** rather than replacing, and renames anything
+sessions, notes, master note and clocks. Import **adds** rather than replacing, and renames anything
 whose name is taken — a second `Gutter Wraith` becomes `Gutter Wraith (2)`, and imported
 encounters are remapped so their picks still resolve.
 

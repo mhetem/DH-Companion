@@ -1061,6 +1061,101 @@ Notes on `npm run check`:
 
 ---
 
+## Phase 6.5 — The campaign master note
+
+**Goal:** one free-form page per campaign for the running timeline — the thing a GM keeps
+open all session and edits constantly, as opposed to the filed, typed notes Phase 4 built.
+
+- [x] `campaigns.master_note` + `campaigns.master_note_updated_at`
+- [x] `GetMasterNote` / `SaveMasterNote` on `gm.Service`
+- [x] `MasterNote.svelte` — markdown editor, autosaving, with a Preview toggle
+- [x] The campaign's first tab, and the runner's rail (editable there, unlike `Notes`)
+- [x] Indexed into the existing fts5 table so search reaches it
+- [x] Carried by the library export/import
+
+Notes on the schema:
+- **It is a column on `campaigns`, not a row in `notes`.** A campaign has exactly one, it
+  can never be created or deleted independently, and it has no title and no kind — the
+  same reasoning that made `beastform_slug` a column rather than a table in Phase 5. The
+  alternative, a sixth `notes.kind` plus a partial unique index, would have meant recreating
+  the table to widen a `CHECK` and would still have left "exactly one" as a constraint the
+  UI has to remember rather than one the shape guarantees.
+- **`master_note_updated_at` is its own column** rather than reusing `campaigns.updated_at`,
+  because `updated_at` moves on every Fear adjustment — it can't answer "when did I last
+  write in here", which is the one thing an autosaving editor has to be able to say.
+- **`SetCampaignMasterNote` deliberately does not touch `updated_at`.** `ListCampaigns` is
+  `ORDER BY updated_at DESC`, so bumping it would reshuffle the campaign picker under the
+  cursor every time the autosave fired. Fear reordering the picker is a once-a-scene event;
+  typing is not.
+- Both columns are `NOT NULL DEFAULT ''`, keeping the Phase 3 rule, and `''` is what every
+  pre-existing campaign gets — SQLite only accepts a constant default on `ADD COLUMN`, which
+  is why the timestamp defaults to empty rather than to `strftime(...)`.
+- **The `Campaign` bridge type deliberately does not carry the body.** `ListCampaigns` is
+  `SELECT *` like everything else here, so the rows do hold it, but `campaignView` drops it
+  and the editor fetches through `GetMasterNote` — otherwise every campaign-picker render
+  would ship every timeline across the bridge. If the list ever needs to *know* about it
+  (a dot on the tab, say), a flag on the view is the cheap answer, not the text.
+- **The library export carries it** (`LibraryCampaign.MasterNote`). It is authored content
+  sitting on an exported table, so leaving it out would have made export/import silently drop
+  the timeline — the one kind of bug that portability features exist to avoid. Import writes
+  it only when non-empty, so it can't stamp a blank over a merge target.
+
+Notes on search:
+- The master note is fed into the same fts5 table as `entity = 'master'`, by two triggers:
+  one on `UPDATE OF master_note`, one on `UPDATE OF name` so a renamed campaign doesn't
+  leave a stale title in the index. Both are delete-then-insert, like the `notes` triggers.
+- **The `OF <column>` clauses are load-bearing.** A bare `AFTER UPDATE ON campaigns` would
+  re-tokenise the whole timeline document on every Fear click, which during a fight is a lot
+  of pointless work against the biggest body of text in the database.
+- **The insert is `SELECT … WHERE trim(new.master_note) <> ''`**, so an empty master note
+  contributes no row. Every campaign has one whether or not it's been written in, and
+  indexing the empty ones would mean every campaign name matched as a "Master note" hit.
+- `entity_id` and `campaign_id` are both the campaign id — the first identifies the record,
+  the second is what the scope filter narrows on, and for this entity they coincide.
+- **`gm.Search`'s scoping clause had to widen.** It was `entity <> 'note' OR campaign_id = ?`,
+  which would have let every other campaign's master note through a campaign-scoped search.
+  It is `entity NOT IN ('note', 'master')` now, and `Search.svelte` keeps the matching pair
+  in `CAMPAIGN_ENTITIES`.
+
+Notes on the frontend:
+- **Autosave is debounced at 600ms, with a save on blur and on Ctrl/Cmd+S.** `keys.js` guards
+  on `isTyping`, so a textarea never reaches the global shortcut map — the chord is bound on
+  the element.
+- **One write is in flight at a time**, and whatever was typed while it was away is caught by
+  a trailing call rather than racing a second write against the same row. A failure ends the
+  chain instead of retrying itself into a loop; the next keystroke reschedules, which is also
+  how you recover from it.
+- **The unmount flush is the part that isn't obvious.** Switching tabs or campaigns unmounts
+  the component and the pending debounce would go with it, taking the last few keystrokes
+  along — so the `$effect` cleanup fires a final save. It is deliberately silent about
+  failure: there is no UI left to report it to.
+- **Both hosts key the component on the campaign id**, which is what lets it read `campaignId`
+  once and save against it for its whole life. In the runner that key is new and fixes a real
+  bug: relinking a live fight to a different campaign left the rail's `Notes` showing the old
+  campaign's, and for a *write* surface the same staleness would have put the timeline in the
+  wrong campaign.
+- **The body is stored verbatim — no trimming.** Trimming an autosaving editor fights the
+  user: press Enter to start a line, the save fires, and the newline is taken back out from
+  under the cursor.
+- The runner's copy is `compact` (the sixth use of that prop) but, unlike `Notes` compact, it
+  stays **editable**. Read-only made sense for filed NPC notes; the whole reason a timeline is
+  in the rail is to write "they burned the bridge" into it without leaving the fight.
+- It is the campaign's **first and default** tab. Sessions was the default before; the running
+  timeline is what you open a campaign to look at.
+
+Not built: **the pop-out window.** Wails v2.13 is single-window, and `window.open` is
+unhandled on all three platforms — there is no `create` signal handler on WebKitGTK, no
+`NewWindowRequested` on WebView2, and no `createWebViewWithConfiguration` on darwin. A real
+second window would have to come from a loopback HTTP server plus `runtime.BrowserOpenURL`,
+which is a meaningful change to the local-first, no-server story and is most of the
+groundwork for the Phase 7 LAN-sharing bullet. Deferred rather than rejected; the rail copy
+covers the case that prompted it (notes on hand while the runner is on screen).
+
+**Done when:** you can keep a campaign timeline open, edit it without ever pressing Save,
+read and edit it from inside a fight, and find it from Search. ✅
+
+---
+
 ## Phase 7 — Roadmap: the first update after release
 
 **Goal:** what goes in the release *after* 1.0. Phases 0–6 are done and shipped, and the app
@@ -1100,6 +1195,11 @@ Ordered by what a user hits first, not by how interesting it is to build.
       that. LAN sharing is the honest way to bridge the two; a cross-island query is not.
 - [ ] **Positions in the runner.** It tracks HP, Stress and spotlight but has no sense of
       where anyone is standing. Not a battle map — a scratch surface per combat would do.
+- [ ] **Pop the notes out into their own window**, so the timeline can sit on a second
+      monitor beside the runner. Wails v2 is single-window and `window.open` is unhandled on
+      all three platforms (see Phase 6.5), so this needs a loopback HTTP server serving a
+      small notes page that `runtime.BrowserOpenURL` opens — which is most of the LAN-sharing
+      groundwork above, and should probably ride along with it rather than land alone.
 
 ### Distribution
 

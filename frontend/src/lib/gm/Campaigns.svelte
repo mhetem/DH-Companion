@@ -10,6 +10,7 @@
   import EmptyState from '../EmptyState.svelte'
   import Countdowns from './Countdowns.svelte'
   import FearTracker from './FearTracker.svelte'
+  import MasterNote from './MasterNote.svelte'
   import Notes from './Notes.svelte'
   import SessionLog from './SessionLog.svelte'
 
@@ -23,7 +24,8 @@
   let error = $state('')
   let saving = $state(false)
   let busy = $state(false)
-  let tab = $state('sessions')
+  // The master note is the tab you open a campaign to look at, so it lands first.
+  let tab = $state('master')
   let editingId = $state(null)
   let form = $state(blank())
   let adding = $state(false)
@@ -112,6 +114,7 @@
   const setFear = (value) => fear(() => SetCampaignFear(selectedId, value))
 
   const TABS = [
+    { id: 'master', label: 'Master note' },
     { id: 'sessions', label: 'Sessions' },
     { id: 'notes', label: 'Notes' },
     { id: 'clocks', label: 'Countdowns' }
@@ -187,7 +190,9 @@
 
       {#key selected.id}
         <div class="panel">
-          {#if tab === 'sessions'}
+          {#if tab === 'master'}
+            <MasterNote campaignId={selected.id} />
+          {:else if tab === 'sessions'}
             <SessionLog campaignId={selected.id} />
           {:else if tab === 'notes'}
             <Notes campaignId={selected.id} />
