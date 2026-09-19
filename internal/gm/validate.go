@@ -12,9 +12,41 @@ var (
 	validAdversaryTypes   = []string{"Bruiser", "Horde", "Leader", "Minion", "Ranged", "Skulk", "Social", "Solo", "Standard", "Support"}
 	validEnvironmentTypes = []string{"Event", "Exploration", "Social", "Traversal"}
 	validNoteKinds        = []string{"npc", "location", "faction", "lore", "plot"}
+	validWeaponTypes      = []string{"Physical", "Magic"}
+	validWeaponCategories = []string{"Primary", "Secondary"}
+	validLootKinds        = []string{"item", "consumable"}
 )
 
 const defaultNoteKind = "npc"
+
+// armorType is the single Type every armor carries: armor has no sub-types the
+// way adversaries and weapons do, but Meta.Type is what the browsers filter on.
+const armorType = "Armor"
+
+// maxArmorScore mirrors the SRD's cap on a PC's Armor Score.
+const maxArmorScore = 12
+
+func validateWeaponType(t string) error {
+	if !slices.Contains(validWeaponTypes, strings.TrimSpace(t)) {
+		return fmt.Errorf("weapon damage must be one of %s, got %q", strings.Join(validWeaponTypes, ", "), t)
+	}
+	return nil
+}
+
+func validateWeaponCategory(c string) error {
+	if !slices.Contains(validWeaponCategories, strings.TrimSpace(c)) {
+		return fmt.Errorf("weapon category must be one of %s, got %q", strings.Join(validWeaponCategories, ", "), c)
+	}
+	return nil
+}
+
+func validateLootKind(kind string) (string, error) {
+	k := strings.ToLower(strings.TrimSpace(kind))
+	if !slices.Contains(validLootKinds, k) {
+		return "", fmt.Errorf("loot kind must be one of %s, got %q", strings.Join(validLootKinds, ", "), kind)
+	}
+	return k, nil
+}
 
 func validateTier(tier string) error {
 	if !slices.Contains(validTiers, strings.TrimSpace(tier)) {

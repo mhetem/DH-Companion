@@ -153,6 +153,20 @@ type CustomAdversary struct {
 	UpdatedAt      string
 }
 
+type CustomArmor struct {
+	ID              int64
+	Slug            string
+	Name            string
+	Tier            string
+	Description     string
+	ThresholdMajor  int64
+	ThresholdSevere int64
+	BaseScore       int64
+	Feature         string
+	CreatedAt       string
+	UpdatedAt       string
+}
+
 type CustomEnvironment struct {
 	ID                   int64
 	Slug                 string
@@ -166,6 +180,35 @@ type CustomEnvironment struct {
 	Features             string
 	CreatedAt            string
 	UpdatedAt            string
+}
+
+type CustomLoot struct {
+	ID          int64
+	Kind        string
+	Slug        string
+	Name        string
+	Rarity      string
+	Description string
+	CreatedAt   string
+	UpdatedAt   string
+}
+
+type CustomWeapon struct {
+	ID          int64
+	Slug        string
+	Name        string
+	Tier        string
+	Type        string
+	Description string
+	Category    string
+	Trait       string
+	WeaponRange string
+	Damage      string
+	DamageType  string
+	Burden      string
+	Feature     string
+	CreatedAt   string
+	UpdatedAt   string
 }
 
 type Encounter struct {

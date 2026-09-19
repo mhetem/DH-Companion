@@ -16,9 +16,26 @@ const (
 
 	KindAdversary   = "adversary"
 	KindEnvironment = "environment"
+	KindWeapon      = "weapon"
+	KindArmor       = "armor"
+	KindItem        = "item"
+	KindConsumable  = "consumable"
 
 	maxDecoded = 1 << 20
 )
+
+var shareKinds = []string{
+	KindAdversary, KindEnvironment, KindWeapon, KindArmor, KindItem, KindConsumable,
+}
+
+func knownKind(kind string) bool {
+	for _, k := range shareKinds {
+		if k == kind {
+			return true
+		}
+	}
+	return false
+}
 
 type Payload struct {
 	Kind string          `json:"kind"`
@@ -26,7 +43,7 @@ type Payload struct {
 }
 
 func Encode(kind string, v any) (string, error) {
-	if kind != KindAdversary && kind != KindEnvironment {
+	if !knownKind(kind) {
 		return "", fmt.Errorf("unknown share kind %q", kind)
 	}
 	data, err := json.Marshal(v)
@@ -96,7 +113,7 @@ func Decode(code string) (Payload, error) {
 	if err := json.Unmarshal(body, &payload); err != nil {
 		return Payload{}, fmt.Errorf("this code is damaged — it may have been cut short when copied")
 	}
-	if payload.Kind != KindAdversary && payload.Kind != KindEnvironment {
+	if !knownKind(payload.Kind) {
 		return Payload{}, fmt.Errorf("unknown share kind %q", payload.Kind)
 	}
 	return payload, nil

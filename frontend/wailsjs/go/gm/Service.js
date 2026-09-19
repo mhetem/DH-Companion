@@ -18,8 +18,24 @@ export function BrowseAdversaries(arg1) {
   return window['go']['gm']['Service']['BrowseAdversaries'](arg1);
 }
 
+export function BrowseArmor(arg1) {
+  return window['go']['gm']['Service']['BrowseArmor'](arg1);
+}
+
+export function BrowseConsumables(arg1) {
+  return window['go']['gm']['Service']['BrowseConsumables'](arg1);
+}
+
 export function BrowseEnvironments(arg1) {
   return window['go']['gm']['Service']['BrowseEnvironments'](arg1);
+}
+
+export function BrowseItems(arg1) {
+  return window['go']['gm']['Service']['BrowseItems'](arg1);
+}
+
+export function BrowseWeapons(arg1) {
+  return window['go']['gm']['Service']['BrowseWeapons'](arg1);
 }
 
 export function ClearSpotlights(arg1) {
@@ -38,8 +54,24 @@ export function CreateCustomAdversary(arg1) {
   return window['go']['gm']['Service']['CreateCustomAdversary'](arg1);
 }
 
+export function CreateCustomArmor(arg1) {
+  return window['go']['gm']['Service']['CreateCustomArmor'](arg1);
+}
+
+export function CreateCustomConsumable(arg1) {
+  return window['go']['gm']['Service']['CreateCustomConsumable'](arg1);
+}
+
 export function CreateCustomEnvironment(arg1) {
   return window['go']['gm']['Service']['CreateCustomEnvironment'](arg1);
+}
+
+export function CreateCustomItem(arg1) {
+  return window['go']['gm']['Service']['CreateCustomItem'](arg1);
+}
+
+export function CreateCustomWeapon(arg1) {
+  return window['go']['gm']['Service']['CreateCustomWeapon'](arg1);
 }
 
 export function CreateParty(arg1) {
@@ -62,8 +94,24 @@ export function DeleteCustomAdversary(arg1) {
   return window['go']['gm']['Service']['DeleteCustomAdversary'](arg1);
 }
 
+export function DeleteCustomArmor(arg1) {
+  return window['go']['gm']['Service']['DeleteCustomArmor'](arg1);
+}
+
+export function DeleteCustomConsumable(arg1) {
+  return window['go']['gm']['Service']['DeleteCustomConsumable'](arg1);
+}
+
 export function DeleteCustomEnvironment(arg1) {
   return window['go']['gm']['Service']['DeleteCustomEnvironment'](arg1);
+}
+
+export function DeleteCustomItem(arg1) {
+  return window['go']['gm']['Service']['DeleteCustomItem'](arg1);
+}
+
+export function DeleteCustomWeapon(arg1) {
+  return window['go']['gm']['Service']['DeleteCustomWeapon'](arg1);
 }
 
 export function DeleteEncounter(arg1) {
@@ -98,12 +146,20 @@ export function GetAdversary(arg1) {
   return window['go']['gm']['Service']['GetAdversary'](arg1);
 }
 
+export function GetArmor(arg1) {
+  return window['go']['gm']['Service']['GetArmor'](arg1);
+}
+
 export function GetCampaign(arg1) {
   return window['go']['gm']['Service']['GetCampaign'](arg1);
 }
 
 export function GetCombat(arg1) {
   return window['go']['gm']['Service']['GetCombat'](arg1);
+}
+
+export function GetConsumable(arg1) {
+  return window['go']['gm']['Service']['GetConsumable'](arg1);
 }
 
 export function GetCountdown(arg1) {
@@ -114,8 +170,24 @@ export function GetCustomAdversary(arg1) {
   return window['go']['gm']['Service']['GetCustomAdversary'](arg1);
 }
 
+export function GetCustomArmor(arg1) {
+  return window['go']['gm']['Service']['GetCustomArmor'](arg1);
+}
+
+export function GetCustomConsumable(arg1) {
+  return window['go']['gm']['Service']['GetCustomConsumable'](arg1);
+}
+
 export function GetCustomEnvironment(arg1) {
   return window['go']['gm']['Service']['GetCustomEnvironment'](arg1);
+}
+
+export function GetCustomItem(arg1) {
+  return window['go']['gm']['Service']['GetCustomItem'](arg1);
+}
+
+export function GetCustomWeapon(arg1) {
+  return window['go']['gm']['Service']['GetCustomWeapon'](arg1);
 }
 
 export function GetEncounter(arg1) {
@@ -124,6 +196,10 @@ export function GetEncounter(arg1) {
 
 export function GetEnvironment(arg1) {
   return window['go']['gm']['Service']['GetEnvironment'](arg1);
+}
+
+export function GetItem(arg1) {
+  return window['go']['gm']['Service']['GetItem'](arg1);
 }
 
 export function GetMasterNote(arg1) {
@@ -140,6 +216,10 @@ export function GetParty(arg1) {
 
 export function GetSession(arg1) {
   return window['go']['gm']['Service']['GetSession'](arg1);
+}
+
+export function GetWeapon(arg1) {
+  return window['go']['gm']['Service']['GetWeapon'](arg1);
 }
 
 export function ImportLibraryJSON(arg1) {
@@ -178,8 +258,24 @@ export function ListCustomAdversaries(arg1) {
   return window['go']['gm']['Service']['ListCustomAdversaries'](arg1);
 }
 
+export function ListCustomArmor(arg1) {
+  return window['go']['gm']['Service']['ListCustomArmor'](arg1);
+}
+
+export function ListCustomConsumables(arg1) {
+  return window['go']['gm']['Service']['ListCustomConsumables'](arg1);
+}
+
 export function ListCustomEnvironments(arg1) {
   return window['go']['gm']['Service']['ListCustomEnvironments'](arg1);
+}
+
+export function ListCustomItems(arg1) {
+  return window['go']['gm']['Service']['ListCustomItems'](arg1);
+}
+
+export function ListCustomWeapons(arg1) {
+  return window['go']['gm']['Service']['ListCustomWeapons'](arg1);
 }
 
 export function ListEncounters() {
@@ -204,6 +300,10 @@ export function ListSessions(arg1) {
 
 export function ListUnassignedCountdowns() {
   return window['go']['gm']['Service']['ListUnassignedCountdowns']();
+}
+
+export function LookupLoot(arg1) {
+  return window['go']['gm']['Service']['LookupLoot'](arg1);
 }
 
 export function MarkHP(arg1, arg2) {
@@ -232,6 +332,10 @@ export function RemoveCombatant(arg1) {
 
 export function ResumeCombat(arg1) {
   return window['go']['gm']['Service']['ResumeCombat'](arg1);
+}
+
+export function RollLoot(arg1) {
+  return window['go']['gm']['Service']['RollLoot'](arg1);
 }
 
 export function SaveCampaign(arg1) {
@@ -290,8 +394,24 @@ export function ShareAdversary(arg1) {
   return window['go']['gm']['Service']['ShareAdversary'](arg1);
 }
 
+export function ShareArmor(arg1) {
+  return window['go']['gm']['Service']['ShareArmor'](arg1);
+}
+
+export function ShareConsumable(arg1) {
+  return window['go']['gm']['Service']['ShareConsumable'](arg1);
+}
+
 export function ShareEnvironment(arg1) {
   return window['go']['gm']['Service']['ShareEnvironment'](arg1);
+}
+
+export function ShareItem(arg1) {
+  return window['go']['gm']['Service']['ShareItem'](arg1);
+}
+
+export function ShareWeapon(arg1) {
+  return window['go']['gm']['Service']['ShareWeapon'](arg1);
 }
 
 export function StartCombat(arg1, arg2, arg3) {
@@ -306,8 +426,24 @@ export function UpdateCustomAdversary(arg1) {
   return window['go']['gm']['Service']['UpdateCustomAdversary'](arg1);
 }
 
+export function UpdateCustomArmor(arg1) {
+  return window['go']['gm']['Service']['UpdateCustomArmor'](arg1);
+}
+
+export function UpdateCustomConsumable(arg1) {
+  return window['go']['gm']['Service']['UpdateCustomConsumable'](arg1);
+}
+
 export function UpdateCustomEnvironment(arg1) {
   return window['go']['gm']['Service']['UpdateCustomEnvironment'](arg1);
+}
+
+export function UpdateCustomItem(arg1) {
+  return window['go']['gm']['Service']['UpdateCustomItem'](arg1);
+}
+
+export function UpdateCustomWeapon(arg1) {
+  return window['go']['gm']['Service']['UpdateCustomWeapon'](arg1);
 }
 
 export function UpdateParty(arg1, arg2) {

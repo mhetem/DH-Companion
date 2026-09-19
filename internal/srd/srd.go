@@ -21,6 +21,10 @@ const (
 	beastformsFile   = "beastforms.json"
 	companionsFile   = "rangerCompanion.json"
 	levelingFile     = "leveling.json"
+	weaponsFile      = "weapons.json"
+	armorFile        = "armor.json"
+	itemsFile        = "items.json"
+	consumablesFile  = "consumables.json"
 )
 
 type AdvancementEffect struct {
@@ -72,6 +76,10 @@ type Catalog struct {
 	Classes      map[string]cards.CharacterClass
 	Beastforms   map[string]cards.Beastform
 	Companions   map[string]cards.Companion
+	Weapons      map[string]cards.Weapon
+	Armor        map[string]cards.Armor
+	Items        map[string]cards.Loot
+	Consumables  map[string]cards.Loot
 	Leveling     Leveling
 }
 
@@ -85,6 +93,10 @@ func Load(fsys fs.FS) (*Catalog, error) {
 		Classes:      map[string]cards.CharacterClass{},
 		Beastforms:   map[string]cards.Beastform{},
 		Companions:   map[string]cards.Companion{},
+		Weapons:      map[string]cards.Weapon{},
+		Armor:        map[string]cards.Armor{},
+		Items:        map[string]cards.Loot{},
+		Consumables:  map[string]cards.Loot{},
 	}
 
 	if err := decodeFile(fsys, adversariesFile, &c.Adversaries); err != nil {
@@ -157,6 +169,42 @@ func Load(fsys fs.FS) (*Catalog, error) {
 		p.Kind = cards.KindCompanion
 		p.Slug = slug
 		c.Companions[slug] = p
+	}
+
+	if err := decodeFile(fsys, weaponsFile, &c.Weapons); err != nil {
+		return nil, err
+	}
+	for slug, w := range c.Weapons {
+		w.Kind = cards.KindWeapon
+		w.Slug = slug
+		c.Weapons[slug] = w
+	}
+
+	if err := decodeFile(fsys, armorFile, &c.Armor); err != nil {
+		return nil, err
+	}
+	for slug, a := range c.Armor {
+		a.Kind = cards.KindArmor
+		a.Slug = slug
+		c.Armor[slug] = a
+	}
+
+	if err := decodeFile(fsys, itemsFile, &c.Items); err != nil {
+		return nil, err
+	}
+	for slug, i := range c.Items {
+		i.Kind = cards.KindItem
+		i.Slug = slug
+		c.Items[slug] = i
+	}
+
+	if err := decodeFile(fsys, consumablesFile, &c.Consumables); err != nil {
+		return nil, err
+	}
+	for slug, i := range c.Consumables {
+		i.Kind = cards.KindConsumable
+		i.Slug = slug
+		c.Consumables[slug] = i
 	}
 
 	if err := decodeFile(fsys, levelingFile, &c.Leveling); err != nil {
@@ -368,5 +416,110 @@ func (c *Catalog) EnvironmentsByTier(tier string) []cards.Environment {
 			out = append(out, e)
 		}
 	}
+	return out
+}
+
+func (c *Catalog) Weapon(slug string) (cards.Weapon, bool) {
+	w, ok := c.Weapons[slug]
+	return w, ok
+}
+
+// ListWeapons returns every weapon sorted the way the tables are printed: by
+// tier, then primary before secondary, then physical before magic, then by name.
+func (c *Catalog) ListWeapons() []cards.Weapon {
+	out := make([]cards.Weapon, 0, len(c.Weapons))
+	for _, w := range c.Weapons {
+		out = append(out, w)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Tier != out[j].Tier {
+			return out[i].Tier < out[j].Tier
+		}
+		if out[i].Category != out[j].Category {
+			return out[i].Category == cards.CategoryPrimary
+		}
+		if out[i].Type != out[j].Type {
+			return out[i].Type < out[j].Type
+		}
+		return out[i].Name < out[j].Name
+	})
+	return out
+}
+
+func (c *Catalog) ArmorPiece(slug string) (cards.Armor, bool) {
+	a, ok := c.Armor[slug]
+	return a, ok
+}
+
+// ListArmor returns every armor sorted by tier, then by name.
+func (c *Catalog) ListArmor() []cards.Armor {
+	out := make([]cards.Armor, 0, len(c.Armor))
+	for _, a := range c.Armor {
+		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Tier != out[j].Tier {
+			return out[i].Tier < out[j].Tier
+		}
+		return out[i].Name < out[j].Name
+	})
+	return out
+}
+
+func (c *Catalog) Item(slug string) (cards.Loot, bool) {
+	i, ok := c.Items[slug]
+	return i, ok
+}
+
+func (c *Catalog) Consumable(slug string) (cards.Loot, bool) {
+	i, ok := c.Consumables[slug]
+	return i, ok
+}
+
+// ListItems and ListConsumables return their tables in printed order: the Core
+// Set table first, then the expansion, each by its own roll number.
+func (c *Catalog) ListItems() []cards.Loot { return sortLoot(c.Items) }
+
+func (c *Catalog) ListConsumables() []cards.Loot { return sortLoot(c.Consumables) }
+
+func sortLoot(in map[string]cards.Loot) []cards.Loot {
+	out := make([]cards.Loot, 0, len(in))
+	for _, i := range in {
+		out = append(out, i)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Table != out[j].Table {
+			return out[i].Table < out[j].Table
+		}
+		return out[i].Roll < out[j].Roll
+	})
+	return out
+}
+
+// LootByRoll indexes a loot table by its roll number, which is how a rolled d12
+// sum is turned back into an entry. A table row is missing only if the data file
+// is short, which Load would have to have let through.
+func LootByRoll(in []cards.Loot, table string) map[int]cards.Loot {
+	out := make(map[int]cards.Loot, len(in))
+	for _, i := range in {
+		if table == "" || i.Table == table {
+			out[i.Roll] = i
+		}
+	}
+	return out
+}
+
+// LootTables lists the distinct source tables present in a loot set, in printed
+// order, so the frontend can offer them without hardcoding the set names.
+func LootTables(in []cards.Loot) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, i := range in {
+		if !seen[i.Table] {
+			seen[i.Table] = true
+			out = append(out, i.Table)
+		}
+	}
+	sort.Strings(out)
 	return out
 }

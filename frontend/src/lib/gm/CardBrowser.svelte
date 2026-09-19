@@ -2,9 +2,9 @@
   import { untrack } from 'svelte'
   import { TIERS, errorMessage } from './api.js'
 
-  // Shared list/detail chrome for the adversary and environment browsers. Tier
-  // and type are pushed down to the Go filter; the name search stays client-side
-  // so typing doesn't re-hit the bridge on every keystroke.
+  // Shared list/detail chrome for the catalog browsers. The selects are pushed
+  // down to the Go filter; the name search stays client-side so typing doesn't
+  // re-hit the bridge on every keystroke.
   //
   // The parent swaps this component out for the homebrew form, so coming back
   // remounts it and the list reloads on its own — initialSlug is how the parent
@@ -13,8 +13,15 @@
   // which leaves this component mounted with a stale list.
   // compact stacks the list above the detail instead of sitting beside it, for the
   // reference pane inside the homebrew forms where there is no room for two columns.
+  //
+  // filters overrides the tier/type pair for catalogs that browse on other axes —
+  // loot has no tier and sorts by rarity and source book instead. Each entry is
+  // { key, label, all, options: [{ value, label }] }, and key is the field name the
+  // Go filter struct expects. Left unset, the defaults below reproduce the tier and
+  // type selects the adversary and environment browsers have always had.
   let {
-    types,
+    types = [],
+    filters = null,
     load,
     emptyLabel,
     row,
@@ -26,8 +33,27 @@
     compact = false
   } = $props()
 
-  let tier = $state('')
-  let type = $state('')
+  // Read once at mount, like initialSlug: the parent remounts this component when it
+  // swaps catalogs, so the filter set never has to change underneath the selects.
+  const filterDefs = untrack(
+    () =>
+      filters ?? [
+        {
+          key: 'tier',
+          label: 'Tier',
+          all: 'All tiers',
+          options: TIERS.map((t) => ({ value: t, label: `Tier ${t}` }))
+        },
+        {
+          key: 'type',
+          label: 'Type',
+          all: 'All types',
+          options: types.map((t) => ({ value: t, label: t }))
+        }
+      ]
+  )
+
+  let values = $state(Object.fromEntries(filterDefs.map((d) => [d.key, ''])))
   let search = $state('')
 
   let items = $state([])
@@ -36,7 +62,8 @@
   let error = $state('')
 
   $effect(() => {
-    const filter = { tier, type }
+    const filter = {}
+    for (const def of filterDefs) filter[def.key] = values[def.key]
     reloadToken // tracked so a bump re-runs the load
     let stale = false
     loading = true
@@ -69,18 +96,14 @@
 <div class="browser" class:compact>
   <div class="filters">
     <input type="search" placeholder="Search by name…" bind:value={search} />
-    <select bind:value={tier} aria-label="Tier">
-      <option value="">All tiers</option>
-      {#each TIERS as t (t)}
-        <option value={t}>Tier {t}</option>
-      {/each}
-    </select>
-    <select bind:value={type} aria-label="Type">
-      <option value="">All types</option>
-      {#each types as t (t)}
-        <option value={t}>{t}</option>
-      {/each}
-    </select>
+    {#each filterDefs as def (def.key)}
+      <select bind:value={values[def.key]} aria-label={def.label}>
+        <option value="">{def.all}</option>
+        {#each def.options as option (option.value)}
+          <option value={option.value}>{option.label}</option>
+        {/each}
+      </select>
+    {/each}
     <span class="count">{visible.length}</span>
     {#if onnew}
       <button class="btn primary" onclick={onnew}>{newLabel}</button>

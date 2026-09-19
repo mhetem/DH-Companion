@@ -20,9 +20,16 @@ type Library struct {
 	Parties            []LibraryParty      `json:"parties"`
 	CustomAdversaries  []cards.Adversary   `json:"customAdversaries"`
 	CustomEnvironments []cards.Environment `json:"customEnvironments"`
-	Encounters         []LibraryEncounter  `json:"encounters"`
-	Campaigns          []LibraryCampaign   `json:"campaigns"`
-	Countdowns         []LibraryCountdown  `json:"countdowns"`
+	// The equipment and loot homebrew arrived after format 1 and are additive:
+	// an older export simply has none, and an older build ignores them, so the
+	// format number doesn't move.
+	CustomWeapons     []cards.Weapon     `json:"customWeapons"`
+	CustomArmor       []cards.Armor      `json:"customArmor"`
+	CustomItems       []cards.Loot       `json:"customItems"`
+	CustomConsumables []cards.Loot       `json:"customConsumables"`
+	Encounters        []LibraryEncounter `json:"encounters"`
+	Campaigns         []LibraryCampaign  `json:"campaigns"`
+	Countdowns        []LibraryCountdown `json:"countdowns"`
 }
 
 type LibraryParty struct {
@@ -74,6 +81,10 @@ type ImportReport struct {
 	Parties            int      `json:"parties"`
 	CustomAdversaries  int      `json:"customAdversaries"`
 	CustomEnvironments int      `json:"customEnvironments"`
+	CustomWeapons      int      `json:"customWeapons"`
+	CustomArmor        int      `json:"customArmor"`
+	CustomItems        int      `json:"customItems"`
+	CustomConsumables  int      `json:"customConsumables"`
 	Encounters         int      `json:"encounters"`
 	Campaigns          int      `json:"campaigns"`
 	Sessions           int      `json:"sessions"`
@@ -91,6 +102,10 @@ func (s *Service) buildLibrary() (Library, error) {
 		Parties:            []LibraryParty{},
 		CustomAdversaries:  []cards.Adversary{},
 		CustomEnvironments: []cards.Environment{},
+		CustomWeapons:      []cards.Weapon{},
+		CustomArmor:        []cards.Armor{},
+		CustomItems:        []cards.Loot{},
+		CustomConsumables:  []cards.Loot{},
 		Encounters:         []LibraryEncounter{},
 		Campaigns:          []LibraryCampaign{},
 		Countdowns:         []LibraryCountdown{},
@@ -117,6 +132,30 @@ func (s *Service) buildLibrary() (Library, error) {
 		return Library{}, err
 	}
 	lib.CustomEnvironments = append(lib.CustomEnvironments, environments...)
+
+	weapons, err := s.ListCustomWeapons(EquipmentFilter{})
+	if err != nil {
+		return Library{}, err
+	}
+	lib.CustomWeapons = append(lib.CustomWeapons, weapons...)
+
+	armor, err := s.ListCustomArmor(EquipmentFilter{})
+	if err != nil {
+		return Library{}, err
+	}
+	lib.CustomArmor = append(lib.CustomArmor, armor...)
+
+	items, err := s.ListCustomItems(LootFilter{})
+	if err != nil {
+		return Library{}, err
+	}
+	lib.CustomItems = append(lib.CustomItems, items...)
+
+	consumables, err := s.ListCustomConsumables(LootFilter{})
+	if err != nil {
+		return Library{}, err
+	}
+	lib.CustomConsumables = append(lib.CustomConsumables, consumables...)
 
 	rows, err := s.q.ShowAllEncounters(s.ctx)
 	if err != nil {
@@ -291,6 +330,32 @@ func (s *Service) importLibrary(lib Library) (ImportReport, error) {
 		report.CustomEnvironments++
 	}
 
+	// Nothing references equipment or loot by slug the way encounters reference
+	// adversaries, so these need no slug remapping — just a free name each.
+	importHomebrewCards(s, &report, &report.CustomWeapons, "weapon", lib.CustomWeapons,
+		func(c cards.Weapon) string { return c.Name },
+		func(c cards.Weapon, name string) cards.Weapon { c.Name, c.Slug = name, ""; return c },
+		s.slugTaken(func(slug string) error { _, err := s.GetCustomWeapon(slug); return err }),
+		s.CreateCustomWeapon)
+
+	importHomebrewCards(s, &report, &report.CustomArmor, "armor", lib.CustomArmor,
+		func(c cards.Armor) string { return c.Name },
+		func(c cards.Armor, name string) cards.Armor { c.Name, c.Slug = name, ""; return c },
+		s.slugTaken(func(slug string) error { _, err := s.GetCustomArmor(slug); return err }),
+		s.CreateCustomArmor)
+
+	importHomebrewCards(s, &report, &report.CustomItems, "item", lib.CustomItems,
+		func(c cards.Loot) string { return c.Name },
+		func(c cards.Loot, name string) cards.Loot { c.Name, c.Slug = name, ""; return c },
+		s.slugTaken(func(slug string) error { _, err := s.GetCustomItem(slug); return err }),
+		s.CreateCustomItem)
+
+	importHomebrewCards(s, &report, &report.CustomConsumables, "consumable", lib.CustomConsumables,
+		func(c cards.Loot) string { return c.Name },
+		func(c cards.Loot, name string) cards.Loot { c.Name, c.Slug = name, ""; return c },
+		s.slugTaken(func(slug string) error { _, err := s.GetCustomConsumable(slug); return err }),
+		s.CreateCustomConsumable)
+
 	existingParties, err := s.ListParties()
 	if err != nil {
 		return report, err
@@ -425,4 +490,37 @@ func remapPicks(picks []Pick, slugs map[string]string) []Pick {
 		out = append(out, p)
 	}
 	return out
+}
+
+// importHomebrewCards adds a batch of homebrew that nothing else references by
+// slug, renaming around collisions and recording each outcome. The adversary and
+// environment loops above stay written out because they also have to remember
+// which new slug each old one became, so encounters can be remapped onto them.
+func importHomebrewCards[T any](
+	s *Service,
+	report *ImportReport,
+	counter *int,
+	label string,
+	rows []T,
+	nameOf func(T) string,
+	rename func(T, string) T,
+	taken func(string) (bool, error),
+	create func(T) (T, error),
+) {
+	for _, card := range rows {
+		original := nameOf(card)
+		name, renamed, err := s.freeName(original, taken)
+		if err != nil {
+			report.Skipped = append(report.Skipped, fmt.Sprintf("%s %q: %v", label, original, err))
+			continue
+		}
+		if _, err := create(rename(card, name)); err != nil {
+			report.Skipped = append(report.Skipped, fmt.Sprintf("%s %q: %v", label, name, err))
+			continue
+		}
+		if renamed {
+			report.Renamed = append(report.Renamed, fmt.Sprintf("%s → %s", original, name))
+		}
+		*counter++
+	}
 }

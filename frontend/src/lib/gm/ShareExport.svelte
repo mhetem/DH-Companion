@@ -1,8 +1,27 @@
 <script>
   import Modal from '../Modal.svelte'
-  import { ShareAdversary, ShareEnvironment, errorMessage } from './api.js'
+  import {
+    ShareAdversary,
+    ShareArmor,
+    ShareConsumable,
+    ShareEnvironment,
+    ShareItem,
+    ShareWeapon,
+    errorMessage
+  } from './api.js'
 
   let { kind, slug, name } = $props()
+
+  // Keyed by the share kind the Go side stamps into the code — see share.Kind* in
+  // internal/share/share.go.
+  const EXPORTERS = {
+    adversary: ShareAdversary,
+    environment: ShareEnvironment,
+    weapon: ShareWeapon,
+    armor: ShareArmor,
+    item: ShareItem,
+    consumable: ShareConsumable
+  }
 
   let open = $state(false)
   let code = $state('')
@@ -15,7 +34,7 @@
     error = ''
     copied = false
     try {
-      code = await (kind === 'adversary' ? ShareAdversary(slug) : ShareEnvironment(slug))
+      code = await EXPORTERS[kind](slug)
     } catch (e) {
       error = errorMessage(e)
     }

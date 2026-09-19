@@ -12,7 +12,15 @@ export function AdvanceCountdown(arg1:number,arg2:number):Promise<gm.Countdown>;
 
 export function BrowseAdversaries(arg1:gm.Filter):Promise<Array<gm.BrowseAdversary>>;
 
+export function BrowseArmor(arg1:gm.EquipmentFilter):Promise<Array<gm.BrowseArmorPiece>>;
+
+export function BrowseConsumables(arg1:gm.LootFilter):Promise<Array<gm.BrowseLoot>>;
+
 export function BrowseEnvironments(arg1:gm.Filter):Promise<Array<gm.BrowseEnvironment>>;
+
+export function BrowseItems(arg1:gm.LootFilter):Promise<Array<gm.BrowseLoot>>;
+
+export function BrowseWeapons(arg1:gm.EquipmentFilter):Promise<Array<gm.BrowseWeapon>>;
 
 export function ClearSpotlights(arg1:number):Promise<void>;
 
@@ -22,7 +30,15 @@ export function ComputeBudget(arg1:rules.EncounterSettings,arg2:Array<rules.Enco
 
 export function CreateCustomAdversary(arg1:cards.Adversary):Promise<cards.Adversary>;
 
+export function CreateCustomArmor(arg1:cards.Armor):Promise<cards.Armor>;
+
+export function CreateCustomConsumable(arg1:cards.Loot):Promise<cards.Loot>;
+
 export function CreateCustomEnvironment(arg1:cards.Environment):Promise<cards.Environment>;
+
+export function CreateCustomItem(arg1:cards.Loot):Promise<cards.Loot>;
+
+export function CreateCustomWeapon(arg1:cards.Weapon):Promise<cards.Weapon>;
 
 export function CreateParty(arg1:gm.PartyInput):Promise<gm.Party>;
 
@@ -34,7 +50,15 @@ export function DeleteCountdown(arg1:number):Promise<void>;
 
 export function DeleteCustomAdversary(arg1:string):Promise<void>;
 
+export function DeleteCustomArmor(arg1:string):Promise<void>;
+
+export function DeleteCustomConsumable(arg1:string):Promise<void>;
+
 export function DeleteCustomEnvironment(arg1:string):Promise<void>;
+
+export function DeleteCustomItem(arg1:string):Promise<void>;
+
+export function DeleteCustomWeapon(arg1:string):Promise<void>;
 
 export function DeleteEncounter(arg1:number):Promise<void>;
 
@@ -52,19 +76,33 @@ export function GetActiveCombat():Promise<gm.CombatView>;
 
 export function GetAdversary(arg1:string):Promise<gm.BrowseAdversary>;
 
+export function GetArmor(arg1:string):Promise<gm.BrowseArmorPiece>;
+
 export function GetCampaign(arg1:number):Promise<gm.Campaign>;
 
 export function GetCombat(arg1:number):Promise<gm.CombatView>;
+
+export function GetConsumable(arg1:string):Promise<gm.BrowseLoot>;
 
 export function GetCountdown(arg1:number):Promise<gm.Countdown>;
 
 export function GetCustomAdversary(arg1:string):Promise<cards.Adversary>;
 
+export function GetCustomArmor(arg1:string):Promise<cards.Armor>;
+
+export function GetCustomConsumable(arg1:string):Promise<cards.Loot>;
+
 export function GetCustomEnvironment(arg1:string):Promise<cards.Environment>;
+
+export function GetCustomItem(arg1:string):Promise<cards.Loot>;
+
+export function GetCustomWeapon(arg1:string):Promise<cards.Weapon>;
 
 export function GetEncounter(arg1:number):Promise<rules.EncounterView>;
 
 export function GetEnvironment(arg1:string):Promise<gm.BrowseEnvironment>;
+
+export function GetItem(arg1:string):Promise<gm.BrowseLoot>;
 
 export function GetMasterNote(arg1:number):Promise<gm.MasterNote>;
 
@@ -73,6 +111,8 @@ export function GetNote(arg1:number):Promise<gm.Note>;
 export function GetParty(arg1:number):Promise<gm.Party>;
 
 export function GetSession(arg1:number):Promise<gm.SessionView>;
+
+export function GetWeapon(arg1:string):Promise<gm.BrowseWeapon>;
 
 export function ImportLibraryJSON(arg1:string):Promise<gm.ImportReport>;
 
@@ -92,7 +132,15 @@ export function ListCountdownsForCampaign(arg1:number):Promise<Array<gm.Countdow
 
 export function ListCustomAdversaries(arg1:gm.Filter):Promise<Array<cards.Adversary>>;
 
+export function ListCustomArmor(arg1:gm.EquipmentFilter):Promise<Array<cards.Armor>>;
+
+export function ListCustomConsumables(arg1:gm.LootFilter):Promise<Array<cards.Loot>>;
+
 export function ListCustomEnvironments(arg1:gm.Filter):Promise<Array<cards.Environment>>;
+
+export function ListCustomItems(arg1:gm.LootFilter):Promise<Array<cards.Loot>>;
+
+export function ListCustomWeapons(arg1:gm.EquipmentFilter):Promise<Array<cards.Weapon>>;
 
 export function ListEncounters():Promise<Array<gm.EncounterSummary>>;
 
@@ -105,6 +153,8 @@ export function ListParties():Promise<Array<gm.Party>>;
 export function ListSessions(arg1:number):Promise<Array<gm.SessionSummary>>;
 
 export function ListUnassignedCountdowns():Promise<Array<gm.Countdown>>;
+
+export function LookupLoot(arg1:gm.LootLookupRequest):Promise<gm.LootRoll>;
 
 export function MarkHP(arg1:number,arg2:number):Promise<gm.CombatantView>;
 
@@ -119,6 +169,8 @@ export function ReindexCards():Promise<void>;
 export function RemoveCombatant(arg1:number):Promise<void>;
 
 export function ResumeCombat(arg1:number):Promise<gm.CombatView>;
+
+export function RollLoot(arg1:gm.LootRequest):Promise<gm.LootHaul>;
 
 export function SaveCampaign(arg1:gm.CampaignInput):Promise<gm.Campaign>;
 
@@ -148,7 +200,15 @@ export function SetVitals(arg1:number,arg2:number,arg3:number):Promise<gm.Combat
 
 export function ShareAdversary(arg1:string):Promise<string>;
 
+export function ShareArmor(arg1:string):Promise<string>;
+
+export function ShareConsumable(arg1:string):Promise<string>;
+
 export function ShareEnvironment(arg1:string):Promise<string>;
+
+export function ShareItem(arg1:string):Promise<string>;
+
+export function ShareWeapon(arg1:string):Promise<string>;
 
 export function StartCombat(arg1:number,arg2:any,arg3:any):Promise<gm.CombatView>;
 
@@ -156,6 +216,14 @@ export function UnlinkEncounter(arg1:number,arg2:number):Promise<gm.SessionView>
 
 export function UpdateCustomAdversary(arg1:cards.Adversary):Promise<cards.Adversary>;
 
+export function UpdateCustomArmor(arg1:cards.Armor):Promise<cards.Armor>;
+
+export function UpdateCustomConsumable(arg1:cards.Loot):Promise<cards.Loot>;
+
 export function UpdateCustomEnvironment(arg1:cards.Environment):Promise<cards.Environment>;
+
+export function UpdateCustomItem(arg1:cards.Loot):Promise<cards.Loot>;
+
+export function UpdateCustomWeapon(arg1:cards.Weapon):Promise<cards.Weapon>;
 
 export function UpdateParty(arg1:number,arg2:gm.PartyInput):Promise<gm.Party>;

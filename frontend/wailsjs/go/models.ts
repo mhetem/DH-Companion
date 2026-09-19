@@ -142,6 +142,54 @@ export namespace cards {
 		    return a;
 		}
 	}
+	export class Armor {
+	    kind: string;
+	    slug: string;
+	    name: string;
+	    tier: string;
+	    type: string;
+	    description: string;
+	    thresholdMajor: number;
+	    thresholdSevere: number;
+	    baseScore: number;
+	    feature?: Feature;
+	
+	    static createFrom(source: any = {}) {
+	        return new Armor(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kind = source["kind"];
+	        this.slug = source["slug"];
+	        this.name = source["name"];
+	        this.tier = source["tier"];
+	        this.type = source["type"];
+	        this.description = source["description"];
+	        this.thresholdMajor = source["thresholdMajor"];
+	        this.thresholdSevere = source["thresholdSevere"];
+	        this.baseScore = source["baseScore"];
+	        this.feature = this.convertValues(source["feature"], Feature);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	
 	export class BeastformAttack {
 	    range: string;
@@ -489,6 +537,89 @@ export namespace cards {
 		}
 	}
 	
+	export class Loot {
+	    kind: string;
+	    slug: string;
+	    name: string;
+	    tier: string;
+	    type: string;
+	    description: string;
+	    roll: number;
+	    table: string;
+	    rarity: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Loot(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kind = source["kind"];
+	        this.slug = source["slug"];
+	        this.name = source["name"];
+	        this.tier = source["tier"];
+	        this.type = source["type"];
+	        this.description = source["description"];
+	        this.roll = source["roll"];
+	        this.table = source["table"];
+	        this.rarity = source["rarity"];
+	    }
+	}
+	
+	export class Weapon {
+	    kind: string;
+	    slug: string;
+	    name: string;
+	    tier: string;
+	    type: string;
+	    description: string;
+	    category: string;
+	    trait: string;
+	    range: string;
+	    damage: string;
+	    damageType: string;
+	    burden: string;
+	    feature?: Feature;
+	
+	    static createFrom(source: any = {}) {
+	        return new Weapon(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kind = source["kind"];
+	        this.slug = source["slug"];
+	        this.name = source["name"];
+	        this.tier = source["tier"];
+	        this.type = source["type"];
+	        this.description = source["description"];
+	        this.category = source["category"];
+	        this.trait = source["trait"];
+	        this.range = source["range"];
+	        this.damage = source["damage"];
+	        this.damageType = source["damageType"];
+	        this.burden = source["burden"];
+	        this.feature = this.convertValues(source["feature"], Feature);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 
 }
 
@@ -611,6 +742,56 @@ export namespace gm {
 		    return a;
 		}
 	}
+	export class BrowseArmorPiece {
+	    kind: string;
+	    slug: string;
+	    name: string;
+	    tier: string;
+	    type: string;
+	    description: string;
+	    thresholdMajor: number;
+	    thresholdSevere: number;
+	    baseScore: number;
+	    feature?: cards.Feature;
+	    source: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BrowseArmorPiece(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kind = source["kind"];
+	        this.slug = source["slug"];
+	        this.name = source["name"];
+	        this.tier = source["tier"];
+	        this.type = source["type"];
+	        this.description = source["description"];
+	        this.thresholdMajor = source["thresholdMajor"];
+	        this.thresholdSevere = source["thresholdSevere"];
+	        this.baseScore = source["baseScore"];
+	        this.feature = this.convertValues(source["feature"], cards.Feature);
+	        this.source = source["source"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class BrowseEnvironment {
 	    kind: string;
 	    slug: string;
@@ -640,6 +821,92 @@ export namespace gm {
 	        this.impulses = source["impulses"];
 	        this.potentialAdversaries = source["potentialAdversaries"];
 	        this.features = this.convertValues(source["features"], cards.Feature);
+	        this.source = source["source"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class BrowseLoot {
+	    kind: string;
+	    slug: string;
+	    name: string;
+	    tier: string;
+	    type: string;
+	    description: string;
+	    roll: number;
+	    table: string;
+	    rarity: string;
+	    source: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BrowseLoot(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kind = source["kind"];
+	        this.slug = source["slug"];
+	        this.name = source["name"];
+	        this.tier = source["tier"];
+	        this.type = source["type"];
+	        this.description = source["description"];
+	        this.roll = source["roll"];
+	        this.table = source["table"];
+	        this.rarity = source["rarity"];
+	        this.source = source["source"];
+	    }
+	}
+	export class BrowseWeapon {
+	    kind: string;
+	    slug: string;
+	    name: string;
+	    tier: string;
+	    type: string;
+	    description: string;
+	    category: string;
+	    trait: string;
+	    range: string;
+	    damage: string;
+	    damageType: string;
+	    burden: string;
+	    feature?: cards.Feature;
+	    source: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BrowseWeapon(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kind = source["kind"];
+	        this.slug = source["slug"];
+	        this.name = source["name"];
+	        this.tier = source["tier"];
+	        this.type = source["type"];
+	        this.description = source["description"];
+	        this.category = source["category"];
+	        this.trait = source["trait"];
+	        this.range = source["range"];
+	        this.damage = source["damage"];
+	        this.damageType = source["damageType"];
+	        this.burden = source["burden"];
+	        this.feature = this.convertValues(source["feature"], cards.Feature);
 	        this.source = source["source"];
 	    }
 	
@@ -994,6 +1261,22 @@ export namespace gm {
 	        this.updatedAt = source["updatedAt"];
 	    }
 	}
+	export class EquipmentFilter {
+	    tier: string;
+	    type: string;
+	    category: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new EquipmentFilter(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.tier = source["tier"];
+	        this.type = source["type"];
+	        this.category = source["category"];
+	    }
+	}
 	export class Filter {
 	    tier: string;
 	    type: string;
@@ -1012,6 +1295,10 @@ export namespace gm {
 	    parties: number;
 	    customAdversaries: number;
 	    customEnvironments: number;
+	    customWeapons: number;
+	    customArmor: number;
+	    customItems: number;
+	    customConsumables: number;
 	    encounters: number;
 	    campaigns: number;
 	    sessions: number;
@@ -1029,6 +1316,10 @@ export namespace gm {
 	        this.parties = source["parties"];
 	        this.customAdversaries = source["customAdversaries"];
 	        this.customEnvironments = source["customEnvironments"];
+	        this.customWeapons = source["customWeapons"];
+	        this.customArmor = source["customArmor"];
+	        this.customItems = source["customItems"];
+	        this.customConsumables = source["customConsumables"];
 	        this.encounters = source["encounters"];
 	        this.campaigns = source["campaigns"];
 	        this.sessions = source["sessions"];
@@ -1038,6 +1329,143 @@ export namespace gm {
 	        this.skipped = source["skipped"];
 	    }
 	}
+	export class LootFilter {
+	    rarity: string;
+	    table: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new LootFilter(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.rarity = source["rarity"];
+	        this.table = source["table"];
+	    }
+	}
+	export class LootRoll {
+	    dice: number[];
+	    total: number;
+	    source: string;
+	    entry: cards.Loot;
+	
+	    static createFrom(source: any = {}) {
+	        return new LootRoll(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.dice = source["dice"];
+	        this.total = source["total"];
+	        this.source = source["source"];
+	        this.entry = this.convertValues(source["entry"], cards.Loot);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class LootHaul {
+	    tier: string;
+	    rarity: string;
+	    dice: number;
+	    weapons: BrowseWeapon[];
+	    armor: BrowseArmorPiece[];
+	    items: LootRoll[];
+	    consumables: LootRoll[];
+	
+	    static createFrom(source: any = {}) {
+	        return new LootHaul(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.tier = source["tier"];
+	        this.rarity = source["rarity"];
+	        this.dice = source["dice"];
+	        this.weapons = this.convertValues(source["weapons"], BrowseWeapon);
+	        this.armor = this.convertValues(source["armor"], BrowseArmorPiece);
+	        this.items = this.convertValues(source["items"], LootRoll);
+	        this.consumables = this.convertValues(source["consumables"], LootRoll);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class LootLookupRequest {
+	    kind: string;
+	    table: string;
+	    total: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new LootLookupRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kind = source["kind"];
+	        this.table = source["table"];
+	        this.total = source["total"];
+	    }
+	}
+	export class LootRequest {
+	    tier: string;
+	    rarity: string;
+	    dice: number;
+	    table: string;
+	    includeHomebrew: boolean;
+	    weapons: number;
+	    armor: number;
+	    items: number;
+	    consumables: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new LootRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.tier = source["tier"];
+	        this.rarity = source["rarity"];
+	        this.dice = source["dice"];
+	        this.table = source["table"];
+	        this.includeHomebrew = source["includeHomebrew"];
+	        this.weapons = source["weapons"];
+	        this.armor = source["armor"];
+	        this.items = source["items"];
+	        this.consumables = source["consumables"];
+	    }
+	}
+	
 	export class MasterNote {
 	    campaignId: number;
 	    body: string;

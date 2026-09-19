@@ -5,16 +5,28 @@ export {
   AdjustFear,
   AdvanceCountdown,
   BrowseAdversaries,
+  BrowseArmor,
+  BrowseConsumables,
+  BrowseItems,
   BrowseEnvironments,
+  BrowseWeapons,
   ClearSpotlights,
   ComputeBudget,
   CreateCustomAdversary,
+  CreateCustomArmor,
+  CreateCustomConsumable,
+  CreateCustomItem,
+  CreateCustomWeapon,
   CreateCustomEnvironment,
   CreateParty,
   DeleteCampaign,
   DeleteCombat,
   DeleteCountdown,
   DeleteCustomAdversary,
+  DeleteCustomArmor,
+  DeleteCustomConsumable,
+  DeleteCustomItem,
+  DeleteCustomWeapon,
   DeleteCustomEnvironment,
   DeleteEncounter,
   DeleteNote,
@@ -22,17 +34,25 @@ export {
   DeleteSession,
   EndCombat,
   GetActiveCombat,
+  GetArmor,
   GetAdversary,
   GetCampaign,
   GetCombat,
+  GetConsumable,
   GetCountdown,
   GetCustomAdversary,
+  GetCustomArmor,
+  GetCustomConsumable,
+  GetCustomItem,
+  GetCustomWeapon,
   GetCustomEnvironment,
   GetEncounter,
+  GetItem,
   GetEnvironment,
   GetMasterNote,
   GetNote,
   GetParty,
+  GetWeapon,
   GetSession,
   ImportShareCode,
   LinkCombat,
@@ -49,11 +69,13 @@ export {
   ListParties,
   ListSessions,
   ListUnassignedCountdowns,
+  LookupLoot,
   MarkHP,
   PreviewShareCode,
   MarkStress,
   RemoveCombatant,
   ResumeCombat,
+  RollLoot,
   SaveCampaign,
   SaveCombatant,
   SaveCountdown,
@@ -68,10 +90,18 @@ export {
   SetSpotlight,
   SetVitals,
   ShareAdversary,
+  ShareArmor,
+  ShareConsumable,
+  ShareItem,
+  ShareWeapon,
   ShareEnvironment,
   StartCombat,
   UnlinkEncounter,
   UpdateCustomAdversary,
+  UpdateCustomArmor,
+  UpdateCustomConsumable,
+  UpdateCustomItem,
+  UpdateCustomWeapon,
   UpdateCustomEnvironment,
   UpdateParty
 } from '../../../wailsjs/go/gm/Service.js'
@@ -97,6 +127,68 @@ export const ADVERSARY_TYPES = [
 ]
 
 export const ENVIRONMENT_TYPES = ['Event', 'Exploration', 'Social', 'Traversal']
+
+// Mirrors internal/cards/cards.go — a weapon is Primary or Secondary, and deals
+// physical or magic damage. Combat wheelchairs are equipped as primary weapons,
+// so they need no category of their own.
+export const WEAPON_CATEGORIES = ['Primary', 'Secondary']
+
+export const WEAPON_TYPES = ['Physical', 'Magic']
+
+// The rest of a weapon's closed sets. These aren't validated by the backend the
+// way category and type are — the SRD's own tables are the only authority — so
+// they're here purely to keep the homebrew form's pickers honest.
+export const WEAPON_TRAITS = [
+  'Agility',
+  'Strength',
+  'Finesse',
+  'Instinct',
+  'Presence',
+  'Knowledge',
+  'Spellcast'
+]
+
+export const WEAPON_RANGES = ['Melee', 'Very Close', 'Close', 'Far', 'Very Far']
+
+export const WEAPON_BURDENS = ['One-Handed', 'Two-Handed']
+
+// The SRD abbreviates these in its tables; the value is what crosses the bridge.
+export const DAMAGE_TYPES = [
+  { value: 'phy', label: 'Physical' },
+  { value: 'mag', label: 'Magic' },
+  { value: 'phy/mag', label: 'Either' }
+]
+
+// Mirrors maxArmorScore in internal/gm/validate.go.
+export const MAX_ARMOR_SCORE = 12
+
+// Mirrors internal/rules/loot.go — keep the two in step.
+//
+// Rarity in the SRD describes the roll, not the entry: it names how many d12s to
+// throw, and the sum indexes a 60-row table. Both dice counts are offered, so the
+// roller lets the GM pick — the smaller keeps results low in the table, the larger
+// spreads them across the whole band.
+export const LOOT_RARITIES = [
+  { name: 'Common', minDice: 1, maxDice: 2 },
+  { name: 'Uncommon', minDice: 2, maxDice: 3 },
+  { name: 'Rare', minDice: 3, maxDice: 4 },
+  { name: 'Legendary', minDice: 4, maxDice: 5 }
+]
+
+// The source books the item and consumable tables come from, as data/items.json
+// and data/consumables.json label them.
+export const LOOT_TABLES = ['Core Set', 'Hope & Fear']
+
+// Homebrew loot has no roll number, so it isn't one of the books above — it's a
+// separate bucket the browser can filter to. Mirrors homebrewTable in
+// internal/gm/loot.go.
+export const HOMEBREW_TABLE = 'Homebrew'
+
+export function rarityDice(name) {
+  const rarity = LOOT_RARITIES.find((r) => r.name === name)
+  if (!rarity) return ''
+  return `${rarity.minDice}d12 or ${rarity.maxDice}d12`
+}
 
 // Note kinds are a closed set in SQL (notes.kind CHECK) as well as in validate.go.
 // Labels are display-only; the value is what crosses the bridge.

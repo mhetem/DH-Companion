@@ -12,6 +12,16 @@ const (
 	KindClass       Kind = "class"
 	KindBeastform   Kind = "beastform"
 	KindCompanion   Kind = "companion"
+	KindWeapon      Kind = "weapon"
+	KindArmor       Kind = "armor"
+	KindItem        Kind = "item"
+	KindConsumable  Kind = "consumable"
+)
+
+// Weapon.Category values. A character equips at most one of each at a time.
+const (
+	CategoryPrimary   = "Primary"
+	CategorySecondary = "Secondary"
 )
 
 // Feature.Type values used by class data. Subclass features are printed in these
@@ -151,4 +161,42 @@ type Companion struct {
 	ExampleExperiences         []string  `json:"exampleExperiences"`
 	Rules                      []Feature `json:"rules"`
 	LevelUpOptions             []Feature `json:"levelUpOptions"`
+}
+
+// Weapon covers the primary, secondary and combat wheelchair tables. Type is
+// "Physical" or "Magic" so it lines up with the browse filter; DamageType is the
+// SRD's own abbreviation ("phy", "mag", "phy/mag"), which is what the tables print.
+type Weapon struct {
+	Meta
+	Category   string   `json:"category"`
+	Trait      string   `json:"trait"`
+	Range      string   `json:"range"`
+	Damage     string   `json:"damage"`
+	DamageType string   `json:"damageType"`
+	Burden     string   `json:"burden"`
+	Feature    *Feature `json:"feature"`
+}
+
+// Armor's thresholds are the base Major/Severe pair before the wearer's level is
+// added, and BaseScore is how many Armor Slots it grants before bonuses.
+type Armor struct {
+	Meta
+	ThresholdMajor  int      `json:"thresholdMajor"`
+	ThresholdSevere int      `json:"thresholdSevere"`
+	BaseScore       int      `json:"baseScore"`
+	Feature         *Feature `json:"feature"`
+}
+
+// Loot is one row of an item or consumable table. Items and consumables have the
+// same shape and differ only in Kind and Type, so they share this type.
+//
+// Roll is the row's number in its own 60-row table, which is what the d12 sum
+// indexes. Rarity is derived from Roll rather than printed by the SRD: rarity
+// there describes how many d12s you roll, so an entry's rarity is the cheapest
+// one whose dice can still reach it. See rules.RarityFor.
+type Loot struct {
+	Meta
+	Roll   int    `json:"roll"`
+	Table  string `json:"table"`
+	Rarity string `json:"rarity"`
 }

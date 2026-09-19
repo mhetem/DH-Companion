@@ -1,0 +1,1082 @@
+{
+    "airbladeCharm": {
+        "name": "Airblade Charm",
+        "type": "Item",
+        "tier": "",
+        "description": "You can attach this charm to a weapon with a Melee range. Three times per rest, you can activate the charm and attack a target within Close range.",
+        "roll": 35,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "alistairSTorch": {
+        "name": "Alistair’s Torch",
+        "type": "Item",
+        "tier": "",
+        "description": "You can light this magic torch at will. The flame’s light fills a much larger space than it should, enough to illuminate a cave bright as day.",
+        "roll": 4,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "arcaneCloak": {
+        "name": "Arcane Cloak",
+        "type": "Item",
+        "tier": "",
+        "description": "A creature with a Spellcast trait wearing this cloak can adjust its color, texture, and size at will.",
+        "roll": 7,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "arcanePrism": {
+        "name": "Arcane Prism",
+        "type": "Item",
+        "tier": "",
+        "description": "Position this prism in a location of your choosing and activate it. All allies within Close range of it gain a +1 bonus to their Spellcast Rolls. While activated, the prism can’t be moved. Once the prism is deactivated, it can’t be activated again until your next long rest.",
+        "roll": 17,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "attuneRelic": {
+        "name": "Attune Relic",
+        "type": "Item",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Instinct. You can only carry one relic.",
+        "roll": 44,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "augurSRelic": {
+        "name": "Augur’s Relic",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per long rest, you can activate your Hope feature without spending Hope. You can carry only one relic.",
+        "roll": 60,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "bagOfFicklesand": {
+        "name": "Bag of Ficklesand",
+        "type": "Item",
+        "tier": "",
+        "description": "You can convince this small bag of sand to be much heavier or lighter with a successful Presence Roll (10). Additionally, on a successful Finesse Roll (10), you can blow a bit of sand into a target’s face to make them temporarily <em>Vulnerable</em>.",
+        "roll": 31,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "ballBearings": {
+        "name": "Ball Bearings",
+        "type": "Item",
+        "tier": "",
+        "description": "This pouch contains perfectly smooth metal spheres.",
+        "roll": 3,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "beltOfUnity": {
+        "name": "Belt of Unity",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per session, you can spend 5 Hope to lead a Tag Team Roll with three PCs instead of two.",
+        "roll": 60,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "blackwingQuill": {
+        "name": "Blackwing Quill",
+        "type": "Item",
+        "tier": "",
+        "description": "This writing quill never runs out of ink or needs to be sharpened.",
+        "roll": 9,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "bloodstone": {
+        "name": "Bloodstone",
+        "type": "Item",
+        "tier": "",
+        "description": "You can attach this stone to a weapon that doesn’t already have a feature. The weapon gains the following feature.<br><strong>Brutal:</strong> When you roll the maximum value on a damage die, roll an additional damage die.",
+        "roll": 25,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "bolsterRelic": {
+        "name": "Bolster Relic",
+        "type": "Item",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Strength. You can only carry one relic.",
+        "roll": 42,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "bootsOfSuppleMystique": {
+        "name": "Boots of Supple Mystique",
+        "type": "Item",
+        "tier": "",
+        "description": "While wearing these boots, you don’t leave tracks or footprints.",
+        "roll": 18,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "boxOfDragonDust": {
+        "name": "Box of Dragon Dust",
+        "type": "Item",
+        "tier": "",
+        "description": "This snuffbox is filled with combustible powder.",
+        "roll": 4,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "boxOfManyGoods": {
+        "name": "Box of Many Goods",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per long rest, you can open this small box and roll a d12. On a result of 1–6, it’s empty. On a result of 7–10, it contains one random common consumable. On a result of 11–12, it contains two random common consumables.",
+        "roll": 34,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "calmingPendant": {
+        "name": "Calming Pendant",
+        "type": "Item",
+        "tier": "",
+        "description": "When you would mark your last Stress, roll a d6. On a result of 5 or higher, don’t mark it.",
+        "roll": 29,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "caltrops": {
+        "name": "Caltrops",
+        "type": "Item",
+        "tier": "",
+        "description": "You can spread these caltrops in a Very Close area around you. A creature hastening through that area must mark a Stress.",
+        "roll": 1,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "chargingQuiver": {
+        "name": "Charging Quiver",
+        "type": "Item",
+        "tier": "",
+        "description": "When you succeed on an attack with an arrow stored in this quiver, gain a bonus to the damage roll equal to your current tier.",
+        "roll": 3,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "charmRelic": {
+        "name": "Charm Relic",
+        "type": "Item",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Presence. You can only carry one relic.",
+        "roll": 45,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "cheaterSCoin": {
+        "name": "Cheater’s Coin",
+        "type": "Item",
+        "tier": "",
+        "description": "When you flip this coin, you can spend a Hope to determine which side it lands on.",
+        "roll": 28,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "clayCompanion": {
+        "name": "Clay Companion",
+        "type": "Item",
+        "tier": "",
+        "description": "When you sculpt this ball of clay into a clay animal companion, it behaves as that animal. For example, a clay spider can spin clay webs, while a clay bird can fly. The clay companion retains memory and identity across different shapes, but they can adopt new mannerisms with each form.",
+        "roll": 50,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "collapsiblePole": {
+        "name": "Collapsible Pole",
+        "type": "Item",
+        "tier": "",
+        "description": "You can break down this 18-foot pole into six interlinked 3-foot segments.",
+        "roll": 8,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "collarOfAscendancy": {
+        "name": "Collar of Ascendancy",
+        "type": "Item",
+        "tier": "",
+        "description": "An animal who wears this collar gains the ability to speak and understand common speech.",
+        "roll": 49,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "communionRelic": {
+        "name": "Communion Relic",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per rest, you can spend a Hope to use an ally’s Experience as if it were your own. You can carry only one relic.",
+        "roll": 59,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "companionCase": {
+        "name": "Companion Case",
+        "type": "Item",
+        "tier": "",
+        "description": "This case can fit a small animal companion. While the companion is inside, the animal and case are immune to all damage and harmful effects.",
+        "roll": 13,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "controlRelic": {
+        "name": "Control Relic",
+        "type": "Item",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Finesse. You can only carry one relic.",
+        "roll": 43,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "correctorSprite": {
+        "name": "Corrector Sprite",
+        "type": "Item",
+        "tier": "",
+        "description": "This tiny sprite sits in the curve of your ear canal and whispers helpful advice during combat. Once per short rest, you can gain advantage on an attack roll.",
+        "roll": 21,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "crucibleFrames": {
+        "name": "Crucible Frames",
+        "type": "Item",
+        "tier": "",
+        "description": "These eyeglasses reveal weak points in objects and creatures. Three times per rest, you can spend a Hope to gain advantage on an attack roll.",
+        "roll": 42,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "dagginaeSObsidianSlate": {
+        "name": "Dagginae’s Obsidian Slate",
+        "type": "Item",
+        "tier": "",
+        "description": "This wafer-thin sheet of volcanic glass is used by archivists to keep notes. Any information etched onto its surface disappears but can be recalled via a command you set.",
+        "roll": 32,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "dualFlask": {
+        "name": "Dual Flask",
+        "type": "Item",
+        "tier": "",
+        "description": "This flask can hold two different liquids. You can swap between them by flipping a small switch on the flask’s side.",
+        "roll": 30,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "eclipseCoin": {
+        "name": "Eclipse Coin",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per rest, flip a coin. On heads, you gain a +1 bonus to attack rolls until your next successful attack. On tails, you gain +1 to your Evasion until an attack fails against you.",
+        "roll": 34,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "elusiveAmulet": {
+        "name": "Elusive Amulet",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per long rest, you can activate this amulet to become <em>Hidden</em> until you move. While <em>Hidden</em> in this way, you remain unseen even if an adversary moves to where they would normally see you.",
+        "roll": 38,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "elvenSpyglass": {
+        "name": "Elven Spyglass",
+        "type": "Item",
+        "tier": "",
+        "description": "You can use this spyglass to magnify your vision a hundredfold.",
+        "roll": 6,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "emptyChest": {
+        "name": "Empty Chest",
+        "type": "Item",
+        "tier": "",
+        "description": "This magical chest appears empty. When you speak a specific trigger word or action and open the chest, you can see the items stored within it.",
+        "roll": 12,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "enchanterSLoupe": {
+        "name": "Enchanter’s Loupe",
+        "type": "Item",
+        "tier": "",
+        "description": "You can use this loupe to see through illusions and enchantments.",
+        "roll": 26,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "enlightenRelic": {
+        "name": "Enlighten Relic",
+        "type": "Item",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Knowledge. You can only carry one relic.",
+        "roll": 46,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "escherSMirrorball": {
+        "name": "Escher’s Mirrorball",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per long rest, you can command this fist-sized silver orb to capture an omnidirectional image of its surroundings on its surface. This image lasts until your next long rest.",
+        "roll": 27,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "fireJar": {
+        "name": "Fire Jar",
+        "type": "Item",
+        "tier": "",
+        "description": "You can pour out the strange liquid contents of this jar to instantly produce fire. The contents regenerate when you take a long rest.",
+        "roll": 9,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "flickerflyPendant": {
+        "name": "Flickerfly Pendant",
+        "type": "Item",
+        "tier": "",
+        "description": "While you carry this pendant, your weapons with a Melee range that deal physical damage have a gossamer sheen and can attack targets within Very Close range.",
+        "roll": 48,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "forceDisc": {
+        "name": "Force Disc",
+        "type": "Item",
+        "tier": "",
+        "description": "This shimmering two-dimensional disc of magical force has a 4-foot diameter and is magically tethered to a pebble. The disc always floats 3 feet north of, and at the same elevation as, the pebble. The pebble has a mass equal to one-hundredth of the total mass carried by the disc.",
+        "roll": 45,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "furballBag": {
+        "name": "Furball Bag",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per rest, you can produce 2d20 harmless, cat-sized fur creatures of indeterminate origin and species from this bag.",
+        "roll": 24,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "gadimanSBackpack": {
+        "name": "Gadiman’s Backpack",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per rest, you can spend a Hope to conjure a mundane item up to a cubic foot in size inside this satchel.",
+        "roll": 33,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "geckoGloves": {
+        "name": "Gecko Gloves",
+        "type": "Item",
+        "tier": "",
+        "description": "You can climb up vertical surfaces and across ceilings.",
+        "roll": 22,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "gemOfAlacrity": {
+        "name": "Gem of Alacrity",
+        "type": "Item",
+        "tier": "",
+        "description": "You can attach this gem to a weapon, allowing you to use your Agility when making an attack with that weapon.",
+        "roll": 53,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "gemOfAudacity": {
+        "name": "Gem of Audacity",
+        "type": "Item",
+        "tier": "",
+        "description": "You can attach this gem to a weapon, allowing you to use your Presence when making an attack with that weapon.",
+        "roll": 57,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "gemOfInsight": {
+        "name": "Gem of Insight",
+        "type": "Item",
+        "tier": "",
+        "description": "You can attach this gem to a weapon, allowing you to use your Instinct when making an attack with that weapon.",
+        "roll": 56,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "gemOfMight": {
+        "name": "Gem of Might",
+        "type": "Item",
+        "tier": "",
+        "description": "You can attach this gem to a weapon, allowing you to use your Strength when making an attack with that weapon.",
+        "roll": 54,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "gemOfPrecision": {
+        "name": "Gem of Precision",
+        "type": "Item",
+        "tier": "",
+        "description": "You can attach this gem to a weapon, allowing you to use your Finesse when making an attack with that weapon.",
+        "roll": 55,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "gemOfSagacity": {
+        "name": "Gem of Sagacity",
+        "type": "Item",
+        "tier": "",
+        "description": "You can attach this gem to a weapon, allowing you to use your Knowledge when making an attack with that weapon.",
+        "roll": 58,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "ghoulskinGloves": {
+        "name": "Ghoulskin Gloves",
+        "type": "Item",
+        "tier": "",
+        "description": "When you attack with a physical weapon while wearing these gloves, the damage is considered both physical and magic.",
+        "roll": 36,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "glamourStone": {
+        "name": "Glamour Stone",
+        "type": "Item",
+        "tier": "",
+        "description": "Activate this pebble-sized stone to memorize the appearance of someone you can see. Spend a Hope to magically recreate this guise on yourself as an illusion.",
+        "roll": 11,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "glider": {
+        "name": "Glider",
+        "type": "Item",
+        "tier": "",
+        "description": "While falling, you can mark a Stress to deploy this small parachute and glide safely to the ground.",
+        "roll": 27,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "glovesOfAlacrity": {
+        "name": "Gloves of Alacrity",
+        "type": "Item",
+        "tier": "",
+        "description": "When you would mark a Stress to reload a weapon, you don’t mark it.",
+        "roll": 37,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "gourmetGranules": {
+        "name": "Gourmet Granules",
+        "type": "Item",
+        "tier": "",
+        "description": "This savory powder makes any food it’s sprinkled on delicious and healthy, no matter how bland or rotten it is.",
+        "roll": 7,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "grapnel": {
+        "name": "Grapnel",
+        "type": "Item",
+        "tier": "",
+        "description": "You gain advantage on action rolls to climb sheer surfaces.",
+        "roll": 2,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "gravewardenSBell": {
+        "name": "Gravewarden’s Bell",
+        "type": "Item",
+        "tier": "",
+        "description": "This bell rings when a ghost or undead creature moves within Far range of it.",
+        "roll": 29,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "greatstone": {
+        "name": "Greatstone",
+        "type": "Item",
+        "tier": "",
+        "description": "You can attach this stone to a weapon that doesn’t already have a feature. The weapon gains the following feature.<br><strong>Powerful:</strong> On a successful attack, roll an additional damage die and discard the lowest result.",
+        "roll": 26,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "heroSHelm": {
+        "name": "Hero’s Helm",
+        "type": "Item",
+        "tier": "",
+        "description": "When you critically succeed on an attack, all allies within Close range gain a Hope.",
+        "roll": 51,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "hollowbarkHorn": {
+        "name": "Hollowbark Horn",
+        "type": "Item",
+        "tier": "",
+        "description": "You can blow this horn to summon a small woodland creature to perform a simple task.",
+        "roll": 13,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "homingCompasses": {
+        "name": "Homing Compasses",
+        "type": "Item",
+        "tier": "",
+        "description": "These two compasses point toward each other no matter how far apart they are.",
+        "roll": 20,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "honingRelic": {
+        "name": "Honing Relic",
+        "type": "Item",
+        "tier": "",
+        "description": "You gain a +1 bonus to an Experience of your choice. You can only carry one relic.",
+        "roll": 47,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "hopekeeperLocket": {
+        "name": "Hopekeeper Locket",
+        "type": "Item",
+        "tier": "",
+        "description": "During a long rest, if you have 6 Hope, you can spend a Hope to imbue this locket with your bountiful resolve. When you have 0 Hope, you can use the locket to immediately gain a Hope. The locket must be re-imbued before it can be used this way again.",
+        "roll": 39,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "infiniteBag": {
+        "name": "Infinite Bag",
+        "type": "Item",
+        "tier": "",
+        "description": "When you store items in this bag, they are kept in a pocket dimension that never runs out of space. You can retrieve an item at any time.",
+        "roll": 40,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "insomniacSPeriapt": {
+        "name": "Insomniac’s Periapt",
+        "type": "Item",
+        "tier": "",
+        "description": "When you take a rest without clearing Hit Points or Stress, you gain a +2 bonus to attack and damage rolls until your next rest.",
+        "roll": 38,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "ironDaggerPendant": {
+        "name": "Iron Dagger Pendant",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per long rest, you can spend a Hope to tell the pendant a creature’s name. The pendant gently pulls you toward that creature’s current location until your next long rest.",
+        "roll": 48,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "ironVeil": {
+        "name": "Iron Veil",
+        "type": "Item",
+        "tier": "",
+        "description": "This chain-link head covering renders the wearer invisible to fey creatures.",
+        "roll": 23,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "kingfisherSNet": {
+        "name": "Kingfisher’s Net",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per long rest, you can use this net to scoop one live fish out of any amount of water, no matter how unlikely it is for that water to have fish in it.",
+        "roll": 21,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "knockbackBracelets": {
+        "name": "Knockback Bracelets",
+        "type": "Item",
+        "tier": "",
+        "description": "On a successful weapon attack, you can knock your target back up to Close range from their location.",
+        "roll": 44,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "lakestriderBoots": {
+        "name": "Lakestrider Boots",
+        "type": "Item",
+        "tier": "",
+        "description": "You can walk on the surface of water as if it were soft ground.",
+        "roll": 49,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "loadedDice": {
+        "name": "Loaded Dice",
+        "type": "Item",
+        "tier": "",
+        "description": "You can choose what result this set of weighted dice rolls with a successful Finesse Roll (14). If you roll with Fear, anyone watching knows the dice are loaded.",
+        "roll": 12,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "lorekeeper": {
+        "name": "Lorekeeper",
+        "type": "Item",
+        "tier": "",
+        "description": "You can store the name and details of up to three hostile creatures inside this book. You gain a +1 bonus to action rolls against those creatures.",
+        "roll": 23,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "manacles": {
+        "name": "Manacles",
+        "type": "Item",
+        "tier": "",
+        "description": "This pair of locking cuffs comes with a key.",
+        "roll": 6,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "mandragorianTorch": {
+        "name": "Mandragorian Torch",
+        "type": "Item",
+        "tier": "",
+        "description": "This torch gives off light only the bearer can see.",
+        "roll": 17,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "mapOfRevelation": {
+        "name": "Map of Revelation",
+        "type": "Item",
+        "tier": "",
+        "description": "You can attune this map to one creature at a time. The map always shows the attuned creature’s location.",
+        "roll": 31,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "minorHealthPotionRecipe": {
+        "name": "Minor Health Potion Recipe",
+        "type": "Item",
+        "tier": "",
+        "description": "As a downtime move, you can use a vial of blood to craft a Minor Health Potion.",
+        "roll": 19,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "minorStaminaPotionRecipe": {
+        "name": "Minor Stamina Potion Recipe",
+        "type": "Item",
+        "tier": "",
+        "description": "As a downtime move, you can use the bone of a creature to craft a Minor Stamina Potion.",
+        "roll": 18,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "molepawMittens": {
+        "name": "Molepaw Mittens",
+        "type": "Item",
+        "tier": "",
+        "description": "Spend a Hope to swim through earth as if it were water for the next 10 minutes.",
+        "roll": 46,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "mythicDustRecipe": {
+        "name": "Mythic Dust Recipe",
+        "type": "Item",
+        "tier": "",
+        "description": "As a downtime move, you can use a handful of fine gold dust to craft Mythic Dust.",
+        "roll": 51,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "namerSOracle": {
+        "name": "Namer’s Oracle",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per session, you can roll this set of runic dice to reveal the full name of the last person you touched.",
+        "roll": 41,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "nighthawkerSRing": {
+        "name": "Nighthawker’s Ring",
+        "type": "Item",
+        "tier": "",
+        "description": "Spend a Hope to activate the gemstone in this ring until the end of the scene. While active, the gemstone changes color to indicate the wearer’s proximity to hidden treasure: warm colors for near, cool colors for far.",
+        "roll": 5,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "paragonSChain": {
+        "name": "Paragon’s Chain",
+        "type": "Item",
+        "tier": "",
+        "description": "As a downtime move, you can meditate on an ideal or principle you hold dear and focus your will into this chain. Once per long rest, you can spend a Hope to roll a d20 as your Hope Die for rolls that directly align with that principle.",
+        "roll": 37,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "phobophageSCirclet": {
+        "name": "Phobophage’s Circlet",
+        "type": "Item",
+        "tier": "",
+        "description": "When the GM spends a Fear, roll a d4. Once per scene on a result of 4, you clear a Stress.",
+        "roll": 55,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "phoenixFeather": {
+        "name": "Phoenix Feather",
+        "type": "Item",
+        "tier": "",
+        "description": "If you have at least one Phoenix Feather on you when you fall unconscious, you gain a +1 bonus to the roll you make to determine whether you gain a scar.",
+        "roll": 33,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "piercingArrows": {
+        "name": "Piercing Arrows",
+        "type": "Item",
+        "tier": "",
+        "description": "Three times per rest when you succeed on an attack with one of these arrows, you can add your Proficiency to the damage roll.",
+        "roll": 14,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "piperWhistle": {
+        "name": "Piper Whistle",
+        "type": "Item",
+        "tier": "",
+        "description": "This handcrafted whistle has a distinctive sound. When you blow this whistle, its piercing tone can be heard within a 1-mile radius.",
+        "roll": 2,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "portalFrames": {
+        "name": "Portal Frames",
+        "type": "Item",
+        "tier": "",
+        "description": "This pair of small ornate frames, one red and one blue, are connected. Anything that passes into one exits from the other.",
+        "roll": 58,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "portalSeed": {
+        "name": "Portal Seed",
+        "type": "Item",
+        "tier": "",
+        "description": "You can plant this seed in the ground to grow a portal in that spot. The portal is ready to use in 24 hours. You can use this portal to travel to any other location where you planted a portal seed. A portal can be destroyed by dealing any amount of magic damage to it.",
+        "roll": 36,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "premiumBedroll": {
+        "name": "Premium Bedroll",
+        "type": "Item",
+        "tier": "",
+        "description": "During downtime, you automatically clear a Stress.",
+        "roll": 1,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "quillshawl": {
+        "name": "Quillshawl",
+        "type": "Item",
+        "tier": "",
+        "description": "If an adversary attacks you within Melee range, they must succeed on a Reaction Roll (12) or mark a Hit Point.",
+        "roll": 56,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "reliquaryOfTheSightlessSaint": {
+        "name": "Reliquary of the Sightless Saint",
+        "type": "Item",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Hope Die when you make the Risk It All death move.",
+        "roll": 30,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "returningRing": {
+        "name": "Returning Ring",
+        "type": "Item",
+        "tier": "",
+        "description": "When you throw your primary weapon while wearing this ring, the weapon appears in your hand immediately after the attack.",
+        "roll": 20,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "ringOfResistance": {
+        "name": "Ring of Resistance",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per long rest, you can activate this ring after a successful attack against you to halve the damage.",
+        "roll": 32,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "ringOfSilence": {
+        "name": "Ring of Silence",
+        "type": "Item",
+        "tier": "",
+        "description": "Spend a Hope to activate this ring. Your footsteps are silent until your next rest.",
+        "roll": 28,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "ringOfUnbreakableResolve": {
+        "name": "Ring of Unbreakable Resolve",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per session, when the GM spends a Fear, you can spend 4 Hope to cancel the effects of that spent Fear.",
+        "roll": 59,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "ringsOfAlliance": {
+        "name": "Rings of Alliance",
+        "type": "Item",
+        "tier": "",
+        "description": "Two creatures can wear this pair of rose gold rings. Once per session, you can initiate a Tag Team Roll with whoever is wearing the other ring without spending Hope or counting against your session limit for Tag Team Rolls.",
+        "roll": 54,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "ringsOfCamaraderie": {
+        "name": "Rings of Camaraderie",
+        "type": "Item",
+        "tier": "",
+        "description": "Two creatures can wear this pair of wooden rings. You can mark the Stress of whoever is wearing the other ring (with their permission) as if it were your own.",
+        "roll": 53,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "ringsOfFriendship": {
+        "name": "Rings of Friendship",
+        "type": "Item",
+        "tier": "",
+        "description": "Two creatures can wear this pair of rings shaped like coiled snakes. You can spend the Hope of whoever is wearing the other ring (with their permission) as if it were your own.",
+        "roll": 52,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "selfTyingRope": {
+        "name": "Self-Tying Rope",
+        "type": "Item",
+        "tier": "",
+        "description": "You can command this rope to tie or untie itself.",
+        "roll": 14,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "shardOfMemory": {
+        "name": "Shard of Memory",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per long rest, you can spend 2 Hope to recall a domain card from your vault instead of paying its Recall Cost.",
+        "roll": 52,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "sileeSFoldingKnife": {
+        "name": "Silee’s Folding Knife",
+        "type": "Item",
+        "tier": "",
+        "description": "This 3-inch blade has an edge that easily cuts through anything except the handle it’s stored in.",
+        "roll": 10,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "skeletonKey": {
+        "name": "Skeleton Key",
+        "type": "Item",
+        "tier": "",
+        "description": "When you use this key to open a locked door, you gain advantage on the Finesse Roll.",
+        "roll": 16,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "sorcererSHat": {
+        "name": "Sorcerer’s Hat",
+        "type": "Item",
+        "tier": "",
+        "description": "This conical blue hat is covered in silver stars. Once per rest, you can cast a spell from your vault with a Recall Cost equal to or less than your tier. This doesn’t work for permanently vaulted cards.",
+        "roll": 35,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "soulTwinCirclets": {
+        "name": "Soul-Twin Circlets",
+        "type": "Item",
+        "tier": "",
+        "description": "Two creatures can wear this pair of circlets. You can spend a Hope to switch places with whoever is wearing the other circlet.",
+        "roll": 40,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "speakingOrbs": {
+        "name": "Speaking Orbs",
+        "type": "Item",
+        "tier": "",
+        "description": "This pair of orbs allows any creatures holding them to communicate with each other across any distance.",
+        "roll": 5,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "strideRelic": {
+        "name": "Stride Relic",
+        "type": "Item",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Agility. You can only carry one relic.",
+        "roll": 41,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "suspendedRod": {
+        "name": "Suspended Rod",
+        "type": "Item",
+        "tier": "",
+        "description": "This flat rod is inscribed with runes. When you activate the rod, it is immediately suspended in place. Until the rod is deactivated, it can’t move, doesn’t abide by the rules of gravity, and remains in place.",
+        "roll": 10,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "temporalSanctuary": {
+        "name": "Temporal Sanctuary",
+        "type": "Item",
+        "tier": "",
+        "description": "A PC who takes a rest in the temporal sanctuary can choose an additional downtime move.",
+        "roll": 50,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "thiefSCompass": {
+        "name": "Thief’s Compass",
+        "type": "Item",
+        "tier": "",
+        "description": "This compass points the way toward the nearest exit while indoors and the closest entrance while outdoors.",
+        "roll": 15,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "timekeeperSPendant": {
+        "name": "Timekeeper’s Pendant",
+        "type": "Item",
+        "tier": "",
+        "description": "You can choose an additional downtime move each rest.",
+        "roll": 47,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "titanSGirdle": {
+        "name": "Titan’s Girdle",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per scene, you can activate this girdle to gain a +1 bonus to your Proficiency for your next attack.",
+        "roll": 22,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "travelerSBell": {
+        "name": "Traveler’s Bell",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per long rest, you can ring this bell to magically open the shortest safe path through rough terrain for 1 hour.",
+        "roll": 16,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "twoFacedAegisBrooch": {
+        "name": "Two-Faced Aegis Brooch",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per rest, flip a coin. On heads, you become immune to the next physical damage you take. On tails, you become immune to the next magic damage you take.",
+        "roll": 43,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "valorstone": {
+        "name": "Valorstone",
+        "type": "Item",
+        "tier": "",
+        "description": "You can attach this stone to armor that doesn’t already have a feature. The armor gains the following feature.<br><strong>Resilient:</strong> Before you mark your last Armor Slot, roll a d6. On a result of 6, reduce the severity by one threshold without marking an Armor Slot.",
+        "roll": 15,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "vialOfDarksmokeRecipe": {
+        "name": "Vial of Darksmoke Recipe",
+        "type": "Item",
+        "tier": "",
+        "description": "As a downtime move, you can mark a Stress to craft a Vial of Darksmoke.",
+        "roll": 24,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "warpPendant": {
+        "name": "Warp Pendant",
+        "type": "Item",
+        "tier": "",
+        "description": "Once per rest, mark a Stress to teleport to a location you can clearly see.",
+        "roll": 57,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "whisperstepAnklet": {
+        "name": "Whisperstep Anklet",
+        "type": "Item",
+        "tier": "",
+        "description": "This anklet makes your steps silent as long as you don’t move faster than walking speed.",
+        "roll": 25,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "wildriderSSaddle": {
+        "name": "Wildrider’s Saddle",
+        "type": "Item",
+        "tier": "",
+        "description": "This saddle grants any animal it’s strapped onto the ability to understand their rider’s commands.",
+        "roll": 39,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "windupToy": {
+        "name": "Windup Toy",
+        "type": "Item",
+        "tier": "",
+        "description": "This small mechanical device is shaped like a strixwolf pup and can be programmed to perform simple tricks.",
+        "roll": 11,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "wovenNet": {
+        "name": "Woven Net",
+        "type": "Item",
+        "tier": "",
+        "description": "You can make a Finesse Roll using this net to trap a small creature. A trapped target can break free with a successful Attack Roll (16).",
+        "roll": 8,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "zephyrSJar": {
+        "name": "Zephyr’s Jar",
+        "type": "Item",
+        "tier": "",
+        "description": "You can open this empty jar during inclement weather to capture the storm and leave behind clear skies. The storm remains inside until unleashed by reopening the jar.",
+        "roll": 19,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    }
+}

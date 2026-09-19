@@ -48,10 +48,23 @@ database.
 
 ### GM
 
-- **Adversary and environment browsers** over the SRD catalog (129 adversaries, 19
+- **Adversary and environment browsers** over the SRD catalog (264 adversaries, 47
   environments) merged with your own homebrew, filterable by tier and type. A custom card
   shadows an SRD one on slug collision.
-- **Homebrew editors** for custom adversaries and environments, with a live preview and a
+- **Equipment browser** — every weapon and armor in the SRD (315 weapons across the primary,
+  secondary and combat wheelchair tables; 69 armors), filterable by tier, primary/secondary
+  and physical/magic.
+- **Loot browser** — the item and consumable tables from both the Core Set and the Hope &
+  Fear expansion (120 items, 120 consumables), filterable by rarity and source.
+- **Loot randomizer** in both sections, because tier and rarity are different axes in the
+  SRD: weapons and armor are drawn from a tier's tables, while items and consumables have no
+  tier at all and are rolled on d12s — the rarity picks how many. Ask for any mix of the four
+  and it rolls them in one go, showing the dice and the total beside each entry so you can
+  read the result back to the printed table. If your table would rather throw real d12s,
+  **Rolled at the table?** takes the total they got and resolves it against the right table
+  instead — hand-entered results stack up in the same list, tagged *Entered*.
+- **Homebrew editors** for custom adversaries, environments, weapons, armor, items and
+  consumables, each with a live preview. The adversary and environment editors also have a
   reference pane that is the real browser — so you can crib from an existing card while you
   write, or copy one wholesale with *Use as template*.
 - **Parties** — size and tier, which is what the budget is computed from.
@@ -72,7 +85,8 @@ database.
   saved as you type. It's the campaign's landing tab, and it sits in the combat runner's rail
   too, still editable, so the timeline is on hand mid-fight.
 - **Full-text search** over notes, master notes, adversaries and environments in one SQLite
-  FTS5 index, with highlighted excerpts.
+  FTS5 index, with highlighted excerpts. Equipment and loot are deliberately left out: six
+  hundred-odd gear rows would bury the handful of hits you actually search for.
 - **Dice** — a GM d20 with advantage/disadvantage and modifiers, plus a damage roller.
   Duality dice are deliberately absent: only players roll Hope and Fear.
 
@@ -212,13 +226,20 @@ header switches at any time without touching your data.
    advance clocks. Reopen exactly where you left off.
 6. **Write it up.** Log the session with a recap, link the encounters you ran, and keep
    typed notes on the NPCs and places the party met. Search finds them later.
+7. **Hand out loot.** Browse Equipment and Loot for anything in the SRD, or roll a haul:
+   pick the party's tier for gear, the rarity for items and consumables, how many of each,
+   and *Roll*. Tick **Include homebrew** to put your own gear in the mix — it's off by
+   default so a haul is reproducible from the SRD alone. If the players rolled their own
+   d12s, type the total into **Rolled at the table?** instead and it resolves that row;
+   pick the kind and the book first, since the same total names a different entry in each.
 
 ### As a player
 
 1. **Build a character** (Characters) — the wizard walks class → subclass → ancestry →
    community → traits → defenses, showing the SRD text for whatever you're choosing next.
    Armor Score and both damage thresholds are asked for outright and it says where to read
-   them off your armor; there is no armor dataset yet.
+   them off your armor — the armor dataset exists now, but only the GM's browser reads it;
+   the sheet is not yet wired to it.
 2. **Take your first two domain cards** (Domain Cards). The pool only offers cards in your
    domains at your level or lower.
 3. **Play from the sheet.** Click any trait to roll it — a roll with Hope grants you a Hope,
@@ -326,13 +347,15 @@ app.go                  App struct: role, window size, UI scale, DB open + migra
 portable.go             backup/restore, library export/import, update check (file dialogs)
 
 internal/
-  rules/                encounter budget math + the encounter view model
+  rules/                encounter budget math, loot rarity bands, the encounter view model
   dice/                 duality dice, GM d20, damage; die sizes as a closed set
   cards/                shared card model (adversary, environment, domain, class, …)
   srd/                  loader for the embedded SRD json
   db/                   sqlc-generated queries and models
   gm/                   the GM service — one file per area, plus:
     browse.go             SRD ∪ custom union, custom-shadows-SRD
+    equipment.go          weapon and armor browse + homebrew CRUD
+    loot.go               item and consumable browse + homebrew CRUD + the randomizer
     search.go             FTS5 query (hand-written; see Key decisions)
     library.go            whole-library JSON export/import
     share.go              homebrew share codes
@@ -349,7 +372,7 @@ internal/
   update/               GitHub release feed check
 
 sql/
-  schema/               goose migrations (24, embedded)
+  schema/               goose migrations (26, embedded)
   queries/              sqlc sources
 
 data/                   SRD json + //go:embed
@@ -442,14 +465,17 @@ current database to `data-replaced-<timestamp>.db`, then swaps and reopens.
 
 ### Library export/import
 
-Readable JSON covering parties, homebrew cards, encounters, and campaigns with their
-sessions, notes, master note and clocks. Import **adds** rather than replacing, and renames anything
-whose name is taken — a second `Gutter Wraith` becomes `Gutter Wraith (2)`, and imported
-encounters are remapped so their picks still resolve.
+Readable JSON covering parties, homebrew cards (adversaries, environments, weapons, armor,
+items and consumables), encounters, and campaigns with their sessions, notes, master note
+and clocks. Import **adds** rather than replacing, and renames anything whose name is taken
+— a second `Gutter Wraith` becomes `Gutter Wraith (2)`, and imported encounters are remapped
+so their picks still resolve. The equipment and loot arrays are additive, so an export from
+an older build still imports and an older build ignores what it doesn't know.
 
 ### Share codes
 
-Any custom adversary or environment has a *Share* button producing a `HILT1:…` string;
+Any homebrew card — adversary, environment, weapon, armor, item or consumable — has a
+*Share* button producing a `HILT1:…` string;
 *Import code* in the browser takes one back. The format is
 `HILT<version>:<base64url(zlib(json))>` — versioned, so a code from a newer build is refused
 with a message that says so rather than failing as corrupt. A code carries **one card and
@@ -522,11 +548,12 @@ on first run.
 | 7 | Post-1.0 roadmap — see below | ⬜ |
 
 Phase 7 is the shortlist for the release *after* this one, and nothing in it is a
-prerequisite for anything above: armor and weapon datasets (so equipping gear sets your
-thresholds and damage die instead of you typing them in), a "took N damage" box that marks
-the right number of Hit Points, death moves, code signing, real self-update, and the
-optional LAN session view — the GM's app broadcasting Fear, countdowns and spotlight to
-read-only player devices on the same Wi-Fi.
+prerequisite for anything above. The weapon and armor datasets have since landed on the GM
+side, so what remains of that item is wiring the player sheet to them, so equipping gear
+sets your thresholds and damage die instead of you typing them in. The rest: a "took N
+damage" box that marks the right number of Hit Points, death moves, code signing, real
+self-update, and the optional LAN session view — the GM's app broadcasting Fear, countdowns
+and spotlight to read-only player devices on the same Wi-Fi.
 
 [BUILD_PLAN.md](BUILD_PLAN.md) has the full roadmap and, per phase, a "notes on what
 landed" section recording why things are the way they are — including the ones that were

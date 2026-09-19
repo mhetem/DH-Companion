@@ -1,0 +1,1082 @@
+{
+    "acidpaste": {
+        "name": "Acidpaste",
+        "type": "Consumable",
+        "tier": "",
+        "description": "This paste eats away walls and other surfaces in bright flashes.",
+        "roll": 36,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "arcticiteShard": {
+        "name": "Arcticite Shard",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Choose a point within Far range. All targets within Close range of that point must succeed on a Reaction Roll (16) or take 3d6 magic damage and become temporarily <em>Restrained</em> by ice.",
+        "roll": 36,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "armorStitcher": {
+        "name": "Armor Stitcher",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can use this stitcher to spend any number of Hope and clear that many Armor Slots.",
+        "roll": 21,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "attunePotion": {
+        "name": "Attune Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain a +1 bonus to your next Instinct Roll.",
+        "roll": 4,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "berserkerSBrew": {
+        "name": "Berserker’s Brew",
+        "type": "Consumable",
+        "tier": "",
+        "description": "When you drink this dram of liquid, you gain a bonus to your Strength and a penalty to your Finesse and Knowledge equal to your Instinct (minimum 1). This effect lasts until you make a death move or until your next rest.",
+        "roll": 34,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "blindingOrb": {
+        "name": "Blinding Orb",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can activate this orb to create a flash of bright light. All targets within Close range become <em>Vulnerable</em> until they mark HP.",
+        "roll": 57,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "bloodOfTheYorgi": {
+        "name": "Blood of the Yorgi",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this blood to disappear from where you are and immediately reappear at a point you can see within Very Far range.",
+        "roll": 31,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "bolsterPotion": {
+        "name": "Bolster Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain a +1 bonus to your next Strength Roll.",
+        "roll": 2,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "bondingHoney": {
+        "name": "Bonding Honey",
+        "type": "Consumable",
+        "tier": "",
+        "description": "This honey can be used to glue two objects together permanently.",
+        "roll": 52,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "bridgeSeed": {
+        "name": "Bridge Seed",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Thick vines grow from your location to a point of your choice within Far range, allowing you to climb up or across them. The vines dissipate on your next short rest.",
+        "roll": 49,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "bundleOfSpiderlegs": {
+        "name": "Bundle of Spiderlegs",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can eat these spiderlegs to walk on walls until your next rest.",
+        "roll": 17,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "cacophonousConcoction": {
+        "name": "Cacophonous Concoction",
+        "type": "Consumable",
+        "tier": "",
+        "description": "When you drink this potion, anything you say or do in the next hour becomes impossible for a witness to recount. Any attempts they make to communicate what they saw, heard, or otherwise sensed comes out garbled or nonsensical.",
+        "roll": 41,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "channelstone": {
+        "name": "Channelstone",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can use this stone to take a spell or grimoire from your vault, use it once, and return it to your vault.",
+        "roll": 34,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "charmPotion": {
+        "name": "Charm Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain a +1 bonus to your next Presence Roll.",
+        "roll": 5,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "chimericSaliva": {
+        "name": "Chimeric Saliva",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can apply this saliva to a weapon that deals physical damage to change its damage type to magic until your next rest.",
+        "roll": 8,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "circleOfTheVoid": {
+        "name": "Circle of the Void",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Mark a Stress to create a void that extends up to Far range. No magic can be cast inside the void, and creatures within the void are immune to magic damage.",
+        "roll": 40,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "ciscanFogBottle": {
+        "name": "Ciscan Fog Bottle",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can break this jar to fill the area within Close range with magical mist. A creature who enters the mist clears a Stress and becomes <em>Hidden</em>.",
+        "roll": 18,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "cockerelClawTea": {
+        "name": "Cockerel Claw Tea",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this tea to refresh your features as if you had taken a long rest.",
+        "roll": 39,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "controlPotion": {
+        "name": "Control Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain a +1 bonus to your next Finesse Roll.",
+        "roll": 3,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "cupbearerSBezoar": {
+        "name": "Cupbearer’s Bezoar",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can swallow this bezoar to become immune to poisons until your next long rest.",
+        "roll": 4,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "deathTea": {
+        "name": "Death Tea",
+        "type": "Consumable",
+        "tier": "",
+        "description": "After you drink this tea, you instantly kill your target when you critically succeed on an attack. If you don’t critically succeed on an attack before your next long rest, you die.",
+        "roll": 58,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "deathseerSPowder": {
+        "name": "Deathseer’s Powder",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can sprinkle this powder over a recently deceased corpse to conjure a spectral reprise of their final minute of life.",
+        "roll": 11,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "demiurgeSDraught": {
+        "name": "Demiurge’s Draught",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this draught to gain a +1 bonus to your Proficiency for your next successful attack roll.",
+        "roll": 38,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "displacementToken": {
+        "name": "Displacement Token",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can swallow this token to conjure two illusions of yourself that you can control. Each illusion lasts until it takes damage or until your next rest.",
+        "roll": 23,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "dragonbloomTea": {
+        "name": "Dragonbloom Tea",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this tea to unleash a fiery breath attack. Make an Instinct Roll against all adversaries in front of you within Close range. Targets you succeed against take d20 physical damage using your Proficiency.",
+        "roll": 48,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "drakemantle": {
+        "name": "Drakemantle",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can use this enchanted ancient dragon hide to gain draconic characteristics until the end of the scene, when the hide falls aways in tatters. Until then, you can fly and gain a +5 bonus to your damage thresholds and a +1 bonus to your Proficiency.",
+        "roll": 56,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "dripfangPoison": {
+        "name": "Dripfang Poison",
+        "type": "Consumable",
+        "tier": "",
+        "description": "A creature who consumes this poison takes 8d10 direct magic damage.",
+        "roll": 42,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "emberiteShard": {
+        "name": "Emberite Shard",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Choose a point within Far range. All targets within Close range of that point must succeed on a Reaction Roll (16) or take 3d6 magic damage and become temporarily <em>Ablaze</em>. While <em>Ablaze</em>, a creature must roll a d4 whenever they make an action roll. On a result of 1, they mark a Hit Point. On a result of 4, they clear the <em>Ablaze</em> condition.",
+        "roll": 35,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "enlightenPotion": {
+        "name": "Enlighten Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain a +1 bonus to your next Knowledge Roll.",
+        "roll": 6,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "feastOfXuria": {
+        "name": "Feast of Xuria",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can eat this meal to clear all HP and Stress and gain 1d4 Hope.",
+        "roll": 51,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "featherbone": {
+        "name": "Featherbone",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can use this bone to control your falling speed for a number of minutes equal to your level.",
+        "roll": 39,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "featherstepPotion": {
+        "name": "Featherstep Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this potion to sprout small wings from your ankles that give you a bonus to your Evasion equal to your tier until your next rest.",
+        "roll": 60,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "formoidSerum": {
+        "name": "Formoid Serum",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this potion to become a swarm of 16 million ants until the end of the scene. You keep and have access to all equipment, loot, and features.",
+        "roll": 48,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "fulguriteShard": {
+        "name": "Fulgurite Shard",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Choose a point within Far range. All targets within Close range of that point must succeed on a Reaction Roll (16) or take 3d6 magic damage and mark 1d4 Stress as lightning crackles through the area.",
+        "roll": 37,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "gamblerSFallacy": {
+        "name": "Gambler’s Fallacy",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can spend any number of handfuls of gold by placing them into this slotted ceramic jar shaped like a pig. When you throw the jar at a point within Far range, it explodes and deals 1d20 magic damage for each handful of gold spent to all creatures within Close range of that point. All gold within the jar is destroyed.",
+        "roll": 57,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "gillSalve": {
+        "name": "Gill Salve",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can apply this salve to your neck to breathe underwater for a number of minutes equal to your level.",
+        "roll": 22,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "glowmossMushroom": {
+        "name": "Glowmoss Mushroom",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can break this mushroom into pieces, causing it to glow bright blue until your next long rest.",
+        "roll": 14,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "godlingSPomelo": {
+        "name": "Godling’s Pomelo",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can eat this citrus fruit to clear all Hit Points and Stress.",
+        "roll": 50,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "gossipFlower": {
+        "name": "Gossip Flower",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can plant this seed in soil. It instantly grows into a small flower that records everything it hears for up to one week. When plucked, the flower recites what it recorded in real time, then withers.",
+        "roll": 22,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "gravityBomb": {
+        "name": "Gravity Bomb",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can throw this peach-sized mechanical orb at a point within Far range. It implodes and pulls all creatures and objects within Close range of that point into Melee range with it.",
+        "roll": 21,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "greenOozeOil": {
+        "name": "Green Ooze Oil",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can coat your weapon in this oil. The next successful attack you make with this weapon deals an extra 1d8 magic damage and temporarily <em>Corrodes</em> the target. While <em>Corroded</em>, the target gains a −2 penalty to their damage thresholds.",
+        "roll": 29,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "grindletoothVenom": {
+        "name": "Grindletooth Venom",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can apply this venom to a weapon that deals physical damage to add a d6 to your next damage roll with that weapon.",
+        "roll": 9,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "growingPotion": {
+        "name": "Growing Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this potion to double your size until you choose to drop this form or your next rest. While in this form, you have a +2 bonus to Strength and a +1 bonus to your Proficiency.",
+        "roll": 54,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "healthPotion": {
+        "name": "Health Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Clear 1d4+1 HP.",
+        "roll": 19,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "hometSSecretPotion": {
+        "name": "Homet’s Secret Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "After drinking this potion, the next successful attack you make critically succeeds.",
+        "roll": 32,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "hopeholdFlare": {
+        "name": "Hopehold Flare",
+        "type": "Consumable",
+        "tier": "",
+        "description": "When you use this flare, allies within Close range roll a d6 when they spend a Hope. On a result of 6, they gain the effect of that Hope without spending it. The flare lasts until the end of the scene.",
+        "roll": 37,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "improvedArcaneShard": {
+        "name": "Improved Arcane Shard",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can make a Finesse Roll to throw this shard at a group of adversaries within Far range. Targets you succeed against take 2d20 magic damage.",
+        "roll": 24,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "improvedGrindletoothVenom": {
+        "name": "Improved Grindletooth Venom",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can apply this venom to a weapon that deals physical damage to add a d8 to your next damage roll with that weapon.",
+        "roll": 14,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "instantCamp": {
+        "name": "Instant Camp",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can unfold this small mechanical box into a camping tent large enough to safely house six people. The tent collapses at the end of your next long rest.",
+        "roll": 16,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "invisibilityPotion": {
+        "name": "Invisibility Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You are <em>Hidden</em> until you deal damage to another creature or until your next rest.",
+        "roll": 47,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "iridianDust": {
+        "name": "Iridian Dust",
+        "type": "Consumable",
+        "tier": "",
+        "description": "This multicolored powder sticks to everything and prevents creatures covered in it from becoming <em>Hidden</em>.",
+        "roll": 2,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "jarOfLostVoices": {
+        "name": "Jar of Lost Voices",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can open this jar to release a deafening echo of voices for a number of minutes equal to your Instinct. Creatures within Far range unprepared for the sound take 6d8 magic damage.",
+        "roll": 47,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "jumpingRoot": {
+        "name": "Jumping Root",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Eat this root to leap up to Far range once without needing to roll.",
+        "roll": 17,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "knowledgeStone": {
+        "name": "Knowledge Stone",
+        "type": "Consumable",
+        "tier": "",
+        "description": "If you die while holding this stone, an ally can take a card from your loadout to place in their loadout or vault. After they take this knowledge, the stone crumbles.",
+        "roll": 55,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "lionheartTonic": {
+        "name": "Lionheart Tonic",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this tonic to gain a +1 bonus to your Proficiency until you roll with Fear.",
+        "roll": 58,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "lyrebirdLozenge": {
+        "name": "Lyrebird Lozenge",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can dissolve this lozenge in your mouth to perfectly mimic any voice you’ve heard until the end of the scene.",
+        "roll": 6,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "magicUserSMalison": {
+        "name": "Magic-User’s Malison",
+        "type": "Consumable",
+        "tier": "",
+        "description": "When you release this spellcaster’s trapped soul, you can cast one spell from a card in your vault as if it were in your loadout. This doesn’t work for permanently vaulted cards.",
+        "roll": 52,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "majorArcaneShard": {
+        "name": "Major Arcane Shard",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can make a Finesse Roll to throw this shard at a group of adversaries within Far range. Targets you succeed against take 4d20 magic damage.",
+        "roll": 38,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "majorAttunePotion": {
+        "name": "Major Attune Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Instinct until your next rest.",
+        "roll": 28,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "majorBolsterPotion": {
+        "name": "Major Bolster Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Strength until your next rest.",
+        "roll": 26,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "majorCharmPotion": {
+        "name": "Major Charm Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Presence until your next rest.",
+        "roll": 29,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "majorControlPotion": {
+        "name": "Major Control Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Finesse until your next rest.",
+        "roll": 27,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "majorEnlightenPotion": {
+        "name": "Major Enlighten Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Knowledge until your next rest.",
+        "roll": 30,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "majorHealthPotion": {
+        "name": "Major Health Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Clear 1d4+2 HP.",
+        "roll": 43,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "majorStaminaPotion": {
+        "name": "Major Stamina Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Clear 1d4+2 Stress.",
+        "roll": 44,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "majorStridePotion": {
+        "name": "Major Stride Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain a +1 bonus to your Agility until your next rest.",
+        "roll": 25,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "maskOfTheEchoedSelf": {
+        "name": "Mask of the Echoed Self",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can wear this mask during your next level up to swap the values of any of your traits. When you do, the mask becomes your permanent face.",
+        "roll": 54,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "mesmerSTonic": {
+        "name": "Mesmer’s Tonic",
+        "type": "Consumable",
+        "tier": "",
+        "description": "When you drink this tonic, the only thing you can hear until your next rest are the surface thoughts of creatures within Very Close range.",
+        "roll": 46,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "midasFlask": {
+        "name": "Midas Flask",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can pour this small flask of alchemical liquid over a mundane item to instantly transmute it into a handful of gold.",
+        "roll": 32,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "minorHealthPotion": {
+        "name": "Minor Health Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Clear 1d4 HP.",
+        "roll": 7,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "minorStaminaPotion": {
+        "name": "Minor Stamina Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Clear 1d4 Stress.",
+        "roll": 8,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "mirrorOfMarigold": {
+        "name": "Mirror of Marigold",
+        "type": "Consumable",
+        "tier": "",
+        "description": "When you take damage, you can spend a Hope to negate that damage, after which the mirror shatters.",
+        "roll": 59,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "mnemonicPotion": {
+        "name": "Mnemonic Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this potion to Utilize an Experience without spending a Hope.",
+        "roll": 27,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "moonlightOrb": {
+        "name": "Moonlight Orb",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can shatter this orb to make the area within Very Far range appear as though it’s moonlit nighttime for the next 24 hours.",
+        "roll": 31,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "morphingClay": {
+        "name": "Morphing Clay",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can spend a Hope to use this clay, altering your face enough to make you unrecognizable until your next rest.",
+        "roll": 15,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "mossmantlePotion": {
+        "name": "Mossmantle Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this tea to perfectly blend into natural environments until your next rest.",
+        "roll": 5,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "mythicDust": {
+        "name": "Mythic Dust",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can apply this dust to a weapon that deals magic damage to add a d12 to your next damage roll with that weapon.",
+        "roll": 35,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "necroprancerSBell": {
+        "name": "Necroprancer’s Bell",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can break this rusted, clapperless bell against the ground to summon a skeletal steed that climbs out of the earth and serves you until the next sunrise.",
+        "roll": 55,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "nightHagSDust": {
+        "name": "Night Hag’s Dust",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can blow this dust in an adversary’s face to prevent them from clearing Stress until your next long rest.",
+        "roll": 24,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "nightmareMead": {
+        "name": "Nightmare Mead",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this potion to discover the deepest fear of the next person you make eye contact with. When you do, the GM gains a Fear.",
+        "roll": 42,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "ogreMusk": {
+        "name": "Ogre Musk",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can use this musk to prevent anyone from tracking you by mundane or magical means until your next rest.",
+        "roll": 45,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "packetOfSpaceDust": {
+        "name": "Packet of Space Dust",
+        "type": "Consumable",
+        "tier": "",
+        "description": "This dust causes anything it covers to become lighter than air. One packet contains enough dust to cover the contents of a picnic basket, and the effects last for an hour.",
+        "roll": 9,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "phialOfDeepInk": {
+        "name": "Phial of Deep Ink",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this bottle of ink to transform into a cephalopod of roughly your size for the next hour. You gain rubbery skin, soft bones, the ability to breathe underwater, and new limbs until you have eight total.",
+        "roll": 45,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "pipeweed": {
+        "name": "Pipeweed",
+        "type": "Consumable",
+        "tier": "",
+        "description": "When you choose the Clear Stress downtime move during a short rest, you can smoke this non-intoxicating leaf to clear an additional Stress. Any other PCs who chose the Clear Stress downtime move also gain this benefit.",
+        "roll": 10,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "potionOfStability": {
+        "name": "Potion of Stability",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this potion to choose one additional downtime move.",
+        "roll": 13,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "potionOfVigilance": {
+        "name": "Potion of Vigilance",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this potion to gain a +1 bonus to your Evasion until you mark a Hit Point.",
+        "roll": 40,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "psychopompSShroud": {
+        "name": "Psychopomp’s Shroud",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can place this shroud over the corpse of a recently deceased creature. The creature’s spirit enters the shroud and becomes your spectral assistant until the next sunrise, when they pass through the veil of death and take the shroud with them.",
+        "roll": 44,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "quintessentialSeverant": {
+        "name": "Quintessential Severant",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can use this magic blade to cut one magical or metaphysical bond, such as an enchantment, contract, magical tether, or divine oath. When you do, the blade shatters.",
+        "roll": 53,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "redOozeOil": {
+        "name": "Red Ooze Oil",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can coat your weapon in this oil. The next successful attack you make with this weapon deals an extra 1d8 magic damage and temporarily <em>Ignites</em> the target. While <em>Ignited</em>, the target takes 1d4 magic damage when they take the spotlight.",
+        "roll": 15,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "redthornSaliva": {
+        "name": "Redthorn Saliva",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can apply this saliva to a weapon that deals physical damage to add a d12 to your next damage roll with that weapon.",
+        "roll": 33,
+        "table": "Core Set",
+        "rarity": "Uncommon"
+    },
+    "replicationParchment": {
+        "name": "Replication Parchment",
+        "type": "Consumable",
+        "tier": "",
+        "description": "By touching this piece of parchment to another, you can perfectly copy the second parchment’s contents. Once used, this parchment becomes mundane paper.",
+        "roll": 23,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "salamanderSalve": {
+        "name": "Salamander Salve",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can apply this salve to your skin to make yourself immune to heat until your next rest.",
+        "roll": 28,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "selfSewingThread": {
+        "name": "Self-Sewing Thread",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can use this thread to clear either a Hit Point or 2 Armor Slots.",
+        "roll": 25,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "shrinkingPotion": {
+        "name": "Shrinking Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this potion to halve your size until you choose to drop this form or your next rest. While in this form, you have a +2 bonus to Agility and a −1 penalty to your Proficiency.",
+        "roll": 53,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "slayerSSalt": {
+        "name": "Slayer’s Salt",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can spread this salt in a line along windowsills or thresholds to create a magical barrier that undead creatures can’t cross until the line is broken.",
+        "roll": 12,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "sleepingSap": {
+        "name": "Sleeping Sap",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this potion to fall asleep for a full night’s rest. You clear all Stress upon waking.",
+        "roll": 50,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "snakeskinSpirit": {
+        "name": "Snakeskin Spirit",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this potion to slough off your outer layer of skin and heal a scar.",
+        "roll": 51,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "snapPowder": {
+        "name": "Snap Powder",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Mark a Stress and clear a HP.",
+        "roll": 18,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "snapthornSeed": {
+        "name": "Snapthorn Seed",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can throw this seed at a point you can see. It explodes into a tangle of binding vines that temporarily <em>Restrains</em> all creatures within Close range of that point.",
+        "roll": 19,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "spriteBottle": {
+        "name": "Sprite Bottle",
+        "type": "Consumable",
+        "tier": "",
+        "description": "When you mark your last Hit Point, this bottle shatters to release the Sprite inside. The Sprite clears all your Hit Points before fading from the Mortal Realm.",
+        "roll": 20,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "staffOfReversal": {
+        "name": "Staff of Reversal",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can break this staff against the ground to reverse one magical transformation or effect within Far range.",
+        "roll": 33,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "stakeOfAbjuration": {
+        "name": "Stake of Abjuration",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can hammer this stake into the ground and make a proclamation. Until your next rest, a creature within Far range of the stake who transgresses that proclamation must mark a Stress. The stake lasts until your next rest, then it shatters.",
+        "roll": 43,
+        "table": "Hope & Fear",
+        "rarity": "Rare"
+    },
+    "staminaPotion": {
+        "name": "Stamina Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Clear 1d4+1 Stress.",
+        "roll": 20,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "stardrop": {
+        "name": "Stardrop",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can use this stardrop to summon a hailstorm of comets that deals 8d20 physical damage to all targets within Very Far range.",
+        "roll": 60,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "steelskinSalve": {
+        "name": "Steelskin Salve",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can apply this salve to your skin to gain a bonus to your damage thresholds equal to your tier until the end of the scene.",
+        "roll": 49,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "stonemasonSFortune": {
+        "name": "Stonemason’s Fortune",
+        "type": "Consumable",
+        "tier": "",
+        "description": "When you throw this gray brick on the ground, it immediately grows into a 6-foot-tall, 10-foot-wide, and 2-foot-deep wall of solid stone.",
+        "roll": 26,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "stridePotion": {
+        "name": "Stride Potion",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain a +1 bonus to your next Agility Roll.",
+        "roll": 1,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "sunTreeSap": {
+        "name": "Sun Tree Sap",
+        "type": "Consumable",
+        "tier": "",
+        "description": "Consume this sap to roll a d6. On a result of 5–6, clear 2 HP. On a result of 2–4, clear 3 Stress. On a result of 1, see through the veil of death and return changed, gaining one scar.",
+        "roll": 41,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "sunlightOrb": {
+        "name": "Sunlight Orb",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can shatter this orb to make the area within Very Far range appear as though it’s sunlit daytime for the next 24 hours.",
+        "roll": 30,
+        "table": "Hope & Fear",
+        "rarity": "Uncommon"
+    },
+    "sweetMoss": {
+        "name": "Sweet Moss",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can consume this moss during a rest to clear 1d10 HP or 1d10 Stress.",
+        "roll": 56,
+        "table": "Core Set",
+        "rarity": "Legendary"
+    },
+    "tearsOfTheUndyingHero": {
+        "name": "Tears of the Undying Hero",
+        "type": "Consumable",
+        "tier": "",
+        "description": "When you drink this potion, death can’t touch you until your next long rest. When you would mark your last Hit Point, instead of making a death move, you make one final action roll before falling into a dreamless slumber until an ally chooses the Tend to Wounds downtime move to clear your Hit Points.",
+        "roll": 59,
+        "table": "Hope & Fear",
+        "rarity": "Legendary"
+    },
+    "unstableArcaneShard": {
+        "name": "Unstable Arcane Shard",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can make a Finesse Roll to throw this shard at a group of adversaries within Far range. Targets you succeed against take 1d20 magic damage.",
+        "roll": 12,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "varikLeaves": {
+        "name": "Varik Leaves",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can eat these paired leaves to immediately gain 2 Hope.",
+        "roll": 10,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "verglasianSeed": {
+        "name": "Verglasian Seed",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can use this ice shard to instantly freeze an area of water up to Close range.",
+        "roll": 3,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "vialOfDarksmoke": {
+        "name": "Vial of Darksmoke",
+        "type": "Consumable",
+        "tier": "",
+        "description": "When an adversary attacks you, use this vial and roll a number of d6s equal to your Agility. Add the highest result to your Evasion against the attack.",
+        "roll": 16,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "vialOfFeatherfall": {
+        "name": "Vial of Featherfall",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can drink this potion to ignore damage from falling for the next 10 minutes.",
+        "roll": 7,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "vialOfMoondrip": {
+        "name": "Vial of Moondrip",
+        "type": "Consumable",
+        "tier": "",
+        "description": "When you drink the contents of this vial, you can see in total darkness until your next rest.",
+        "roll": 11,
+        "table": "Core Set",
+        "rarity": "Common"
+    },
+    "wardingCandle": {
+        "name": "Warding Candle",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You can light this candle to fill an area within Close range with a halo of light. A creature outside the halo can’t enter it if they have ill intent toward a creature within it. The candle burns for an hour.",
+        "roll": 1,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    },
+    "wingsprout": {
+        "name": "Wingsprout",
+        "type": "Consumable",
+        "tier": "",
+        "description": "You gain magic wings that allow you to fly for a number of minutes equal to your level.",
+        "roll": 46,
+        "table": "Core Set",
+        "rarity": "Rare"
+    },
+    "yakamelMilk": {
+        "name": "Yakamel Milk",
+        "type": "Consumable",
+        "tier": "",
+        "description": "After consuming this milk, the next time you clear 1 or more Hit Points, you clear an additional Hit Point.",
+        "roll": 13,
+        "table": "Hope & Fear",
+        "rarity": "Common"
+    }
+}

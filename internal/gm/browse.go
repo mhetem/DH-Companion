@@ -79,6 +79,20 @@ func (s *Service) BrowseEnvironments(filter Filter) ([]BrowseEnvironment, error)
 	return out, nil
 }
 
+// sortEquipment keeps the merged equipment lists in the order the tables are
+// printed: by tier first, then by name, so a homebrew tier 2 sword lands beside
+// the SRD ones rather than at the end of the list.
+func sortEquipment[T any](items []T, key func(T) (tier, name string)) {
+	sort.SliceStable(items, func(i, j int) bool {
+		ti, ni := key(items[i])
+		tj, nj := key(items[j])
+		if ti != tj {
+			return ti < tj
+		}
+		return strings.ToLower(ni) < strings.ToLower(nj)
+	})
+}
+
 func sortByName[T any](items []T, name func(T) string) {
 	sort.SliceStable(items, func(i, j int) bool {
 		return strings.ToLower(name(items[i])) < strings.ToLower(name(items[j]))
