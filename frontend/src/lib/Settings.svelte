@@ -89,6 +89,7 @@
         [report.campaigns, 'campaign', 'campaigns'],
         [report.sessions, 'session', 'sessions'],
         [report.notes, 'note', 'notes'],
+        [report.worldNotes, 'world page', 'world pages'],
         [report.countdowns, 'countdown', 'countdowns']
       ]
       const counts = rows

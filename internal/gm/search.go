@@ -13,6 +13,7 @@ import (
 const (
 	entityNote        = "note"
 	entityMaster      = "master"
+	entityWorld       = "world"
 	entityAdversary   = "adversary"
 	entityEnvironment = "environment"
 )
@@ -23,7 +24,7 @@ SELECT entity, entity_id, campaign_id, slug, title,
        bm25(search)
 FROM search
 WHERE search MATCH ?
-  AND (? = 0 OR entity NOT IN ('note', 'master') OR campaign_id = ?)
+  AND (? = 0 OR entity NOT IN ('note', 'master', 'world') OR campaign_id = ?)
 ORDER BY rank
 LIMIT ?`
 

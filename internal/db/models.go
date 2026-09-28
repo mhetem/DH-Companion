@@ -292,3 +292,16 @@ type Setting struct {
 	Key   string
 	Value string
 }
+
+type WorldNote struct {
+	ID         int64
+	CampaignID int64
+	ParentID   sql.NullInt64
+	Kind       string
+	Title      string
+	WorldDate  string
+	Body       string
+	Position   int64
+	CreatedAt  string
+	UpdatedAt  string
+}

@@ -13,6 +13,7 @@
   import MasterNote from './MasterNote.svelte'
   import Notes from './Notes.svelte'
   import SessionLog from './SessionLog.svelte'
+  import World from './World.svelte'
 
   // The last campaign opened is remembered the same way the runner remembers its
   // dice panel — reopening the section lands you back where you were.
@@ -86,7 +87,7 @@
   }
 
   async function remove(campaign) {
-    if (!confirm(`Delete “${campaign.name}”? Its sessions, notes and countdowns go with it.`)) return
+    if (!confirm(`Delete “${campaign.name}”? Its sessions, notes, world pages and countdowns go with it.`)) return
     try {
       await DeleteCampaign(campaign.id)
       if (editingId === campaign.id) reset()
@@ -117,6 +118,7 @@
     { id: 'master', label: 'Master note' },
     { id: 'sessions', label: 'Sessions' },
     { id: 'notes', label: 'Notes' },
+    { id: 'world', label: 'Worldbuilding' },
     { id: 'clocks', label: 'Countdowns' }
   ]
 </script>
@@ -196,6 +198,8 @@
             <SessionLog campaignId={selected.id} />
           {:else if tab === 'notes'}
             <Notes campaignId={selected.id} />
+          {:else if tab === 'world'}
+            <World campaignId={selected.id} />
           {:else}
             <Countdowns campaignId={selected.id} />
           {/if}

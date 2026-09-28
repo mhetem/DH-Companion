@@ -6,13 +6,14 @@
   const ENTITY_LABELS = {
     note: 'Note',
     master: 'Master note',
+    world: 'World',
     adversary: 'Adversary',
     environment: 'Environment'
   }
 
-  // The two campaign-scoped entities — the scope select narrows these and leaves
-  // the cards alone, matching what gm.Search does on the Go side.
-  const CAMPAIGN_ENTITIES = ['note', 'master']
+  // The campaign-scoped entities — the scope select narrows these and leaves the
+  // cards alone, matching what gm.Search does on the Go side.
+  const CAMPAIGN_ENTITIES = ['note', 'master', 'world']
 
   let query = $state('')
   let scope = $state(0)
@@ -67,7 +68,7 @@
 <div class="search">
   <header>
     <h2>Search</h2>
-    <p class="blurb">One index over your notes, your campaigns' master notes, and every adversary and environment card, SRD or homebrew.</p>
+    <p class="blurb">One index over your notes, your campaigns' master notes and world pages, and every adversary and environment card, SRD or homebrew.</p>
   </header>
 
   {#if error}
@@ -112,6 +113,8 @@
                 <p class="hint">The master note of “{hit.title}” — open that campaign to read or edit it in full.</p>
               {:else if hit.entity === 'note'}
                 <p class="hint">Open this campaign's Notes tab to read or edit it in full.</p>
+              {:else if hit.entity === 'world'}
+                <p class="hint">A world page — open this campaign's Worldbuilding tab and filter for “{hit.title}”.</p>
               {:else}
                 <p class="hint">Card slug <code>{hit.slug}</code> — find it in the {ENTITY_LABELS[hit.entity]?.toLowerCase()} browser.</p>
               {/if}

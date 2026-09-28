@@ -32,6 +32,7 @@ export {
   DeleteNote,
   DeleteParty,
   DeleteSession,
+  DeleteWorldNote,
   EndCombat,
   GetActiveCombat,
   GetArmor,
@@ -53,6 +54,7 @@ export {
   GetNote,
   GetParty,
   GetWeapon,
+  GetWorldNote,
   GetSession,
   ImportShareCode,
   LinkCombat,
@@ -69,8 +71,10 @@ export {
   ListParties,
   ListSessions,
   ListUnassignedCountdowns,
+  ListWorldNotes,
   LookupLoot,
   MarkHP,
+  MoveWorldNote,
   PreviewShareCode,
   MarkStress,
   RemoveCombatant,
@@ -83,6 +87,7 @@ export {
   SaveMasterNote,
   SaveNote,
   SaveSession,
+  SaveWorldNote,
   Search,
   SessionsForEncounter,
   SetCampaignFear,
@@ -95,6 +100,7 @@ export {
   ShareItem,
   ShareWeapon,
   ShareEnvironment,
+  ShiftWorldNote,
   StartCombat,
   UnlinkEncounter,
   UpdateCustomAdversary,
@@ -203,6 +209,31 @@ export const NOTE_KINDS = [
 export function noteKindLabel(kind) {
   return NOTE_KINDS.find((k) => k.value === kind)?.label ?? kind
 }
+
+// Mirrors validWorldKinds in internal/gm/validate.go. Unlike NOTE_KINDS there is no
+// SQL CHECK behind these — it's a worldbuilding taxonomy, not a rules list, and
+// it's expected to grow.
+export const WORLD_KINDS = [
+  { value: 'region', label: 'Region', hint: 'Continents, kingdoms, wilds' },
+  { value: 'city', label: 'City', hint: 'Cities, towns, villages' },
+  { value: 'place', label: 'Place', hint: 'Landmarks, dungeons, buildings' },
+  { value: 'timeline', label: 'Timeline', hint: 'An age or a history, told in order' },
+  { value: 'event', label: 'Event', hint: 'Something that happened, and when' },
+  { value: 'culture', label: 'Culture', hint: 'Peoples, customs, languages' },
+  { value: 'religion', label: 'Religion', hint: 'Gods, faiths, cults' },
+  { value: 'page', label: 'Page', hint: 'Anything else' }
+]
+
+export function worldKindLabel(kind) {
+  return WORLD_KINDS.find((k) => k.value === kind)?.label ?? kind
+}
+
+// The kinds that carry an in-world date — an event's "when", a timeline's span.
+export const WORLD_DATED_KINDS = ['timeline', 'event']
+
+// What a new page inside a page of each kind starts as. Only a first guess: the
+// kind picker is right there on the form.
+export const WORLD_CHILD_KIND = { region: 'city', city: 'place', timeline: 'event' }
 
 // Not validated by the backend, but every SRD feature uses one of these three.
 export const FEATURE_TYPES = ['Action', 'Passive', 'Reaction']

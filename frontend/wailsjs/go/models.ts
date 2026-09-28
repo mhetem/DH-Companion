@@ -1303,6 +1303,7 @@ export namespace gm {
 	    campaigns: number;
 	    sessions: number;
 	    notes: number;
+	    worldNotes: number;
 	    countdowns: number;
 	    renamed: string[];
 	    skipped: string[];
@@ -1324,6 +1325,7 @@ export namespace gm {
 	        this.campaigns = source["campaigns"];
 	        this.sessions = source["sessions"];
 	        this.notes = source["notes"];
+	        this.worldNotes = source["worldNotes"];
 	        this.countdowns = source["countdowns"];
 	        this.renamed = source["renamed"];
 	        this.skipped = source["skipped"];
@@ -1707,6 +1709,58 @@ export namespace gm {
 	        this.type = source["type"];
 	        this.description = source["description"];
 	        this.renamed = source["renamed"];
+	    }
+	}
+	export class WorldNote {
+	    id: number;
+	    campaignId: number;
+	    parentId?: number;
+	    kind: string;
+	    title: string;
+	    worldDate: string;
+	    body: string;
+	    createdAt: string;
+	    updatedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorldNote(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.campaignId = source["campaignId"];
+	        this.parentId = source["parentId"];
+	        this.kind = source["kind"];
+	        this.title = source["title"];
+	        this.worldDate = source["worldDate"];
+	        this.body = source["body"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
+	export class WorldNoteInput {
+	    id?: number;
+	    campaignId: number;
+	    parentId?: number;
+	    kind: string;
+	    title: string;
+	    worldDate: string;
+	    body: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorldNoteInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.campaignId = source["campaignId"];
+	        this.parentId = source["parentId"];
+	        this.kind = source["kind"];
+	        this.title = source["title"];
+	        this.worldDate = source["worldDate"];
+	        this.body = source["body"];
 	    }
 	}
 

@@ -79,14 +79,18 @@ database.
   mid-fight is safe.
 - **Campaigns** — the connective tissue. A campaign owns its Fear, its **master note**, its
   numbered session log (with recaps and the encounters prepped for and actually run that
-  night), its typed notes (NPC / location / faction / lore / plot, markdown body), and its
-  countdown clocks.
+  night), its typed notes (NPC / location / faction / lore / plot, markdown body), its
+  worldbuilding pages, and its countdown clocks.
 - **The master note** — one free-form markdown page per campaign for the running timeline,
   saved as you type. It's the campaign's landing tab, and it sits in the combat runner's rail
   too, still editable, so the timeline is on hand mid-fight.
-- **Full-text search** over notes, master notes, adversaries and environments in one SQLite
-  FTS5 index, with highlighted excerpts. Equipment and loot are deliberately left out: six
-  hundred-odd gear rows would bury the handful of hits you actually search for.
+- **Worldbuilding** — the campaign's world as a tree of nested pages: regions holding cities
+  holding places, and timelines whose events are laid out in order with their in-world
+  dates. Each page is markdown, saved as you type; pages can be filtered, reordered, and
+  moved anywhere in the tree, and deleting one takes everything inside it along.
+- **Full-text search** over notes, master notes, world pages, adversaries and environments
+  in one SQLite FTS5 index, with highlighted excerpts. Equipment and loot are deliberately
+  left out: six hundred-odd gear rows would bury the handful of hits you actually search for.
 - **Dice** — a GM d20 with advantage/disadvantage and modifiers, plus a damage roller.
   Duality dice are deliberately absent: only players roll Hope and Fear.
 
@@ -225,7 +229,8 @@ header switches at any time without touching your data.
    Fear pool it spends, then mark damage and Stress, hold the spotlight, spend Fear, and
    advance clocks. Reopen exactly where you left off.
 6. **Write it up.** Log the session with a recap, link the encounters you ran, and keep
-   typed notes on the NPCs and places the party met. Search finds them later.
+   typed notes on the NPCs and places the party met. Build out the world they're travelling
+   through under Worldbuilding. Search finds all of it later.
 7. **Hand out loot.** Browse Equipment and Loot for anything in the SRD, or roll a haul:
    pick the party's tier for gear, the rarity for items and consumables, how many of each,
    and *Roll*. Tick **Include homebrew** to put your own gear in the mix — it's off by
@@ -466,11 +471,12 @@ current database to `data-replaced-<timestamp>.db`, then swaps and reopens.
 ### Library export/import
 
 Readable JSON covering parties, homebrew cards (adversaries, environments, weapons, armor,
-items and consumables), encounters, and campaigns with their sessions, notes, master note
-and clocks. Import **adds** rather than replacing, and renames anything whose name is taken
-— a second `Gutter Wraith` becomes `Gutter Wraith (2)`, and imported encounters are remapped
-so their picks still resolve. The equipment and loot arrays are additive, so an export from
-an older build still imports and an older build ignores what it doesn't know.
+items and consumables), encounters, and campaigns with their sessions, notes, master note,
+world pages and clocks. Import **adds** rather than replacing, and renames anything whose
+name is taken — a second `Gutter Wraith` becomes `Gutter Wraith (2)`, and imported
+encounters are remapped so their picks still resolve. The equipment, loot and world arrays
+are additive, so an export from an older build still imports and an older build ignores
+what it doesn't know. World pages travel as a nested tree, in their sibling order.
 
 ### Share codes
 

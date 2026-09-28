@@ -68,6 +68,8 @@ export function DeleteParty(arg1:number):Promise<void>;
 
 export function DeleteSession(arg1:number):Promise<void>;
 
+export function DeleteWorldNote(arg1:number):Promise<void>;
+
 export function EndCombat(arg1:number):Promise<gm.CombatView>;
 
 export function ExportLibraryJSON():Promise<string>;
@@ -114,6 +116,8 @@ export function GetSession(arg1:number):Promise<gm.SessionView>;
 
 export function GetWeapon(arg1:string):Promise<gm.BrowseWeapon>;
 
+export function GetWorldNote(arg1:number):Promise<gm.WorldNote>;
+
 export function ImportLibraryJSON(arg1:string):Promise<gm.ImportReport>;
 
 export function ImportShareCode(arg1:string):Promise<gm.SharePreview>;
@@ -154,11 +158,15 @@ export function ListSessions(arg1:number):Promise<Array<gm.SessionSummary>>;
 
 export function ListUnassignedCountdowns():Promise<Array<gm.Countdown>>;
 
+export function ListWorldNotes(arg1:number):Promise<Array<gm.WorldNote>>;
+
 export function LookupLoot(arg1:gm.LootLookupRequest):Promise<gm.LootRoll>;
 
 export function MarkHP(arg1:number,arg2:number):Promise<gm.CombatantView>;
 
 export function MarkStress(arg1:number,arg2:number):Promise<gm.CombatantView>;
+
+export function MoveWorldNote(arg1:number,arg2:any):Promise<gm.WorldNote>;
 
 export function NoteKinds():Promise<Array<string>>;
 
@@ -186,6 +194,8 @@ export function SaveNote(arg1:gm.NoteInput):Promise<gm.Note>;
 
 export function SaveSession(arg1:gm.SessionInput):Promise<gm.SessionView>;
 
+export function SaveWorldNote(arg1:gm.WorldNoteInput):Promise<gm.WorldNote>;
+
 export function Search(arg1:string,arg2:number,arg3:number):Promise<Array<gm.SearchHit>>;
 
 export function SessionsForEncounter(arg1:number):Promise<Array<gm.SessionSummary>>;
@@ -210,6 +220,8 @@ export function ShareItem(arg1:string):Promise<string>;
 
 export function ShareWeapon(arg1:string):Promise<string>;
 
+export function ShiftWorldNote(arg1:number,arg2:number):Promise<void>;
+
 export function StartCombat(arg1:number,arg2:any,arg3:any):Promise<gm.CombatView>;
 
 export function UnlinkEncounter(arg1:number,arg2:number):Promise<gm.SessionView>;
@@ -227,3 +239,5 @@ export function UpdateCustomItem(arg1:cards.Loot):Promise<cards.Loot>;
 export function UpdateCustomWeapon(arg1:cards.Weapon):Promise<cards.Weapon>;
 
 export function UpdateParty(arg1:number,arg2:gm.PartyInput):Promise<gm.Party>;
+
+export function WorldKinds():Promise<Array<string>>;

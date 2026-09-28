@@ -1156,6 +1156,83 @@ read and edit it from inside a fight, and find it from Search. ✅
 
 ---
 
+## Phase 6.6 — Worldbuilding
+
+**Goal:** somewhere to build the world itself — regions, the cities in them, the places in
+those, and the timelines of what happened — as nested pages, rather than as a flat pile of
+`location` and `lore` notes that can't say what sits inside what.
+
+- [x] `world_notes` — a per-campaign tree (`parent_id` self-reference), sibling-ordered
+- [x] `ListWorldNotes` / `GetWorldNote` / `SaveWorldNote` / `MoveWorldNote` /
+      `ShiftWorldNote` / `DeleteWorldNote` / `WorldKinds` on `gm.Service`
+- [x] `World.svelte` (tree, breadcrumbs, children, move/reorder/delete) and
+      `WorldPage.svelte` (one page's autosaving editor), as the campaign's Worldbuilding tab
+- [x] Timelines render their events as an ordered timeline with in-world dates
+- [x] Indexed into the fts5 table as `entity = 'world'`, campaign-scoped like notes
+- [x] Carried by the library export/import as a nested tree
+
+Notes on the schema:
+- **A new table, not a `parent_id` on `notes`.** The typed notes are the at-the-table file —
+  NPCs met, plot threads — and they are filtered by kind in a flat list, in the runner's rail
+  too. Nesting them would mean the rail and the kind filter both had to learn about trees,
+  and the world's kinds (region, city, timeline…) would have to be forced into `notes.kind`,
+  whose `CHECK` can only widen by rebuilding the table — the cost Phase 6.5 already declined.
+- **Kinds are validated in Go only** (`validWorldKinds`), deliberately unlike `notes.kind`.
+  Phase 4 put that set in SQL because the rules close it; this one is a worldbuilding
+  taxonomy with no rules behind it and every reason to grow, and a `CHECK` would turn each
+  new kind into a table rebuild. `WorldKinds()` serves the list the same way `NoteKinds()`
+  does, and `api.js` mirrors it with labels.
+- **`parent_id` is nullable** — a top-level page has no parent, and `NULL` is what lets the
+  column be a real foreign key. That is the `countdowns.campaign_id` exception, not a break
+  from the `NOT NULL` rule. It is `ON DELETE CASCADE`, so deleting a page deletes the
+  subtree; the UI says how many pages go with it before asking.
+- **Checked before it was relied on:** with the default `recursive_triggers = OFF`, a
+  self-referencing cascade still reaches every depth, and each cascaded row still fires its
+  `AFTER DELETE` search trigger. Deleting a region three levels deep, or the campaign
+  itself, leaves no orphan pages and no stale search rows — `world_test.go` pins both.
+- **The tree is guarded in Go, not SQL.** SQLite has no way to express "no cycles" or "the
+  parent shares my campaign" as a constraint. `checkWorldParent` walks up from the proposed
+  parent and refuses if it meets the page being moved, or a page from another campaign.
+- **`position` is campaign-wide, not per-sibling.** A new or moved page takes
+  `max(position) + 1` over the whole campaign (`NextWorldNotePosition`), which puts it last
+  among its new siblings without a query that has to compare `parent_id` against a nullable
+  parameter. Reordering (`ShiftWorldNote`) reassigns the siblings' *existing* position values
+  in their new order inside one transaction, so it never has to renumber anything else.
+- **Moving is its own method, not a field on `SaveWorldNote`.** Save is the autosave path —
+  title, kind, date, body — and fires every 600ms while typing. Keeping the parent out of it
+  means an in-flight autosave can never race a move and put the page back where it was.
+- **Neither a move nor a reorder touches `updated_at`**, and neither re-indexes: the search
+  trigger is `AFTER UPDATE OF title, body`, the same load-bearing `OF` as Phase 6.5's.
+  `updated_at` is what the editor's "Saved 14:02" reads, so it should mean "last written".
+- **`world_date` is free text.** In-world calendars are whatever the GM invented ("312 of
+  the Second Age"), so the column can't sort. Timelines are ordered by hand with the same
+  up/down controls as everything else, and the date is a label.
+
+Notes on the frontend:
+- **The whole campaign's tree comes over in one `ListWorldNotes`** and `World.svelte` builds
+  the hierarchy from `parentId`. A campaign's world is hundreds of pages at the outside, and
+  one list keeps filter, breadcrumbs and the move picker synchronous. Autosaves patch the
+  one page in place; only structural changes (move, reorder, delete) re-fetch.
+- **`WorldPage` is keyed on the page id and reads its `note` prop once**, which is the
+  `MasterNote` pattern carried over: the unmount flush saves against the page that was open,
+  and a list refresh mid-edit can't overwrite keystrokes that haven't gone out yet.
+- **The move picker leaves out the page itself, its descendants and its current parent.**
+  The backend would refuse the first two; the third is a no-op. Offering options only to
+  reject them would be a trap.
+- **The filter keeps each match's ancestors**, so a hit is shown where it lives in the tree.
+- New pages default to the obvious child kind (a city inside a region, a place inside a
+  city, an event inside a timeline); it's only the picker's starting value.
+- The open page is remembered per campaign in `localStorage`, like the campaign picker.
+- Search hits say which tab to open rather than jumping there — the same as notes today.
+
+Not built: world pages in the **runner's rail**. The rail's `Notes` is there to pull up an NPC
+mid-scene; the world is prep. If it's wanted, a compact read-only `World` is the shape.
+
+**Done when:** you can nest cities inside a region and events inside a timeline, move and
+reorder them, find them from Search, and carry them through an export/import. ✅
+
+---
+
 ## Phase 7 — Roadmap: the first update after release
 
 **Goal:** what goes in the release *after* 1.0. Phases 0–6 are done and shipped, and the app

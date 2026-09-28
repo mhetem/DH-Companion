@@ -130,6 +130,10 @@ export function DeleteSession(arg1) {
   return window['go']['gm']['Service']['DeleteSession'](arg1);
 }
 
+export function DeleteWorldNote(arg1) {
+  return window['go']['gm']['Service']['DeleteWorldNote'](arg1);
+}
+
 export function EndCombat(arg1) {
   return window['go']['gm']['Service']['EndCombat'](arg1);
 }
@@ -222,6 +226,10 @@ export function GetWeapon(arg1) {
   return window['go']['gm']['Service']['GetWeapon'](arg1);
 }
 
+export function GetWorldNote(arg1) {
+  return window['go']['gm']['Service']['GetWorldNote'](arg1);
+}
+
 export function ImportLibraryJSON(arg1) {
   return window['go']['gm']['Service']['ImportLibraryJSON'](arg1);
 }
@@ -302,6 +310,10 @@ export function ListUnassignedCountdowns() {
   return window['go']['gm']['Service']['ListUnassignedCountdowns']();
 }
 
+export function ListWorldNotes(arg1) {
+  return window['go']['gm']['Service']['ListWorldNotes'](arg1);
+}
+
 export function LookupLoot(arg1) {
   return window['go']['gm']['Service']['LookupLoot'](arg1);
 }
@@ -312,6 +324,10 @@ export function MarkHP(arg1, arg2) {
 
 export function MarkStress(arg1, arg2) {
   return window['go']['gm']['Service']['MarkStress'](arg1, arg2);
+}
+
+export function MoveWorldNote(arg1, arg2) {
+  return window['go']['gm']['Service']['MoveWorldNote'](arg1, arg2);
 }
 
 export function NoteKinds() {
@@ -366,6 +382,10 @@ export function SaveSession(arg1) {
   return window['go']['gm']['Service']['SaveSession'](arg1);
 }
 
+export function SaveWorldNote(arg1) {
+  return window['go']['gm']['Service']['SaveWorldNote'](arg1);
+}
+
 export function Search(arg1, arg2, arg3) {
   return window['go']['gm']['Service']['Search'](arg1, arg2, arg3);
 }
@@ -414,6 +434,10 @@ export function ShareWeapon(arg1) {
   return window['go']['gm']['Service']['ShareWeapon'](arg1);
 }
 
+export function ShiftWorldNote(arg1, arg2) {
+  return window['go']['gm']['Service']['ShiftWorldNote'](arg1, arg2);
+}
+
 export function StartCombat(arg1, arg2, arg3) {
   return window['go']['gm']['Service']['StartCombat'](arg1, arg2, arg3);
 }
@@ -448,4 +472,8 @@ export function UpdateCustomWeapon(arg1) {
 
 export function UpdateParty(arg1, arg2) {
   return window['go']['gm']['Service']['UpdateParty'](arg1, arg2);
+}
+
+export function WorldKinds() {
+  return window['go']['gm']['Service']['WorldKinds']();
 }

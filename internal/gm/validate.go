@@ -12,12 +12,15 @@ var (
 	validAdversaryTypes   = []string{"Bruiser", "Horde", "Leader", "Minion", "Ranged", "Skulk", "Social", "Solo", "Standard", "Support"}
 	validEnvironmentTypes = []string{"Event", "Exploration", "Social", "Traversal"}
 	validNoteKinds        = []string{"npc", "location", "faction", "lore", "plot"}
+	validWorldKinds       = []string{"region", "city", "place", "timeline", "event", "culture", "religion", "page"}
 	validWeaponTypes      = []string{"Physical", "Magic"}
 	validWeaponCategories = []string{"Primary", "Secondary"}
 	validLootKinds        = []string{"item", "consumable"}
 )
 
 const defaultNoteKind = "npc"
+
+const defaultWorldKind = "page"
 
 // armorType is the single Type every armor carries: armor has no sub-types the
 // way adversaries and weapons do, but Meta.Type is what the browsers filter on.
@@ -82,6 +85,21 @@ func validateNoteKind(kind string) (string, error) {
 
 func (s *Service) NoteKinds() []string {
 	return slices.Clone(validNoteKinds)
+}
+
+func validateWorldKind(kind string) (string, error) {
+	k := strings.ToLower(strings.TrimSpace(kind))
+	if k == "" {
+		return defaultWorldKind, nil
+	}
+	if !slices.Contains(validWorldKinds, k) {
+		return "", fmt.Errorf("world page kind must be one of %s, got %q", strings.Join(validWorldKinds, ", "), kind)
+	}
+	return k, nil
+}
+
+func (s *Service) WorldKinds() []string {
+	return slices.Clone(validWorldKinds)
 }
 
 func validateName(name string) (string, error) {

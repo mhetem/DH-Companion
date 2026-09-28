@@ -53,6 +53,7 @@ type LibraryCampaign struct {
 	MasterNote  string             `json:"masterNote"`
 	Sessions    []LibrarySession   `json:"sessions"`
 	Notes       []LibraryNote      `json:"notes"`
+	World       []LibraryWorldNote `json:"world"`
 	Countdowns  []LibraryCountdown `json:"countdowns"`
 }
 
@@ -68,6 +69,14 @@ type LibraryNote struct {
 	Kind  string `json:"kind"`
 	Title string `json:"title"`
 	Body  string `json:"body"`
+}
+
+type LibraryWorldNote struct {
+	Kind      string             `json:"kind"`
+	Title     string             `json:"title"`
+	WorldDate string             `json:"worldDate"`
+	Body      string             `json:"body"`
+	Children  []LibraryWorldNote `json:"children"`
 }
 
 type LibraryCountdown struct {
@@ -89,6 +98,7 @@ type ImportReport struct {
 	Campaigns          int      `json:"campaigns"`
 	Sessions           int      `json:"sessions"`
 	Notes              int      `json:"notes"`
+	WorldNotes         int      `json:"worldNotes"`
 	Countdowns         int      `json:"countdowns"`
 	Renamed            []string `json:"renamed"`
 	Skipped            []string `json:"skipped"`
@@ -200,6 +210,7 @@ func (s *Service) buildLibrary() (Library, error) {
 			MasterNote:  master.Body,
 			Sessions:    []LibrarySession{},
 			Notes:       []LibraryNote{},
+			World:       []LibraryWorldNote{},
 			Countdowns:  []LibraryCountdown{},
 		}
 
@@ -232,6 +243,12 @@ func (s *Service) buildLibrary() (Library, error) {
 		for _, n := range notes {
 			entry.Notes = append(entry.Notes, LibraryNote{Kind: n.Kind, Title: n.Title, Body: n.Body})
 		}
+
+		world, err := s.ListWorldNotes(c.ID)
+		if err != nil {
+			return Library{}, err
+		}
+		entry.World = libraryWorld(world)
 
 		clocks, err := s.ListCountdownsForCampaign(c.ID)
 		if err != nil {
@@ -457,6 +474,8 @@ func (s *Service) importLibrary(lib Library) (ImportReport, error) {
 			report.Notes++
 		}
 
+		s.importWorld(&report, campaign.ID, nil, c.World)
+
 		for _, cd := range c.Countdowns {
 			id := campaign.ID
 			if _, err := s.SaveCountdown(CountdownInput{CampaignID: &id, Name: cd.Name, Value: cd.Value, Max: cd.Max, Kind: cd.Kind}); err != nil {
@@ -476,6 +495,68 @@ func (s *Service) importLibrary(lib Library) (ImportReport, error) {
 	}
 
 	return report, nil
+}
+
+func libraryWorld(notes []WorldNote) []LibraryWorldNote {
+	children := map[int64][]WorldNote{}
+	for _, n := range notes {
+		var parent int64
+		if n.ParentID != nil {
+			parent = *n.ParentID
+		}
+		children[parent] = append(children[parent], n)
+	}
+
+	var build func(parent int64) []LibraryWorldNote
+	build = func(parent int64) []LibraryWorldNote {
+		out := []LibraryWorldNote{}
+		for _, n := range children[parent] {
+			out = append(out, LibraryWorldNote{
+				Kind:      n.Kind,
+				Title:     n.Title,
+				WorldDate: n.WorldDate,
+				Body:      n.Body,
+				Children:  build(n.ID),
+			})
+		}
+		return out
+	}
+	return build(0)
+}
+
+func (s *Service) importWorld(report *ImportReport, campaignID int64, parentID *int64, pages []LibraryWorldNote) {
+	for _, p := range pages {
+		if _, err := validateWorldKind(p.Kind); err != nil {
+			p.Kind = defaultWorldKind
+		}
+		saved, err := s.SaveWorldNote(WorldNoteInput{
+			CampaignID: campaignID,
+			ParentID:   parentID,
+			Kind:       p.Kind,
+			Title:      p.Title,
+			WorldDate:  p.WorldDate,
+			Body:       p.Body,
+		})
+		if err != nil {
+			if nested := worldPageCount(p.Children); nested > 0 {
+				report.Skipped = append(report.Skipped, fmt.Sprintf("world page %q and the %d inside it: %v", p.Title, nested, err))
+			} else {
+				report.Skipped = append(report.Skipped, fmt.Sprintf("world page %q: %v", p.Title, err))
+			}
+			continue
+		}
+		report.WorldNotes++
+		id := saved.ID
+		s.importWorld(report, campaignID, &id, p.Children)
+	}
+}
+
+func worldPageCount(pages []LibraryWorldNote) int {
+	n := len(pages)
+	for _, p := range pages {
+		n += worldPageCount(p.Children)
+	}
+	return n
 }
 
 func remapPicks(picks []Pick, slugs map[string]string) []Pick {
