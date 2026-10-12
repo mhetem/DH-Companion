@@ -1,6 +1,6 @@
 -- name: CreateCountdown :one
-INSERT INTO countdowns (name, value, max, kind, campaign_id)
-VALUES (?,?,?,?,?)
+INSERT INTO countdowns (name, value, max, kind, campaign_id, beats)
+VALUES (?,?,?,?,?,?)
 RETURNING *;
 
 -- name: GetCountdown :one
@@ -34,6 +34,7 @@ UPDATE countdowns SET
   "max" = sqlc.arg(max),
   value = max(0, min(sqlc.arg(max), CAST(sqlc.arg(value) AS INTEGER))),
   kind = sqlc.arg(kind),
+  beats = sqlc.arg(beats),
   campaign_id = sqlc.arg(campaign_id),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = sqlc.arg(id)

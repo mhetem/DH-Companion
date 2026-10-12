@@ -1233,6 +1233,66 @@ reorder them, find them from Search, and carry them through an export/import. �
 
 ---
 
+## Phase 6.7 — Countdown trails
+
+**Goal:** let a countdown carry its story — a beat written against any number on it, the
+way the book's example trail runs from 8 ("the deal is struck") down to 0 ("open war") — and
+put only the beat the clock is standing on in front of the GM mid-fight.
+
+- [x] `countdowns.beats` — the trail, as a JSON column
+- [x] `CountdownBeat` on `Countdown` and `CountdownInput`; `SaveCountdown` cleans and orders it
+- [x] An editor per clock in `Countdowns.svelte`: name, segments, kind, and one beat per number
+- [x] The campaign tab lays out the whole trail; the runner's rail (`compact`) shows only the
+      current number's beat
+- [x] Carried by the library export/import
+
+Notes on the schema:
+- **A JSON column, not a `countdown_beats` table.** A trail is at most 25 short lines, only
+  ever read and written whole alongside the clock that owns it — the same shape as
+  `encounters.adversaries`. A child table would have cost a join (or a query per clock) on
+  every list and a delete-and-reinsert transaction on every save, for no query that needs
+  to look inside a trail.
+- `NOT NULL DEFAULT '[]'`, keeping the Phase 3 rule; every existing clock gets an empty trail.
+- **A beat is keyed on the number the countdown reads, not on `value`.** `value` counts filled
+  segments up from 0, while a trail reads down, so beat `n` is current when `max - value = n`.
+  Keying on the read number keeps a trail in place when the segment count changes — the
+  beat at 0 is still the finale whether the clock has 8 segments or 10.
+- **The trail is normalised in Go** (`cleanBeats`): text is trimmed, empty beats are dropped,
+  a beat outside `0…max` is dropped, two beats on one number keep the later one, and the
+  result is sorted from the top of the countdown down. Shrinking a clock therefore drops the
+  beats that no longer fit rather than keeping text for numbers it can never reach.
+- **No new bound method.** The trail rides on `SaveCountdown`, which already took the whole
+  clock; `AdvanceCountdown` never touches it.
+- `countdownView` can fail now (an unreadable `beats` column), so it and `countdownViews`
+  return an error, the way `decodePicks` does for encounters.
+
+Notes on the frontend:
+- **The rail shows the beat for the current number and nothing between beats.** A sparse
+  trail (beats at 6, 3 and 0) shows nothing at 5 and 4 rather than repeating the 6 — that
+  beat has already happened, and the rail is where the GM looks for what is happening now.
+  The campaign tab is where the whole trail lives, passed beats dimmed and the current one
+  marked.
+- **The editor is reachable from the rail too** (✎). Clocks without a campaign only ever
+  appear in the runner, so leaving the editor out there would leave them no way to get a
+  trail. It is closed by default, so the rail still reads one beat per clock.
+- The editor lists every number from the segment count down to 0, follows the count as it
+  is edited, and marks the row the clock is standing on. Save sends the clock's *live*
+  `value`, not the one the editor opened with, so ticking while it's open isn't undone.
+- This is the first way to edit a countdown at all — before it a clock could be added, ticked
+  and deleted, but not renamed. The editor carries name, segments and kind because
+  `SaveCountdown` takes them anyway.
+- The library entry gains `beats`. An older export has none and an older build ignores it,
+  so the format number doesn't move — the same call as the equipment homebrew.
+
+Open: the count beside each clock still reads `value/max` (filled segments, counting up),
+while the trail's numbers count down. A beat labelled 5 sits next to `3/8`. Showing the
+read number instead is one line if the mismatch grates at the table.
+
+**Done when:** you can write a trail like the book's 8…0 example on a campaign countdown,
+tick it during a fight, and watch the rail swap to each number's beat as it lands.
+
+---
+
 ## Phase 7 — Roadmap: the first update after release
 
 **Goal:** what goes in the release *after* 1.0. Phases 0–6 are done and shipped, and the app

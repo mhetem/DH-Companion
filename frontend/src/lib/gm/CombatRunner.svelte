@@ -350,7 +350,7 @@
           </section>
         {/if}
 
-        <Countdowns campaignId={combat.campaignId} />
+        <Countdowns campaignId={combat.campaignId} compact />
 
         <!-- Keyed on the campaign: relinking a live fight swaps which campaign the
              rail is reading, and the master note is a write surface — it must not

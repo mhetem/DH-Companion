@@ -1,32 +1,42 @@
 package gm
 
 import (
+	"cmp"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/mhetem/DH-Companion/internal/db"
 )
 
+type CountdownBeat struct {
+	At   int    `json:"at"`
+	Text string `json:"text"`
+}
+
 type Countdown struct {
-	ID         int64  `json:"id"`
-	CampaignID *int64 `json:"campaignId"`
-	Name       string `json:"name"`
-	Value      int    `json:"value"`
-	Max        int    `json:"max"`
-	Kind       string `json:"kind"`
-	CreatedAt  string `json:"createdAt"`
-	UpdatedAt  string `json:"updatedAt"`
+	ID         int64           `json:"id"`
+	CampaignID *int64          `json:"campaignId"`
+	Name       string          `json:"name"`
+	Value      int             `json:"value"`
+	Max        int             `json:"max"`
+	Kind       string          `json:"kind"`
+	Beats      []CountdownBeat `json:"beats"`
+	CreatedAt  string          `json:"createdAt"`
+	UpdatedAt  string          `json:"updatedAt"`
 }
 
 type CountdownInput struct {
-	ID         *int64 `json:"id"`
-	CampaignID *int64 `json:"campaignId"`
-	Name       string `json:"name"`
-	Value      int    `json:"value"`
-	Max        int    `json:"max"`
-	Kind       string `json:"kind"`
+	ID         *int64          `json:"id"`
+	CampaignID *int64          `json:"campaignId"`
+	Name       string          `json:"name"`
+	Value      int             `json:"value"`
+	Max        int             `json:"max"`
+	Kind       string          `json:"kind"`
+	Beats      []CountdownBeat `json:"beats"`
 }
 
 func (in CountdownInput) validate() (CountdownInput, error) {
@@ -45,10 +55,51 @@ func (in CountdownInput) validate() (CountdownInput, error) {
 	if in.Value > in.Max {
 		in.Value = in.Max
 	}
+	in.Beats = cleanBeats(in.Beats, in.Max)
 	return in, nil
 }
 
-func countdownView(r db.Countdown) Countdown {
+func cleanBeats(beats []CountdownBeat, segments int) []CountdownBeat {
+	byStep := make(map[int]string, len(beats))
+	for _, b := range beats {
+		text := strings.TrimSpace(b.Text)
+		if text == "" || b.At < 0 || b.At > segments {
+			continue
+		}
+		byStep[b.At] = text
+	}
+	out := make([]CountdownBeat, 0, len(byStep))
+	for at, text := range byStep {
+		out = append(out, CountdownBeat{At: at, Text: text})
+	}
+	slices.SortFunc(out, func(a, b CountdownBeat) int { return cmp.Compare(b.At, a.At) })
+	return out
+}
+
+func decodeBeats(raw string) ([]CountdownBeat, error) {
+	beats := []CountdownBeat{}
+	if raw == "" {
+		return beats, nil
+	}
+	if err := json.Unmarshal([]byte(raw), &beats); err != nil {
+		return nil, fmt.Errorf("unreadable countdown beats: %w", err)
+	}
+	return beats, nil
+}
+
+func encodeBeats(beats []CountdownBeat) (string, error) {
+	b, err := json.Marshal(beats)
+	if err != nil {
+		return "", fmt.Errorf("encoding countdown beats: %w", err)
+	}
+	return string(b), nil
+}
+
+func countdownView(r db.Countdown) (Countdown, error) {
+	beats, err := decodeBeats(r.Beats)
+	if err != nil {
+		return Countdown{}, err
+	}
 	return Countdown{
 		ID:         r.ID,
 		CampaignID: int64Ptr(r.CampaignID),
@@ -56,17 +107,22 @@ func countdownView(r db.Countdown) Countdown {
 		Value:      int(r.Value),
 		Max:        int(r.Max),
 		Kind:       r.Kind,
+		Beats:      beats,
 		CreatedAt:  r.CreatedAt,
 		UpdatedAt:  r.UpdatedAt,
-	}
+	}, nil
 }
 
-func countdownViews(rows []db.Countdown) []Countdown {
+func countdownViews(rows []db.Countdown) ([]Countdown, error) {
 	out := make([]Countdown, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, countdownView(r))
+		c, err := countdownView(r)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, c)
 	}
-	return out
+	return out, nil
 }
 
 func (s *Service) ListCountdowns() ([]Countdown, error) {
@@ -74,7 +130,7 @@ func (s *Service) ListCountdowns() ([]Countdown, error) {
 	if err != nil {
 		return nil, fmt.Errorf("listing countdowns: %w", err)
 	}
-	return countdownViews(rows), nil
+	return countdownViews(rows)
 }
 
 func (s *Service) ListCountdownsForCampaign(campaignID int64) ([]Countdown, error) {
@@ -82,7 +138,7 @@ func (s *Service) ListCountdownsForCampaign(campaignID int64) ([]Countdown, erro
 	if err != nil {
 		return nil, fmt.Errorf("listing campaign countdowns: %w", err)
 	}
-	return countdownViews(rows), nil
+	return countdownViews(rows)
 }
 
 func (s *Service) ListUnassignedCountdowns() ([]Countdown, error) {
@@ -90,7 +146,7 @@ func (s *Service) ListUnassignedCountdowns() ([]Countdown, error) {
 	if err != nil {
 		return nil, fmt.Errorf("listing unassigned countdowns: %w", err)
 	}
-	return countdownViews(rows), nil
+	return countdownViews(rows)
 }
 
 func (s *Service) GetCountdown(id int64) (Countdown, error) {
@@ -101,11 +157,15 @@ func (s *Service) GetCountdown(id int64) (Countdown, error) {
 	if err != nil {
 		return Countdown{}, fmt.Errorf("loading countdown: %w", err)
 	}
-	return countdownView(row), nil
+	return countdownView(row)
 }
 
 func (s *Service) SaveCountdown(in CountdownInput) (Countdown, error) {
 	in, err := in.validate()
+	if err != nil {
+		return Countdown{}, err
+	}
+	beats, err := encodeBeats(in.Beats)
 	if err != nil {
 		return Countdown{}, err
 	}
@@ -118,6 +178,7 @@ func (s *Service) SaveCountdown(in CountdownInput) (Countdown, error) {
 			Max:        int64(in.Max),
 			Kind:       in.Kind,
 			CampaignID: nullInt64(in.CampaignID),
+			Beats:      beats,
 		})
 		if err != nil {
 			return Countdown{}, fmt.Errorf("creating countdown: %w", err)
@@ -128,6 +189,7 @@ func (s *Service) SaveCountdown(in CountdownInput) (Countdown, error) {
 			Max:        int64(in.Max),
 			Value:      int64(in.Value),
 			Kind:       in.Kind,
+			Beats:      beats,
 			CampaignID: nullInt64(in.CampaignID),
 			ID:         *in.ID,
 		})
@@ -138,7 +200,7 @@ func (s *Service) SaveCountdown(in CountdownInput) (Countdown, error) {
 			return Countdown{}, fmt.Errorf("updating countdown: %w", err)
 		}
 	}
-	return countdownView(row), nil
+	return countdownView(row)
 }
 
 func (s *Service) AdvanceCountdown(id int64, delta int) (Countdown, error) {
@@ -151,7 +213,7 @@ func (s *Service) AdvanceCountdown(id int64, delta int) (Countdown, error) {
 	if err != nil {
 		return Countdown{}, fmt.Errorf("advancing countdown: %w", err)
 	}
-	return countdownView(row), nil
+	return countdownView(row)
 }
 
 func (s *Service) DeleteCountdown(id int64) error {

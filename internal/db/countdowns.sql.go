@@ -15,7 +15,7 @@ UPDATE countdowns SET
   value = max(0, min("max", value + ?1)),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, name, value, max, kind, created_at, updated_at, campaign_id
+RETURNING id, name, value, max, kind, created_at, updated_at, campaign_id, beats
 `
 
 type AdjustCountdownParams struct {
@@ -35,14 +35,15 @@ func (q *Queries) AdjustCountdown(ctx context.Context, arg AdjustCountdownParams
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.CampaignID,
+		&i.Beats,
 	)
 	return i, err
 }
 
 const createCountdown = `-- name: CreateCountdown :one
-INSERT INTO countdowns (name, value, max, kind, campaign_id)
-VALUES (?,?,?,?,?)
-RETURNING id, name, value, max, kind, created_at, updated_at, campaign_id
+INSERT INTO countdowns (name, value, max, kind, campaign_id, beats)
+VALUES (?,?,?,?,?,?)
+RETURNING id, name, value, max, kind, created_at, updated_at, campaign_id, beats
 `
 
 type CreateCountdownParams struct {
@@ -51,6 +52,7 @@ type CreateCountdownParams struct {
 	Max        int64
 	Kind       string
 	CampaignID sql.NullInt64
+	Beats      string
 }
 
 func (q *Queries) CreateCountdown(ctx context.Context, arg CreateCountdownParams) (Countdown, error) {
@@ -60,6 +62,7 @@ func (q *Queries) CreateCountdown(ctx context.Context, arg CreateCountdownParams
 		arg.Max,
 		arg.Kind,
 		arg.CampaignID,
+		arg.Beats,
 	)
 	var i Countdown
 	err := row.Scan(
@@ -71,6 +74,7 @@ func (q *Queries) CreateCountdown(ctx context.Context, arg CreateCountdownParams
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.CampaignID,
+		&i.Beats,
 	)
 	return i, err
 }
@@ -86,7 +90,7 @@ func (q *Queries) DeleteCountdown(ctx context.Context, id int64) error {
 }
 
 const getCountdown = `-- name: GetCountdown :one
-SELECT id, name, value, max, kind, created_at, updated_at, campaign_id FROM countdowns
+SELECT id, name, value, max, kind, created_at, updated_at, campaign_id, beats FROM countdowns
 WHERE id = ?
 `
 
@@ -102,12 +106,13 @@ func (q *Queries) GetCountdown(ctx context.Context, id int64) (Countdown, error)
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.CampaignID,
+		&i.Beats,
 	)
 	return i, err
 }
 
 const listCountdowns = `-- name: ListCountdowns :many
-SELECT id, name, value, max, kind, created_at, updated_at, campaign_id FROM countdowns
+SELECT id, name, value, max, kind, created_at, updated_at, campaign_id, beats FROM countdowns
 ORDER BY created_at ASC
 `
 
@@ -129,6 +134,7 @@ func (q *Queries) ListCountdowns(ctx context.Context) ([]Countdown, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.CampaignID,
+			&i.Beats,
 		); err != nil {
 			return nil, err
 		}
@@ -144,7 +150,7 @@ func (q *Queries) ListCountdowns(ctx context.Context) ([]Countdown, error) {
 }
 
 const listCountdownsForCampaign = `-- name: ListCountdownsForCampaign :many
-SELECT id, name, value, max, kind, created_at, updated_at, campaign_id FROM countdowns
+SELECT id, name, value, max, kind, created_at, updated_at, campaign_id, beats FROM countdowns
 WHERE campaign_id = ?
 ORDER BY created_at ASC
 `
@@ -167,6 +173,7 @@ func (q *Queries) ListCountdownsForCampaign(ctx context.Context, campaignID sql.
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.CampaignID,
+			&i.Beats,
 		); err != nil {
 			return nil, err
 		}
@@ -182,7 +189,7 @@ func (q *Queries) ListCountdownsForCampaign(ctx context.Context, campaignID sql.
 }
 
 const listUnassignedCountdowns = `-- name: ListUnassignedCountdowns :many
-SELECT id, name, value, max, kind, created_at, updated_at, campaign_id FROM countdowns
+SELECT id, name, value, max, kind, created_at, updated_at, campaign_id, beats FROM countdowns
 WHERE campaign_id IS NULL
 ORDER BY created_at ASC
 `
@@ -205,6 +212,7 @@ func (q *Queries) ListUnassignedCountdowns(ctx context.Context) ([]Countdown, er
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.CampaignID,
+			&i.Beats,
 		); err != nil {
 			return nil, err
 		}
@@ -225,10 +233,11 @@ UPDATE countdowns SET
   "max" = ?2,
   value = max(0, min(?2, CAST(?3 AS INTEGER))),
   kind = ?4,
-  campaign_id = ?5,
+  beats = ?5,
+  campaign_id = ?6,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-WHERE id = ?6
-RETURNING id, name, value, max, kind, created_at, updated_at, campaign_id
+WHERE id = ?7
+RETURNING id, name, value, max, kind, created_at, updated_at, campaign_id, beats
 `
 
 type UpdateCountdownParams struct {
@@ -236,6 +245,7 @@ type UpdateCountdownParams struct {
 	Max        int64
 	Value      int64
 	Kind       string
+	Beats      string
 	CampaignID sql.NullInt64
 	ID         int64
 }
@@ -246,6 +256,7 @@ func (q *Queries) UpdateCountdown(ctx context.Context, arg UpdateCountdownParams
 		arg.Max,
 		arg.Value,
 		arg.Kind,
+		arg.Beats,
 		arg.CampaignID,
 		arg.ID,
 	)
@@ -259,6 +270,7 @@ func (q *Queries) UpdateCountdown(ctx context.Context, arg UpdateCountdownParams
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.CampaignID,
+		&i.Beats,
 	)
 	return i, err
 }

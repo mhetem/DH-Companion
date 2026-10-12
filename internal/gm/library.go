@@ -80,10 +80,11 @@ type LibraryWorldNote struct {
 }
 
 type LibraryCountdown struct {
-	Name  string `json:"name"`
-	Value int    `json:"value"`
-	Max   int    `json:"max"`
-	Kind  string `json:"kind"`
+	Name  string          `json:"name"`
+	Value int             `json:"value"`
+	Max   int             `json:"max"`
+	Kind  string          `json:"kind"`
+	Beats []CountdownBeat `json:"beats"`
 }
 
 type ImportReport struct {
@@ -255,7 +256,7 @@ func (s *Service) buildLibrary() (Library, error) {
 			return Library{}, err
 		}
 		for _, cd := range clocks {
-			entry.Countdowns = append(entry.Countdowns, LibraryCountdown{Name: cd.Name, Value: cd.Value, Max: cd.Max, Kind: cd.Kind})
+			entry.Countdowns = append(entry.Countdowns, LibraryCountdown{Name: cd.Name, Value: cd.Value, Max: cd.Max, Kind: cd.Kind, Beats: cd.Beats})
 		}
 
 		lib.Campaigns = append(lib.Campaigns, entry)
@@ -266,7 +267,7 @@ func (s *Service) buildLibrary() (Library, error) {
 		return Library{}, err
 	}
 	for _, cd := range loose {
-		lib.Countdowns = append(lib.Countdowns, LibraryCountdown{Name: cd.Name, Value: cd.Value, Max: cd.Max, Kind: cd.Kind})
+		lib.Countdowns = append(lib.Countdowns, LibraryCountdown{Name: cd.Name, Value: cd.Value, Max: cd.Max, Kind: cd.Kind, Beats: cd.Beats})
 	}
 
 	return lib, nil
@@ -478,7 +479,7 @@ func (s *Service) importLibrary(lib Library) (ImportReport, error) {
 
 		for _, cd := range c.Countdowns {
 			id := campaign.ID
-			if _, err := s.SaveCountdown(CountdownInput{CampaignID: &id, Name: cd.Name, Value: cd.Value, Max: cd.Max, Kind: cd.Kind}); err != nil {
+			if _, err := s.SaveCountdown(CountdownInput{CampaignID: &id, Name: cd.Name, Value: cd.Value, Max: cd.Max, Kind: cd.Kind, Beats: cd.Beats}); err != nil {
 				report.Skipped = append(report.Skipped, fmt.Sprintf("countdown %q: %v", cd.Name, err))
 				continue
 			}
@@ -487,7 +488,7 @@ func (s *Service) importLibrary(lib Library) (ImportReport, error) {
 	}
 
 	for _, cd := range lib.Countdowns {
-		if _, err := s.SaveCountdown(CountdownInput{Name: cd.Name, Value: cd.Value, Max: cd.Max, Kind: cd.Kind}); err != nil {
+		if _, err := s.SaveCountdown(CountdownInput{Name: cd.Name, Value: cd.Value, Max: cd.Max, Kind: cd.Kind, Beats: cd.Beats}); err != nil {
 			report.Skipped = append(report.Skipped, fmt.Sprintf("countdown %q: %v", cd.Name, err))
 			continue
 		}

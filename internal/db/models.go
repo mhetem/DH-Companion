@@ -130,6 +130,7 @@ type Countdown struct {
 	CreatedAt  string
 	UpdatedAt  string
 	CampaignID sql.NullInt64
+	Beats      string
 }
 
 type CustomAdversary struct {
