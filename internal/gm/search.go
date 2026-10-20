@@ -108,8 +108,12 @@ func (s *Service) ReindexCards() error {
 }
 
 func adversaryText(a cards.Adversary) string {
-	parts := []string{a.Type, a.Description, a.Motives, a.Experiences}
+	parts := []string{a.Type, a.Description, a.Motives, a.Experiences, a.Size}
 	parts = append(parts, featureText(a.Features)...)
+	for _, seg := range a.Segments {
+		parts = append(parts, seg.Name, seg.StandardAttack.Name)
+		parts = append(parts, featureText(seg.Features)...)
+	}
 	return joinText(parts)
 }
 

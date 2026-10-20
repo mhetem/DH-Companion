@@ -1,8 +1,8 @@
 -- name: CreateCombatant :one
 INSERT INTO combatants (
-  combat_id, adversary_slug, display_name, hp_max, stress_max
+  combat_id, adversary_slug, display_name, hp_max, stress_max, colossus_id, segment
 )
-VALUES (?,?,?,?,?)
+VALUES (?,?,?,?,?,?,?)
 RETURNING *;
 
 -- name: GetCombatant :one
@@ -39,6 +39,13 @@ RETURNING *;
 -- name: SetCombatantSpotlight :one
 UPDATE combatants SET
   spotlight = ?,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = ?
+RETURNING *;
+
+-- name: SetCombatantBroken :one
+UPDATE combatants SET
+  broken = ?,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?
 RETURNING *;

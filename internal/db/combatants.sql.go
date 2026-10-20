@@ -15,7 +15,7 @@ UPDATE combatants SET
   hp_marked = max(0, min(hp_max, hp_marked + ?1)),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at
+RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at, colossus_id, segment, broken
 `
 
 type AdjustCombatantHPParams struct {
@@ -38,6 +38,9 @@ func (q *Queries) AdjustCombatantHP(ctx context.Context, arg AdjustCombatantHPPa
 		&i.Spotlight,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ColossusID,
+		&i.Segment,
+		&i.Broken,
 	)
 	return i, err
 }
@@ -47,7 +50,7 @@ UPDATE combatants SET
   stress_marked = max(0, min(stress_max, stress_marked + ?1)),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at
+RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at, colossus_id, segment, broken
 `
 
 type AdjustCombatantStressParams struct {
@@ -70,6 +73,9 @@ func (q *Queries) AdjustCombatantStress(ctx context.Context, arg AdjustCombatant
 		&i.Spotlight,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ColossusID,
+		&i.Segment,
+		&i.Broken,
 	)
 	return i, err
 }
@@ -88,10 +94,10 @@ func (q *Queries) ClearCombatantSpotlights(ctx context.Context, combatID int64) 
 
 const createCombatant = `-- name: CreateCombatant :one
 INSERT INTO combatants (
-  combat_id, adversary_slug, display_name, hp_max, stress_max
+  combat_id, adversary_slug, display_name, hp_max, stress_max, colossus_id, segment
 )
-VALUES (?,?,?,?,?)
-RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at
+VALUES (?,?,?,?,?,?,?)
+RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at, colossus_id, segment, broken
 `
 
 type CreateCombatantParams struct {
@@ -100,6 +106,8 @@ type CreateCombatantParams struct {
 	DisplayName   string
 	HpMax         int64
 	StressMax     int64
+	ColossusID    sql.NullInt64
+	Segment       string
 }
 
 func (q *Queries) CreateCombatant(ctx context.Context, arg CreateCombatantParams) (Combatant, error) {
@@ -109,6 +117,8 @@ func (q *Queries) CreateCombatant(ctx context.Context, arg CreateCombatantParams
 		arg.DisplayName,
 		arg.HpMax,
 		arg.StressMax,
+		arg.ColossusID,
+		arg.Segment,
 	)
 	var i Combatant
 	err := row.Scan(
@@ -123,6 +133,9 @@ func (q *Queries) CreateCombatant(ctx context.Context, arg CreateCombatantParams
 		&i.Spotlight,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ColossusID,
+		&i.Segment,
+		&i.Broken,
 	)
 	return i, err
 }
@@ -148,7 +161,7 @@ func (q *Queries) DeleteCombatantsForCombat(ctx context.Context, combatID int64)
 }
 
 const getCombatant = `-- name: GetCombatant :one
-SELECT id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at FROM combatants
+SELECT id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at, colossus_id, segment, broken FROM combatants
 WHERE id = ?
 `
 
@@ -167,12 +180,15 @@ func (q *Queries) GetCombatant(ctx context.Context, id int64) (Combatant, error)
 		&i.Spotlight,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ColossusID,
+		&i.Segment,
+		&i.Broken,
 	)
 	return i, err
 }
 
 const listCombatants = `-- name: ListCombatants :many
-SELECT id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at FROM combatants
+SELECT id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at, colossus_id, segment, broken FROM combatants
 WHERE combat_id = ?
 ORDER BY id ASC
 `
@@ -198,6 +214,9 @@ func (q *Queries) ListCombatants(ctx context.Context, combatID int64) ([]Combata
 			&i.Spotlight,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ColossusID,
+			&i.Segment,
+			&i.Broken,
 		); err != nil {
 			return nil, err
 		}
@@ -212,12 +231,47 @@ func (q *Queries) ListCombatants(ctx context.Context, combatID int64) ([]Combata
 	return items, nil
 }
 
+const setCombatantBroken = `-- name: SetCombatantBroken :one
+UPDATE combatants SET
+  broken = ?,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = ?
+RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at, colossus_id, segment, broken
+`
+
+type SetCombatantBrokenParams struct {
+	Broken int64
+	ID     int64
+}
+
+func (q *Queries) SetCombatantBroken(ctx context.Context, arg SetCombatantBrokenParams) (Combatant, error) {
+	row := q.db.QueryRowContext(ctx, setCombatantBroken, arg.Broken, arg.ID)
+	var i Combatant
+	err := row.Scan(
+		&i.ID,
+		&i.CombatID,
+		&i.AdversarySlug,
+		&i.DisplayName,
+		&i.HpMax,
+		&i.HpMarked,
+		&i.StressMax,
+		&i.StressMarked,
+		&i.Spotlight,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ColossusID,
+		&i.Segment,
+		&i.Broken,
+	)
+	return i, err
+}
+
 const setCombatantSpotlight = `-- name: SetCombatantSpotlight :one
 UPDATE combatants SET
   spotlight = ?,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?
-RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at
+RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at, colossus_id, segment, broken
 `
 
 type SetCombatantSpotlightParams struct {
@@ -240,6 +294,9 @@ func (q *Queries) SetCombatantSpotlight(ctx context.Context, arg SetCombatantSpo
 		&i.Spotlight,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ColossusID,
+		&i.Segment,
+		&i.Broken,
 	)
 	return i, err
 }
@@ -250,7 +307,7 @@ UPDATE combatants SET
   stress_marked = max(0, min(stress_max, CAST(?2 AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?3
-RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at
+RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at, colossus_id, segment, broken
 `
 
 type SetCombatantVitalsParams struct {
@@ -274,6 +331,9 @@ func (q *Queries) SetCombatantVitals(ctx context.Context, arg SetCombatantVitals
 		&i.Spotlight,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ColossusID,
+		&i.Segment,
+		&i.Broken,
 	)
 	return i, err
 }
@@ -287,7 +347,7 @@ UPDATE combatants SET
   stress_marked = min(stress_marked, ?3),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?4
-RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at
+RETURNING id, combat_id, adversary_slug, display_name, hp_max, hp_marked, stress_max, stress_marked, spotlight, created_at, updated_at, colossus_id, segment, broken
 `
 
 type UpdateCombatantParams struct {
@@ -317,6 +377,9 @@ func (q *Queries) UpdateCombatant(ctx context.Context, arg UpdateCombatantParams
 		&i.Spotlight,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ColossusID,
+		&i.Segment,
+		&i.Broken,
 	)
 	return i, err
 }

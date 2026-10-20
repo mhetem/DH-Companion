@@ -200,6 +200,8 @@ export function Search(arg1:string,arg2:number,arg3:number):Promise<Array<gm.Sea
 
 export function SessionsForEncounter(arg1:number):Promise<Array<gm.SessionSummary>>;
 
+export function SetBroken(arg1:number,arg2:boolean):Promise<gm.CombatantView>;
+
 export function SetCampaignFear(arg1:number,arg2:number):Promise<number>;
 
 export function SetFear(arg1:number,arg2:number):Promise<number>;

@@ -90,6 +90,7 @@ export {
   SaveWorldNote,
   Search,
   SessionsForEncounter,
+  SetBroken,
   SetCampaignFear,
   SetFear,
   SetSpotlight,
@@ -121,6 +122,7 @@ export const TIERS = ['1', '2', '3', '4']
 
 export const ADVERSARY_TYPES = [
   'Bruiser',
+  'Colossus',
   'Horde',
   'Leader',
   'Minion',
@@ -131,6 +133,10 @@ export const ADVERSARY_TYPES = [
   'Standard',
   'Support'
 ]
+
+// Mirrors maxSegmentCount in internal/gm/validate.go — how many copies of one
+// segment (two arms, four legs) a colossus can spawn.
+export const MAX_SEGMENT_COUNT = 20
 
 export const ENVIRONMENT_TYPES = ['Event', 'Exploration', 'Social', 'Traversal']
 
@@ -259,7 +265,8 @@ export const DIFFICULTIES = [
 ]
 
 // Battle-point cost per adversary type, mirroring rules.adversaryCost. Minions
-// are batched party-sized by the budget math, so they have no flat cost here.
+// are batched party-sized by the budget math, so they have no flat cost here,
+// and a colossus spends whatever the adjusted budget comes to.
 const COSTS = {
   Social: 1,
   Support: 1,
@@ -274,6 +281,7 @@ const COSTS = {
 
 export function costLabel(type) {
   if (type === 'Minion') return 'batched'
+  if (type === 'Colossus') return 'whole budget'
   return `${COSTS[type] ?? 2} pt${(COSTS[type] ?? 2) === 1 ? '' : 's'}`
 }
 

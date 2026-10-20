@@ -9,7 +9,7 @@ import (
 
 var (
 	validTiers            = []string{"1", "2", "3", "4"}
-	validAdversaryTypes   = []string{"Bruiser", "Horde", "Leader", "Minion", "Ranged", "Skulk", "Social", "Solo", "Standard", "Support"}
+	validAdversaryTypes   = []string{"Bruiser", "Colossus", "Horde", "Leader", "Minion", "Ranged", "Skulk", "Social", "Solo", "Standard", "Support"}
 	validEnvironmentTypes = []string{"Event", "Exploration", "Social", "Traversal"}
 	validNoteKinds        = []string{"npc", "location", "faction", "lore", "plot"}
 	validWorldKinds       = []string{"region", "city", "place", "timeline", "event", "culture", "religion", "page"}
@@ -21,6 +21,8 @@ var (
 const defaultNoteKind = "npc"
 
 const defaultWorldKind = "page"
+
+const maxSegmentCount = 20
 
 // armorType is the single Type every armor carries: armor has no sub-types the
 // way adversaries and weapons do, but Meta.Type is what the browsers filter on.

@@ -86,7 +86,7 @@ func TestAdversaryCost(t *testing.T) {
 }
 
 func TestIsBigType(t *testing.T) {
-	big := []string{"Bruiser", "Horde", "Leader", "Solo"}
+	big := []string{"Bruiser", "Horde", "Leader", "Solo", "Colossus"}
 	small := []string{"Social", "Support", "Standard", "Skulk", "Ranged", "Minion", "", "solo"}
 
 	for _, tt := range big {
@@ -393,6 +393,65 @@ func TestComputeBudgetAdjustments(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got.Adjustments, tt.wantAdjustments) {
 				t.Errorf("Adjustments = %#v, want %#v", got.Adjustments, tt.wantAdjustments)
+			}
+		})
+	}
+}
+
+func TestComputeBudgetColossus(t *testing.T) {
+	tests := []struct {
+		name       string
+		settings   EncounterSettings
+		picks      []EncounterAdversary
+		wantBudget int
+		wantSpent  int
+		wantOver   bool
+	}{
+		{
+			name:       "a lone colossus spends exactly the budget",
+			settings:   EncounterSettings{PartySize: 4, PartyTier: "1"},
+			picks:      []EncounterAdversary{adv("Colossus", "1", 1)},
+			wantBudget: 14,
+			wantSpent:  14,
+			wantOver:   false,
+		},
+		{
+			name:       "anything beside a colossus goes over",
+			settings:   EncounterSettings{PartySize: 4, PartyTier: "1"},
+			picks:      []EncounterAdversary{adv("Colossus", "1", 1), adv("Standard", "1", 1)},
+			wantBudget: 14,
+			wantSpent:  16,
+			wantOver:   true,
+		},
+		{
+			name:       "the colossus follows the adjusted budget",
+			settings:   EncounterSettings{PartySize: 4, PartyTier: "2", Difficulty: "hard"},
+			picks:      []EncounterAdversary{adv("Colossus", "1", 1)},
+			wantBudget: 17,
+			wantSpent:  17,
+			wantOver:   false,
+		},
+		{
+			name:       "two colossi spend the budget twice",
+			settings:   EncounterSettings{PartySize: 4, PartyTier: "1"},
+			picks:      []EncounterAdversary{adv("Colossus", "1", 2)},
+			wantBudget: 14,
+			wantSpent:  28,
+			wantOver:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ComputeBudget(tt.settings, tt.picks)
+			if got.Budget != tt.wantBudget {
+				t.Errorf("Budget = %d, want %d (adjustments %v)", got.Budget, tt.wantBudget, got.Adjustments)
+			}
+			if got.Spent != tt.wantSpent {
+				t.Errorf("Spent = %d, want %d", got.Spent, tt.wantSpent)
+			}
+			if got.Over != tt.wantOver {
+				t.Errorf("Over = %v, want %v", got.Over, tt.wantOver)
 			}
 		})
 	}

@@ -4,14 +4,26 @@
   // actions is an optional snippet of buttons rendered beside the title.
   let { card, actions = null } = $props()
 
+  // A colossus keeps Difficulty, HP and the standard attack on its segments; the
+  // card itself is the framework — thresholds, Stress, and features for the whole.
+  // The card-level fields are ignored rather than trusted to be blank, since the
+  // homebrew form keeps whatever was typed before the type was switched.
+  const colossus = $derived(card.type === 'Colossus')
+  const segments = $derived(colossus ? (card.segments ?? []) : [])
+  const roster = $derived(segments.map((s) => (s.count > 1 ? `${s.name} ×${s.count}` : s.name)).join(', '))
+
   const attack = $derived(card.standardAttack ?? {})
-  const hasAttack = $derived(Boolean(attack.name || attack.damage))
+  const hasAttack = $derived(!colossus && Boolean(attack.name || attack.damage))
+
+  function hasSegmentAttack(s) {
+    return Boolean(s.standardAttack?.name || s.standardAttack?.damage)
+  }
 
   const stats = $derived(
     [
-      { label: 'Difficulty', value: card.difficulty },
+      colossus ? null : { label: 'Difficulty', value: card.difficulty },
       { label: 'Thresholds', value: thresholds(card) },
-      { label: 'HP', value: card.hp },
+      colossus ? null : { label: 'HP', value: card.hp },
       { label: 'Stress', value: card.stress },
       // Only Hordes print a unit count on the card.
       card.type === 'Horde' ? { label: 'Horde', value: card.hordeNumber } : null
@@ -54,6 +66,12 @@
     </dl>
   {/if}
 
+  {#if colossus && card.size}
+    <p class="line"><span class="key">Size</span> {card.size}</p>
+  {/if}
+  {#if roster}
+    <p class="line"><span class="key">Segments</span> {roster}</p>
+  {/if}
   {#if card.motives}
     <p class="line"><span class="key">Motives &amp; Tactics</span> {card.motives}</p>
   {/if}
@@ -72,9 +90,37 @@
 
   {#if card.features?.length}
     <div class="features">
+      {#if colossus}<h4 class="group">Every segment</h4>{/if}
       <FeatureList features={card.features} />
     </div>
   {/if}
+
+  {#each segments as s, i (s.name + i)}
+    <section class="segment">
+      <h4>
+        {s.name}
+        {#if s.count > 1}<span class="dim">×{s.count}</span>{/if}
+      </h4>
+      {#if s.difficulty || s.hp}
+        <p class="line">
+          {#if s.difficulty}<span class="key">Difficulty</span> {s.difficulty}{/if}
+          {#if s.hp}<span class="key" class:spaced={s.difficulty}>HP</span> {s.hp}{/if}
+        </p>
+      {/if}
+      {#if s.adjacent}
+        <p class="line"><span class="key">Adjacent</span> {s.adjacent}</p>
+      {/if}
+      {#if hasSegmentAttack(s)}
+        <p class="line">
+          <span class="key">Attack</span>
+          {s.standardAttack.name}{s.standardAttack.modifier ? ` ${s.standardAttack.modifier}` : ''}
+          {#if s.standardAttack.range}<span class="dim">· {s.standardAttack.range}</span>{/if}
+          {#if s.standardAttack.damage}<span class="dim">· {s.standardAttack.damage} {s.standardAttack.damageType}</span>{/if}
+        </p>
+      {/if}
+      <FeatureList features={s.features ?? []} />
+    </section>
+  {/each}
 </article>
 
 <style>
@@ -169,5 +215,32 @@
   .features {
     padding-top: 0.5rem;
     border-top: 1px solid var(--line);
+  }
+
+  .key.spaced { margin-left: 0.6rem; }
+
+  h4 {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  h4.group {
+    margin-bottom: 0.4rem;
+    font-size: 0.65rem;
+    font-weight: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+  }
+
+  .segment {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--line);
+    border-left: 0.2rem solid var(--fear);
+    border-radius: 6px;
+    background: var(--bg);
   }
 </style>

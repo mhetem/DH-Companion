@@ -11,6 +11,7 @@
     MarkStress,
     RemoveCombatant,
     ResumeCombat,
+    SetBroken,
     SetFear,
     SetSpotlight,
     ClearSpotlights,
@@ -18,6 +19,7 @@
     errorMessage
   } from './api.js'
   import { onKeys } from '../keys.js'
+  import ColossusGroup from './ColossusGroup.svelte'
   import CombatLinks from './CombatLinks.svelte'
   import CombatantRow from './CombatantRow.svelte'
   import Countdowns from './Countdowns.svelte'
@@ -54,10 +56,40 @@
 
   const spotlit = $derived(combat?.combatants.filter((c) => c.spotlight).length ?? 0)
 
+  // The roster as it's drawn: every top-level combatant in order, with a colossus's
+  // segments gathered under it. A row is a colossus if segments point at it, or if
+  // its card says so — the second covers a colossus whose card has no segments left.
+  const groups = $derived.by(() => {
+    const list = combat?.combatants ?? []
+    const parts = new Map()
+    for (const c of list) {
+      if (c.colossusId == null) continue
+      if (!parts.has(c.colossusId)) parts.set(c.colossusId, [])
+      parts.get(c.colossusId).push(c)
+    }
+    return list
+      .filter((c) => c.colossusId == null)
+      .map((c) => {
+        const segments = parts.get(c.id) ?? (c.adversary?.type === 'Colossus' ? [] : null)
+        return { lead: c, segments }
+      })
+  })
+
+  // The keyboard walks the roster in the order it's drawn, segments included.
+  const ordered = $derived(groups.flatMap((g) => [g.lead, ...(g.segments ?? [])]))
+
   // Selection is the keyboard's cursor over the roster — separate from spotlight,
   // which is a rules concept the GM sets deliberately and can hold on several at once.
   let selectedId = $state(null)
   const selected = $derived(combat?.combatants.find((c) => c.id === selectedId) ?? null)
+
+  // A segment has no Stress of its own — it marks the colossus's — so the stress
+  // keys aim at the colossus row when a segment is selected.
+  const stressTarget = $derived(
+    selected?.colossusId != null
+      ? (combat?.combatants.find((c) => c.id === selected.colossusId) ?? null)
+      : selected
+  )
 
   async function load() {
     try {
@@ -137,6 +169,7 @@
   const markHp = (c, delta) => run(async () => replace(await MarkHP(c.id, delta)))
   const markStress = (c, delta) => run(async () => replace(await MarkStress(c.id, delta)))
   const spotlight = (c, on) => run(async () => replace(await SetSpotlight(c.id, on)))
+  const setBroken = (c, on) => run(async () => replace(await SetBroken(c.id, on)))
 
   const clearSpotlights = () =>
     run(async () => {
@@ -144,16 +177,23 @@
       combat.combatants = combat.combatants.map((c) => ({ ...c, spotlight: false }))
     })
 
+  // Removing a colossus takes its segments with it — the database cascades, and the
+  // local list drops them in the same pass so nothing is left pointing at nothing.
   const remove = (c) =>
     run(async () => {
-      if (!confirm(`Remove ${c.displayName} from the fight?`)) return
+      const segments = combat.combatants.filter((x) => x.colossusId === c.id).length
+      const what = segments
+        ? `${c.displayName} and its ${segments} segment${segments === 1 ? '' : 's'}`
+        : c.displayName
+      if (!confirm(`Remove ${what} from the fight?`)) return
       await RemoveCombatant(c.id)
-      combat.combatants = combat.combatants.filter((x) => x.id !== c.id)
-      if (selectedId === c.id) selectedId = null
+      const gone = (x) => x.id === c.id || x.colossusId === c.id
+      if (combat.combatants.some((x) => gone(x) && x.id === selectedId)) selectedId = null
+      combat.combatants = combat.combatants.filter((x) => !gone(x))
     })
 
   function move(step) {
-    const list = combat?.combatants ?? []
+    const list = ordered
     if (!list.length) return
     const at = list.findIndex((c) => c.id === selectedId)
     const next = at === -1 ? (step > 0 ? 0 : list.length - 1) : (at + step + list.length) % list.length
@@ -167,13 +207,13 @@
     onKeys(() => {
       if (!combat) return {}
       const c = selected
+      const t = stressTarget
       const steppers =
         c && !busy
           ? {
-              h: () => markHp(c, 1),
-              H: () => markHp(c, -1),
-              s: () => markStress(c, 1),
-              S: () => markStress(c, -1),
+              ...(c.hpMax > 0 ? { h: () => markHp(c, 1), H: () => markHp(c, -1) } : {}),
+              ...(t ? { s: () => markStress(t, 1), S: () => markStress(t, -1) } : {}),
+              ...(c.colossusId != null ? { b: () => setBroken(c, !c.broken) } : {}),
               x: () => spotlight(c, !c.spotlight)
             }
           : {}
@@ -201,7 +241,10 @@
   {:else if !combat}
     <header>
       <h2>Combat Runner</h2>
-      <p class="blurb">Start a fight from a saved encounter. Its adversaries spawn as combatants with their own HP and Stress.</p>
+      <p class="blurb">
+        Start a fight from a saved encounter. Its adversaries spawn as combatants with their own HP
+        and Stress; a colossus spawns once for its Stress and once more for every segment's HP.
+      </p>
     </header>
 
     {#if campaigns.length}
@@ -267,7 +310,7 @@
       <div>
         <h2>{combat.encounterName || 'Untitled encounter'}</h2>
         <p class="blurb">
-          {combat.combatants.length} in the fight · autosaved as you go
+          {groups.length} in the fight · autosaved as you go
           {#if combat.campaignName} · {combat.campaignName}{/if}
           {#if combat.sessionLabel} · {combat.sessionLabel}{/if}
         </p>
@@ -309,7 +352,13 @@
         {#if !combat.combatants.length}
           <p class="empty">Nothing left standing.</p>
         {:else}
-          {#if selected}
+          {#if selected?.colossusId != null}
+            <p class="keyhint">
+              <strong>{selected.displayName}</strong> selected —
+              <kbd>h</kbd> HP, <kbd>s</kbd> the colossus's Stress, <kbd>b</kbd> Broken,
+              hold <kbd>shift</kbd> to clear, <kbd>x</kbd> spotlight, <kbd>esc</kbd> to drop it.
+            </p>
+          {:else if selected}
             <p class="keyhint">
               <strong>{selected.displayName}</strong> selected —
               <kbd>h</kbd> HP, <kbd>s</kbd> Stress, hold <kbd>shift</kbd> to clear,
@@ -321,16 +370,31 @@
             </p>
           {/if}
           <ul class="combatants">
-            {#each combat.combatants as c (c.id)}
-              <CombatantRow
-                combatant={c}
-                selected={c.id === selectedId}
-                {busy}
-                onmarkhp={(d) => markHp(c, d)}
-                onmarkstress={(d) => markStress(c, d)}
-                onspotlight={(on) => spotlight(c, on)}
-                onremove={() => remove(c)}
-              />
+            {#each groups as g (g.lead.id)}
+              {#if g.segments}
+                <ColossusGroup
+                  colossus={g.lead}
+                  segments={g.segments}
+                  {selectedId}
+                  {busy}
+                  onmarkhp={markHp}
+                  onmarkstress={markStress}
+                  onspotlight={spotlight}
+                  onbroken={setBroken}
+                  onremove={remove}
+                />
+              {:else}
+                {@const c = g.lead}
+                <CombatantRow
+                  combatant={c}
+                  selected={c.id === selectedId}
+                  {busy}
+                  onmarkhp={(d) => markHp(c, d)}
+                  onmarkstress={(d) => markStress(c, d)}
+                  onspotlight={(on) => spotlight(c, on)}
+                  onremove={() => remove(c)}
+                />
+              {/if}
             {/each}
           </ul>
         {/if}

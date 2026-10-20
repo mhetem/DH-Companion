@@ -2,6 +2,7 @@
   import { untrack } from 'svelte'
   import CardBrowser from './CardBrowser.svelte'
   import FeatureEditor from './FeatureEditor.svelte'
+  import SegmentEditor from './SegmentEditor.svelte'
   import AdversaryDetail from './AdversaryDetail.svelte'
   import {
     ADVERSARY_TYPES,
@@ -23,15 +24,26 @@
   const original = untrack(() => card)
   const editing = original !== null
 
+  function copyFeatures(features) {
+    return (features ?? []).map((f) => ({ ...f, questions: [...(f.questions ?? [])] }))
+  }
+
+  function copySegments(segments) {
+    return (segments ?? []).map((s) => ({
+      ...s,
+      standardAttack: { ...(s.standardAttack ?? {}) },
+      features: copyFeatures(s.features)
+    }))
+  }
+
   let form = $state(
     original
       ? {
           ...original,
+          size: original.size ?? '',
           standardAttack: { ...(original.standardAttack ?? {}) },
-          features: (original.features ?? []).map((f) => ({
-            ...f,
-            questions: [...(f.questions ?? [])]
-          }))
+          features: copyFeatures(original.features),
+          segments: copySegments(original.segments)
         }
       : {
           kind: 'adversary',
@@ -49,9 +61,18 @@
           hp: '',
           stress: '',
           standardAttack: { modifier: '', name: '', range: 'Melee', damage: '', damageType: 'phy' },
-          features: []
+          features: [],
+          size: '',
+          segments: []
         }
   )
+
+  // A colossus is a framework plus segments: Difficulty, HP and the standard
+  // attack move onto each segment, so the card-level fields for them are hidden.
+  // They're left in the form rather than cleared, so flipping the type back and
+  // forth while drafting doesn't throw anything away; saving is what drops the
+  // set the chosen type doesn't use (shapeForType in internal/gm).
+  const colossus = $derived(form.type === 'Colossus')
 
   let saving = $state(false)
   let error = $state('')
@@ -79,7 +100,9 @@
       hp: card.hp,
       stress: card.stress,
       standardAttack: { ...(card.standardAttack ?? {}) },
-      features: (card.features ?? []).map((f) => ({ ...f, questions: [...(f.questions ?? [])] }))
+      features: copyFeatures(card.features),
+      size: card.size ?? '',
+      segments: copySegments(card.segments)
     }
     if (!form.name.trim()) form.name = `${card.name} (copy)`
     pane = 'preview'
@@ -156,46 +179,73 @@
           <span>Experience</span>
           <input bind:value={form.experiences} placeholder="Tremor Sense +2" />
         </label>
+
+        {#if colossus}
+          <label>
+            <span>Size</span>
+            <input bind:value={form.size} placeholder="30m tall, 18m long" />
+          </label>
+        {/if}
       </section>
 
-      <section>
-        <h3>Statistics</h3>
-        <div class="row">
-          <label><span>Difficulty</span><input bind:value={form.difficulty} placeholder="14" /></label>
-          <label><span>Threshold minor</span><input bind:value={form.thresholdMinor} placeholder="8" /></label>
-          <label><span>Threshold major</span><input bind:value={form.thresholdMajor} placeholder="15" /></label>
-        </div>
-        <div class="row">
-          <label><span>HP</span><input bind:value={form.hp} placeholder="8" /></label>
-          <label><span>Stress</span><input bind:value={form.stress} placeholder="3" /></label>
-          <label>
-            <span>Horde number</span>
-            <input bind:value={form.hordeNumber} placeholder="1" />
-          </label>
-        </div>
-      </section>
+      {#if colossus}
+        <section>
+          <h3>Statistics</h3>
+          <div class="row">
+            <label><span>Threshold minor</span><input bind:value={form.thresholdMinor} placeholder="11" /></label>
+            <label><span>Threshold major</span><input bind:value={form.thresholdMajor} placeholder="22" /></label>
+            <label><span>Stress</span><input bind:value={form.stress} placeholder="6" /></label>
+          </div>
+          <small>Thresholds and Stress belong to the whole colossus. Difficulty, HP and attacks are set per segment below.</small>
+        </section>
+
+        <section>
+          <h3>Segments</h3>
+          <SegmentEditor segments={form.segments} />
+        </section>
+      {:else}
+        <section>
+          <h3>Statistics</h3>
+          <div class="row">
+            <label><span>Difficulty</span><input bind:value={form.difficulty} placeholder="14" /></label>
+            <label><span>Threshold minor</span><input bind:value={form.thresholdMinor} placeholder="8" /></label>
+            <label><span>Threshold major</span><input bind:value={form.thresholdMajor} placeholder="15" /></label>
+          </div>
+          <div class="row">
+            <label><span>HP</span><input bind:value={form.hp} placeholder="8" /></label>
+            <label><span>Stress</span><input bind:value={form.stress} placeholder="3" /></label>
+            <label>
+              <span>Horde number</span>
+              <input bind:value={form.hordeNumber} placeholder="1" />
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <h3>Standard attack</h3>
+          <div class="row">
+            <label class="grow"><span>Name</span><input bind:value={form.standardAttack.name} placeholder="Claws" /></label>
+            <label class="narrow"><span>Modifier</span><input bind:value={form.standardAttack.modifier} placeholder="+3" /></label>
+          </div>
+          <div class="row">
+            <label>
+              <span>Range</span>
+              <input bind:value={form.standardAttack.range} list="attack-ranges" placeholder="Melee" />
+            </label>
+            <label><span>Damage</span><input bind:value={form.standardAttack.damage} placeholder="1d12+2" /></label>
+            <label>
+              <span>Damage type</span>
+              <input bind:value={form.standardAttack.damageType} list="damage-types" placeholder="phy" />
+            </label>
+          </div>
+        </section>
+      {/if}
 
       <section>
-        <h3>Standard attack</h3>
-        <div class="row">
-          <label class="grow"><span>Name</span><input bind:value={form.standardAttack.name} placeholder="Claws" /></label>
-          <label class="narrow"><span>Modifier</span><input bind:value={form.standardAttack.modifier} placeholder="+3" /></label>
-        </div>
-        <div class="row">
-          <label>
-            <span>Range</span>
-            <input bind:value={form.standardAttack.range} list="attack-ranges" placeholder="Melee" />
-          </label>
-          <label><span>Damage</span><input bind:value={form.standardAttack.damage} placeholder="1d12+2" /></label>
-          <label>
-            <span>Damage type</span>
-            <input bind:value={form.standardAttack.damageType} list="damage-types" placeholder="phy" />
-          </label>
-        </div>
-      </section>
-
-      <section>
-        <h3>Features</h3>
+        <h3>{colossus ? 'Colossus features' : 'Features'}</h3>
+        {#if colossus}
+          <small>Features for the colossus as a whole. Ones that belong to a single part go on its segment.</small>
+        {/if}
         <FeatureEditor features={form.features} withCommon />
       </section>
     </form>

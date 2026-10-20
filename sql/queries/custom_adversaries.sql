@@ -21,9 +21,9 @@ WHERE slug = ?;
 INSERT INTO custom_adversaries (
   slug, name, tier, type, description, horde_number, motives, experiences,
   difficulty, threshold_minor, threshold_major, hp, stress,
-  standard_attack, features
+  standard_attack, features, size, segments
 )
-VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 RETURNING *;
 
 -- name: UpdateCustomAdversary :one
@@ -42,6 +42,8 @@ UPDATE custom_adversaries SET
   stress = ?,
   standard_attack = ?,
   features = ?,
+  size = ?,
+  segments = ?,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE slug = ?
 RETURNING *;

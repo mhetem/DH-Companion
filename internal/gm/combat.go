@@ -27,6 +27,10 @@ type CombatantView struct {
 	Adversary     *cards.Adversary `json:"adversary"`
 	Source        string           `json:"source"`
 	Unresolved    bool             `json:"unresolved,omitempty"`
+	ColossusID    *int64           `json:"colossusId"`
+	SegmentName   string           `json:"segmentName"`
+	Segment       *cards.Segment   `json:"segment"`
+	Broken        bool             `json:"broken"`
 	CreatedAt     string           `json:"createdAt"`
 	UpdatedAt     string           `json:"updatedAt"`
 }
@@ -83,21 +87,21 @@ func (in CombatantInput) validate() (CombatantInput, error) {
 	return in, nil
 }
 
-func parseStat(raw string) int64 {
+func parseStat(raw string, fallback int64) int64 {
 	raw = strings.TrimSpace(raw)
 	end := 0
 	for end < len(raw) && raw[end] >= '0' && raw[end] <= '9' {
 		end++
 	}
 	if end == 0 {
-		return statFallback
+		return fallback
 	}
 	n := int64(0)
 	for i := 0; i < end; i++ {
 		n = n*10 + int64(raw[i]-'0')
 	}
 	if n < 0 {
-		return statFallback
+		return fallback
 	}
 	return n
 }
@@ -139,17 +143,9 @@ func (s *Service) StartCombat(encounterID int64, campaignID, sessionID *int64) (
 			return fmt.Errorf("starting combat: %w", err)
 		}
 		for _, pick := range view.Adversaries {
-			slug := pick.Slug
-			hp, stress := parseStat(pick.Hp), parseStat(pick.Stress)
 			for _, name := range spawnNames(pick.Name, pick.Count) {
-				if _, err := q.CreateCombatant(s.ctx, db.CreateCombatantParams{
-					CombatID:      row.ID,
-					AdversarySlug: sql.NullString{String: slug, Valid: slug != ""},
-					DisplayName:   name,
-					HpMax:         hp,
-					StressMax:     stress,
-				}); err != nil {
-					return fmt.Errorf("spawning %q: %w", name, err)
+				if err := s.spawn(q, row.ID, pick.Adversary, name); err != nil {
+					return err
 				}
 			}
 		}
@@ -159,6 +155,48 @@ func (s *Service) StartCombat(encounterID int64, campaignID, sessionID *int64) (
 		return CombatView{}, err
 	}
 	return s.hydrateCombat(row)
+}
+
+func (s *Service) spawn(q *db.Queries, combatID int64, card cards.Adversary, name string) error {
+	slug := sql.NullString{String: card.Slug, Valid: card.Slug != ""}
+	if !isColossus(card) {
+		if _, err := q.CreateCombatant(s.ctx, db.CreateCombatantParams{
+			CombatID:      combatID,
+			AdversarySlug: slug,
+			DisplayName:   name,
+			HpMax:         parseStat(card.Hp, statFallback),
+			StressMax:     parseStat(card.Stress, statFallback),
+		}); err != nil {
+			return fmt.Errorf("spawning %q: %w", name, err)
+		}
+		return nil
+	}
+
+	frame, err := q.CreateCombatant(s.ctx, db.CreateCombatantParams{
+		CombatID:      combatID,
+		AdversarySlug: slug,
+		DisplayName:   name,
+		StressMax:     parseStat(card.Stress, statFallback),
+	})
+	if err != nil {
+		return fmt.Errorf("spawning %q: %w", name, err)
+	}
+	for _, seg := range card.Segments {
+		hp := parseStat(seg.Hp, 0)
+		for _, segName := range spawnNames(seg.Name, seg.Count) {
+			if _, err := q.CreateCombatant(s.ctx, db.CreateCombatantParams{
+				CombatID:      combatID,
+				AdversarySlug: slug,
+				DisplayName:   segName,
+				HpMax:         hp,
+				ColossusID:    sql.NullInt64{Int64: frame.ID, Valid: true},
+				Segment:       seg.Name,
+			}); err != nil {
+				return fmt.Errorf("spawning %s's %q: %w", name, segName, err)
+			}
+		}
+	}
+	return nil
 }
 
 func (s *Service) GetCombat(id int64) (CombatView, error) {
@@ -396,6 +434,23 @@ func (s *Service) SetSpotlight(combatantID int64, on bool) (CombatantView, error
 	return s.resolveCombatant(row), nil
 }
 
+func (s *Service) SetBroken(combatantID int64, broken bool) (CombatantView, error) {
+	var flag int64
+	if broken {
+		flag = 1
+	}
+	row, err := s.q.SetCombatantBroken(s.ctx, db.SetCombatantBrokenParams{
+		Broken: flag, ID: combatantID,
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return CombatantView{}, notFound("combatant", fmt.Sprint(combatantID))
+	}
+	if err != nil {
+		return CombatantView{}, fmt.Errorf("setting broken: %w", err)
+	}
+	return s.resolveCombatant(row), nil
+}
+
 func (s *Service) ClearSpotlights(combatID int64) error {
 	if err := s.q.ClearCombatantSpotlights(s.ctx, combatID); err != nil {
 		return fmt.Errorf("clearing spotlights: %w", err)
@@ -450,6 +505,9 @@ func (s *Service) resolveCombatant(r db.Combatant) CombatantView {
 		StressMax:     int(r.StressMax),
 		StressMarked:  int(r.StressMarked),
 		Spotlight:     r.Spotlight == 1,
+		ColossusID:    int64Ptr(r.ColossusID),
+		SegmentName:   r.Segment,
+		Broken:        r.Broken == 1,
 		CreatedAt:     r.CreatedAt,
 		UpdatedAt:     r.UpdatedAt,
 	}
@@ -462,7 +520,19 @@ func (s *Service) resolveCombatant(r db.Combatant) CombatantView {
 		return view
 	}
 	view.Adversary, view.Source = &card, source
+	if r.Segment != "" {
+		view.Segment = findSegment(card, r.Segment)
+	}
 	return view
+}
+
+func findSegment(card cards.Adversary, name string) *cards.Segment {
+	for i := range card.Segments {
+		if strings.EqualFold(card.Segments[i].Name, name) {
+			return &card.Segments[i]
+		}
+	}
+	return nil
 }
 
 func (s *Service) campaignFear(row db.Combat) (string, int) {

@@ -67,10 +67,16 @@ database.
   consumables, each with a live preview. The adversary and environment editors also have a
   reference pane that is the real browser — so you can crib from an existing card while you
   write, or copy one wholesale with *Use as template*.
+- **Colossal adversaries** — the SRD's colossus, built as homebrew: a framework card with the
+  thresholds, Stress and colossus-wide features, and a list of segments (head, torso, two
+  arms…), each with its own Difficulty, HP, adjacent segments, attack and features. In the
+  builder a colossus spends the whole budget on its own; in the runner it spawns as one row
+  for its shared Stress with every segment's HP and Broken toggle grouped beneath it, and
+  reads *Defeated* once every segment is Destroyed.
 - **Parties** — size and tier, which is what the budget is computed from.
 - **Encounter builder** with a live difficulty-budget meter: cost per adversary type,
-  party-sized minion batching, and the easy/hard, multi-solo, below-tier and
-  no-big-adversary adjustments. Attach an optional environment and see its impulses and
+  party-sized minion batching, a colossus taking the whole budget, and the easy/hard,
+  multi-solo, below-tier and no-big-adversary adjustments. Attach an optional environment and see its impulses and
   features inline.
 - **Combat runner** — start a fight from a saved encounter and its adversaries spawn as
   combatants with their own HP and Stress. Per-combatant steppers, non-exclusive spotlight,
@@ -269,7 +275,8 @@ a field, and while a dialog is open.
 |---|---|
 | <kbd>↑</kbd> <kbd>↓</kbd> / <kbd>k</kbd> <kbd>j</kbd> | Move the selection through the roster |
 | <kbd>h</kbd> / <kbd>H</kbd> | Mark / clear 1 HP on the selected combatant |
-| <kbd>s</kbd> / <kbd>S</kbd> | Mark / clear 1 Stress |
+| <kbd>s</kbd> / <kbd>S</kbd> | Mark / clear 1 Stress — on a colossus segment, the colossus's |
+| <kbd>b</kbd> | Break / mend the selected colossus segment |
 | <kbd>x</kbd> | Toggle spotlight |
 | <kbd>c</kbd> | Clear every spotlight |
 | <kbd>f</kbd> / <kbd>F</kbd> | Gain / spend a Fear |

@@ -3,6 +3,8 @@ package rules
 import (
 	"strconv"
 	"strings"
+
+	"github.com/mhetem/DH-Companion/internal/cards"
 )
 
 func getBudgetForEncounter(numPlayers int) int {
@@ -51,7 +53,7 @@ type BudgetSummary struct {
 
 func isBigType(advType string) bool {
 	switch advType {
-	case "Bruiser", "Horde", "Leader", "Solo":
+	case "Bruiser", "Horde", "Leader", "Solo", cards.TypeColossus:
 		return true
 	default:
 		return false
@@ -68,6 +70,7 @@ func ComputeBudget(s EncounterSettings, picks []EncounterAdversary) BudgetSummar
 	spent := 0
 	minions := 0
 	solos := 0
+	colossi := 0
 	anyPicked := false
 	hasBig := false
 	belowTier := false
@@ -77,9 +80,12 @@ func ComputeBudget(s EncounterSettings, picks []EncounterAdversary) BudgetSummar
 		}
 		anyPicked = true
 
-		if p.Type == "Minion" {
+		switch p.Type {
+		case "Minion":
 			minions += p.Count
-		} else {
+		case cards.TypeColossus:
+			colossi += p.Count
+		default:
 			spent += adversaryCost(p.Type) * p.Count
 		}
 		if p.Type == "Solo" {
@@ -118,6 +124,10 @@ func ComputeBudget(s EncounterSettings, picks []EncounterAdversary) BudgetSummar
 	if anyPicked && !hasBig {
 		budget++
 		adjustments = append(adjustments, "No bruiser, horde, leader, or solo: +1")
+	}
+	if colossi > 0 {
+		spent += budget * colossi
+		adjustments = append(adjustments, "A colossus is a whole encounter: it spends the full budget")
 	}
 
 	return BudgetSummary{

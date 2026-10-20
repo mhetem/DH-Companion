@@ -1293,6 +1293,106 @@ tick it during a fight, and watch the rail swap to each number's beat as it land
 
 ---
 
+## Phase 6.8 — Colossal adversaries
+
+**Goal:** run the SRD's colossus — one enormous creature split into segments, each with its
+own stat block (Difficulty, HP, attack, features), under a framework that holds what applies
+to the whole (thresholds, Stress, experiences, colossus-wide features) — through the
+homebrew editor, the encounter builder and the runner like any other adversary.
+
+- [x] `Colossus` as an adversary type; `cards.Adversary` gains `size` and `segments`, and
+      `cards.Segment` is name, count, adjacent, difficulty, hp, standard attack, features
+- [x] `custom_adversaries.size` / `.segments`; the homebrew form swaps its stat and attack
+      sections for a segment editor when the type is Colossus
+- [x] `AdversaryDetail` renders the framework and every segment's block
+- [x] Budget: a colossus spends the whole adjusted budget
+- [x] Runner: a colossus spawns a framework row (Stress, spotlight) and one row per segment
+      (HP, Broken), grouped under it; `SetBroken` on `gm.Service`
+- [x] Destroyed and Defeated read off the HP tracks; removing the colossus removes its segments
+- [x] Segment text is indexed for search; share codes and the library export carry segments
+
+Notes on the model:
+- **A colossus is an `Adversary` with a type, not a new card kind.** Browsing, search, share
+  codes, the library export and encounter picks all speak `cards.Adversary`, and a separate
+  kind would have needed a parallel path through every one of them. The framework fields the
+  SRD lists are already on the card bar `size`; everything per-part moves into `segments`.
+- **Difficulty, HP, horde number and the standard attack are blank on a colossus**, and size
+  and segments are blank on everything else. `shapeForType` drops whichever set the saved
+  type doesn't use, in both create and update — so share-code and library imports, which go
+  through `CreateCustomAdversary`, get it for free. The form keeps both sets while drafting,
+  so flipping the type back and forth loses nothing until Save; `AdversaryDetail` ignores
+  the card-level stats on a colossus so the live preview matches what will be saved.
+- **`count` is one block printed for several parts** — the book's "Arm (2) … HP 3 (each)".
+  It stays one entry on the card and spawns as `Arm 1`, `Arm 2`, each with its own track.
+  Capped at 20 (`maxSegmentCount`), since a typo there spawns rows by the hundred.
+- **Segment names are required and unique per colossus**, case-insensitively. The runner
+  resolves a segment row back to its block by name, so two "Arm" entries would be ambiguous.
+- **Adjacency is free text**, like motives and experiences. The book's adjacency lines aren't
+  regular ("torso, the other leg"), and the only reader is the GM. Structured adjacency
+  would earn its keep once the runner knows where PCs are standing, which it doesn't — see
+  the positions bullet in Phase 7.
+- **A segment with no parseable HP spawns with 0, not the fallback 1.** The SRD examples
+  include a body segment that is immune to all damage and has no HP line; a 1-HP track would
+  let it be Destroyed. `parseStat` takes the fallback as a parameter now.
+
+Notes on the budget:
+- **The rules give a colossus no battle-point cost.** The book's guidance is that one is
+  already a whole encounter, and that anything added beside it should be few and deliberate.
+  So `ComputeBudget` makes a colossus spend whatever the adjusted budget comes to: alone it
+  lands exactly on budget, and anything next to it reads as over — which is the warning the
+  book gives. Two colossi spend it twice. An adjustment line says why the meter jumped.
+- It counts as a big adversary, so it doesn't earn the "no bruiser, horde, leader or solo"
+  +1 — the meter would only widen the budget by one for the colossus to spend that too. It
+  isn't a Solo, so it doesn't trip the multi-solo penalty.
+
+Notes on the runner:
+- **A colossus is rows in `combatants`, not a new table.** The framework is a row with
+  Stress and no HP; each segment is a row with HP and no Stress, and a `colossus_id` that
+  points at the framework row. That is the SRD's split exactly: Stress is the colossus's
+  (segment actions mark it), HP and Destroyed are per segment, and spotlight is per row —
+  each segment is spotlit like its own adversary, and the framework row is what's spotlit for
+  the colossus's own actions. Every existing stepper and spotlight query works on both kinds
+  of row unchanged.
+- `colossus_id` is a self-referencing FK, `ON DELETE CASCADE`: removing the colossus removes
+  its segments. Segments have no remove button of their own — a Destroyed segment stays on
+  the body, non-working, rather than going away.
+- `segment` holds the segment's name and is resolved against the card on hydrate, the way
+  `adversary_slug` is. A homebrew card edited mid-fight so a name no longer matches shows
+  "segment missing from the card" and keeps its HP.
+- **`broken` is a plain flag.** Broken is the SRD condition, set and cleared by the GM. One of
+  the book's examples puts *tokens* on a segment and keeps it Broken until they're gone;
+  that's a feature of one colossus rather than a rule, and a countdown covers it.
+- **Destroyed and Defeated are derived, not stored.** Destroyed is a full HP track; the
+  colossus reads Defeated when every segment that has a track is Destroyed — the SRD's
+  default. Fatal and Link features end a fight sooner, but they're feature text, so they
+  stay the GM's call.
+- The colossus header carries the thresholds, since every hit on any segment is measured
+  against them, plus an expandable reminder of the SRD's colossus rules.
+- Keyboard: `s` on a selected segment marks the colossus's Stress, `b` breaks or mends a
+  segment, and `h` is skipped on a row with no HP track rather than making a write that
+  clamps to nothing. The roster is walked in the order it's drawn, segments included.
+
+Notes on data:
+- **The library export and share codes needed no code of their own.** Both carry whole
+  `cards.Adversary` values, and both import through `CreateCustomAdversary`, so segments ride
+  along and are validated on the way in like a hand-made card. The format number doesn't
+  move: an older export simply has no segments, and an older build reports a colossus as
+  skipped (unknown type) rather than importing a card it can't run. Combats aren't part of
+  the library, so the new `combatants` columns have nothing to export.
+- **The book's example colossi are not in `data/`.** They come from the *Colossus of the
+  Drylands* campaign frame, which the SRD points to but doesn't contain — so they aren't
+  Public Game Content, and compiling them in would go past even the licensing position
+  below. They can be built as homebrew.
+
+Not built: **where PCs are standing.** The SRD's "advantage on the segment you're on" and
+"that segment's attack can't target you" both hinge on it, and the header reminds the GM of
+both, but tracking it is the Phase 7 positions bullet, not this.
+
+**Done when:** a homebrew colossus can be built with its segments, priced in an encounter,
+started in the runner with its segments grouped under it, and fought down to Defeated.
+
+---
+
 ## Phase 7 — Roadmap: the first update after release
 
 **Goal:** what goes in the release *after* 1.0. Phases 0–6 are done and shipped, and the app
@@ -1332,6 +1432,8 @@ Ordered by what a user hits first, not by how interesting it is to build.
       that. LAN sharing is the honest way to bridge the two; a cross-island query is not.
 - [ ] **Positions in the runner.** It tracks HP, Stress and spotlight but has no sense of
       where anyone is standing. Not a battle map — a scratch surface per combat would do.
+      Colossi raise the stakes: which segment a PC is on decides advantage and which
+      segment attacks can target them (Phase 6.8).
 - [ ] **Pop the notes out into their own window**, so the timeline can sit on a second
       monitor beside the runner. Wails v2 is single-window and `window.open` is unhandled on
       all three platforms (see Phase 6.5), so this needs a loopback HTTP server serving a

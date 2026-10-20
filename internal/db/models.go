@@ -102,6 +102,9 @@ type Combatant struct {
 	Spotlight     int64
 	CreatedAt     string
 	UpdatedAt     string
+	ColossusID    sql.NullInt64
+	Segment       string
+	Broken        int64
 }
 
 type Companion struct {
@@ -152,6 +155,8 @@ type CustomAdversary struct {
 	Features       sql.NullString
 	CreatedAt      string
 	UpdatedAt      string
+	Size           string
+	Segments       string
 }
 
 type CustomArmor struct {

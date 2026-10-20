@@ -15,10 +15,10 @@ const createCustomAdversary = `-- name: CreateCustomAdversary :one
 INSERT INTO custom_adversaries (
   slug, name, tier, type, description, horde_number, motives, experiences,
   difficulty, threshold_minor, threshold_major, hp, stress,
-  standard_attack, features
+  standard_attack, features, size, segments
 )
-VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-RETURNING id, slug, name, tier, type, description, horde_number, motives, experiences, difficulty, threshold_minor, threshold_major, hp, stress, standard_attack, features, created_at, updated_at
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+RETURNING id, slug, name, tier, type, description, horde_number, motives, experiences, difficulty, threshold_minor, threshold_major, hp, stress, standard_attack, features, created_at, updated_at, size, segments
 `
 
 type CreateCustomAdversaryParams struct {
@@ -37,6 +37,8 @@ type CreateCustomAdversaryParams struct {
 	Stress         string
 	StandardAttack sql.NullString
 	Features       sql.NullString
+	Size           string
+	Segments       string
 }
 
 func (q *Queries) CreateCustomAdversary(ctx context.Context, arg CreateCustomAdversaryParams) (CustomAdversary, error) {
@@ -56,6 +58,8 @@ func (q *Queries) CreateCustomAdversary(ctx context.Context, arg CreateCustomAdv
 		arg.Stress,
 		arg.StandardAttack,
 		arg.Features,
+		arg.Size,
+		arg.Segments,
 	)
 	var i CustomAdversary
 	err := row.Scan(
@@ -77,6 +81,8 @@ func (q *Queries) CreateCustomAdversary(ctx context.Context, arg CreateCustomAdv
 		&i.Features,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Size,
+		&i.Segments,
 	)
 	return i, err
 }
@@ -92,7 +98,7 @@ func (q *Queries) DeleteCustomAdversary(ctx context.Context, slug string) error 
 }
 
 const getCustomByIDs = `-- name: GetCustomByIDs :many
-SELECT id, slug, name, tier, type, description, horde_number, motives, experiences, difficulty, threshold_minor, threshold_major, hp, stress, standard_attack, features, created_at, updated_at FROM custom_adversaries
+SELECT id, slug, name, tier, type, description, horde_number, motives, experiences, difficulty, threshold_minor, threshold_major, hp, stress, standard_attack, features, created_at, updated_at, size, segments FROM custom_adversaries
 WHERE id IN (/*SLICE:ids*/?)
 `
 
@@ -134,6 +140,8 @@ func (q *Queries) GetCustomByIDs(ctx context.Context, ids []int64) ([]CustomAdve
 			&i.Features,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Size,
+			&i.Segments,
 		); err != nil {
 			return nil, err
 		}
@@ -149,7 +157,7 @@ func (q *Queries) GetCustomByIDs(ctx context.Context, ids []int64) ([]CustomAdve
 }
 
 const getCustomBySlug = `-- name: GetCustomBySlug :one
-SELECT id, slug, name, tier, type, description, horde_number, motives, experiences, difficulty, threshold_minor, threshold_major, hp, stress, standard_attack, features, created_at, updated_at FROM custom_adversaries
+SELECT id, slug, name, tier, type, description, horde_number, motives, experiences, difficulty, threshold_minor, threshold_major, hp, stress, standard_attack, features, created_at, updated_at, size, segments FROM custom_adversaries
 WHERE slug = ?
 `
 
@@ -175,12 +183,14 @@ func (q *Queries) GetCustomBySlug(ctx context.Context, slug string) (CustomAdver
 		&i.Features,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Size,
+		&i.Segments,
 	)
 	return i, err
 }
 
 const showAllCustomAdversaries = `-- name: ShowAllCustomAdversaries :many
-SELECT id, slug, name, tier, type, description, horde_number, motives, experiences, difficulty, threshold_minor, threshold_major, hp, stress, standard_attack, features, created_at, updated_at FROM custom_adversaries
+SELECT id, slug, name, tier, type, description, horde_number, motives, experiences, difficulty, threshold_minor, threshold_major, hp, stress, standard_attack, features, created_at, updated_at, size, segments FROM custom_adversaries
 WHERE (tier = ?1 OR ?1 = '')
   AND (type = ?2 OR ?2 = 'All')
 ORDER BY name ASC
@@ -219,6 +229,8 @@ func (q *Queries) ShowAllCustomAdversaries(ctx context.Context, arg ShowAllCusto
 			&i.Features,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Size,
+			&i.Segments,
 		); err != nil {
 			return nil, err
 		}
@@ -249,9 +261,11 @@ UPDATE custom_adversaries SET
   stress = ?,
   standard_attack = ?,
   features = ?,
+  size = ?,
+  segments = ?,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE slug = ?
-RETURNING id, slug, name, tier, type, description, horde_number, motives, experiences, difficulty, threshold_minor, threshold_major, hp, stress, standard_attack, features, created_at, updated_at
+RETURNING id, slug, name, tier, type, description, horde_number, motives, experiences, difficulty, threshold_minor, threshold_major, hp, stress, standard_attack, features, created_at, updated_at, size, segments
 `
 
 type UpdateCustomAdversaryParams struct {
@@ -269,6 +283,8 @@ type UpdateCustomAdversaryParams struct {
 	Stress         string
 	StandardAttack sql.NullString
 	Features       sql.NullString
+	Size           string
+	Segments       string
 	Slug           string
 }
 
@@ -288,6 +304,8 @@ func (q *Queries) UpdateCustomAdversary(ctx context.Context, arg UpdateCustomAdv
 		arg.Stress,
 		arg.StandardAttack,
 		arg.Features,
+		arg.Size,
+		arg.Segments,
 		arg.Slug,
 	)
 	var i CustomAdversary
@@ -310,6 +328,8 @@ func (q *Queries) UpdateCustomAdversary(ctx context.Context, arg UpdateCustomAdv
 		&i.Features,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Size,
+		&i.Segments,
 	)
 	return i, err
 }

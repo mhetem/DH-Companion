@@ -394,6 +394,10 @@ export function SessionsForEncounter(arg1) {
   return window['go']['gm']['Service']['SessionsForEncounter'](arg1);
 }
 
+export function SetBroken(arg1, arg2) {
+  return window['go']['gm']['Service']['SetBroken'](arg1, arg2);
+}
+
 export function SetCampaignFear(arg1, arg2) {
   return window['go']['gm']['Service']['SetCampaignFear'](arg1, arg2);
 }

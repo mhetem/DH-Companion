@@ -24,6 +24,8 @@ const (
 	CategorySecondary = "Secondary"
 )
 
+const TypeColossus = "Colossus"
+
 // Feature.Type values used by class data. Subclass features are printed in these
 // three groups, unlocked as the character advances.
 const (
@@ -73,6 +75,18 @@ type Adversary struct {
 	ThresholdMajor string    `json:"thresholdMajor"`
 	Hp             string    `json:"hp"`
 	Stress         string    `json:"stress"`
+	StandardAttack Attack    `json:"standardAttack"`
+	Features       []Feature `json:"features"`
+	Size           string    `json:"size"`
+	Segments       []Segment `json:"segments"`
+}
+
+type Segment struct {
+	Name           string    `json:"name"`
+	Count          int       `json:"count"`
+	Adjacent       string    `json:"adjacent"`
+	Difficulty     string    `json:"difficulty"`
+	Hp             string    `json:"hp"`
 	StandardAttack Attack    `json:"standardAttack"`
 	Features       []Feature `json:"features"`
 }

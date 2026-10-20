@@ -1,5 +1,47 @@
 export namespace cards {
 	
+	export class Segment {
+	    name: string;
+	    count: number;
+	    adjacent: string;
+	    difficulty: string;
+	    hp: string;
+	    standardAttack: Attack;
+	    features: Feature[];
+	
+	    static createFrom(source: any = {}) {
+	        return new Segment(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.count = source["count"];
+	        this.adjacent = source["adjacent"];
+	        this.difficulty = source["difficulty"];
+	        this.hp = source["hp"];
+	        this.standardAttack = this.convertValues(source["standardAttack"], Attack);
+	        this.features = this.convertValues(source["features"], Feature);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class Feature {
 	    common: string;
 	    title: string;
@@ -57,6 +99,8 @@ export namespace cards {
 	    stress: string;
 	    standardAttack: Attack;
 	    features: Feature[];
+	    size: string;
+	    segments: Segment[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Adversary(source);
@@ -80,6 +124,8 @@ export namespace cards {
 	        this.stress = source["stress"];
 	        this.standardAttack = this.convertValues(source["standardAttack"], Attack);
 	        this.features = this.convertValues(source["features"], Feature);
+	        this.size = source["size"];
+	        this.segments = this.convertValues(source["segments"], Segment);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -566,6 +612,7 @@ export namespace cards {
 	    }
 	}
 	
+	
 	export class Weapon {
 	    kind: string;
 	    slug: string;
@@ -697,6 +744,8 @@ export namespace gm {
 	    stress: string;
 	    standardAttack: cards.Attack;
 	    features: cards.Feature[];
+	    size: string;
+	    segments: cards.Segment[];
 	    source: string;
 	
 	    static createFrom(source: any = {}) {
@@ -721,6 +770,8 @@ export namespace gm {
 	        this.stress = source["stress"];
 	        this.standardAttack = this.convertValues(source["standardAttack"], cards.Attack);
 	        this.features = this.convertValues(source["features"], cards.Feature);
+	        this.size = source["size"];
+	        this.segments = this.convertValues(source["segments"], cards.Segment);
 	        this.source = source["source"];
 	    }
 	
@@ -1013,6 +1064,10 @@ export namespace gm {
 	    adversary?: cards.Adversary;
 	    source: string;
 	    unresolved?: boolean;
+	    colossusId?: number;
+	    segmentName: string;
+	    segment?: cards.Segment;
+	    broken: boolean;
 	    createdAt: string;
 	    updatedAt: string;
 	
@@ -1034,6 +1089,10 @@ export namespace gm {
 	        this.adversary = this.convertValues(source["adversary"], cards.Adversary);
 	        this.source = source["source"];
 	        this.unresolved = source["unresolved"];
+	        this.colossusId = source["colossusId"];
+	        this.segmentName = source["segmentName"];
+	        this.segment = this.convertValues(source["segment"], cards.Segment);
+	        this.broken = source["broken"];
 	        this.createdAt = source["createdAt"];
 	        this.updatedAt = source["updatedAt"];
 	    }
@@ -3048,6 +3107,8 @@ export namespace rules {
 	    stress: string;
 	    standardAttack: cards.Attack;
 	    features: cards.Feature[];
+	    size: string;
+	    segments: cards.Segment[];
 	    count: number;
 	    source: string;
 	    id: number;
@@ -3075,6 +3136,8 @@ export namespace rules {
 	        this.stress = source["stress"];
 	        this.standardAttack = this.convertValues(source["standardAttack"], cards.Attack);
 	        this.features = this.convertValues(source["features"], cards.Feature);
+	        this.size = source["size"];
+	        this.segments = this.convertValues(source["segments"], cards.Segment);
 	        this.count = source["count"];
 	        this.source = source["source"];
 	        this.id = source["id"];
