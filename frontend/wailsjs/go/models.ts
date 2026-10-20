@@ -1405,6 +1405,42 @@ export namespace gm {
 	        this.type = source["type"];
 	    }
 	}
+	export class ImportCounts {
+	    parties: number;
+	    customAdversaries: number;
+	    customEnvironments: number;
+	    customWeapons: number;
+	    customArmor: number;
+	    customItems: number;
+	    customConsumables: number;
+	    encounters: number;
+	    campaigns: number;
+	    sessions: number;
+	    notes: number;
+	    worldNotes: number;
+	    countdowns: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ImportCounts(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.parties = source["parties"];
+	        this.customAdversaries = source["customAdversaries"];
+	        this.customEnvironments = source["customEnvironments"];
+	        this.customWeapons = source["customWeapons"];
+	        this.customArmor = source["customArmor"];
+	        this.customItems = source["customItems"];
+	        this.customConsumables = source["customConsumables"];
+	        this.encounters = source["encounters"];
+	        this.campaigns = source["campaigns"];
+	        this.sessions = source["sessions"];
+	        this.notes = source["notes"];
+	        this.worldNotes = source["worldNotes"];
+	        this.countdowns = source["countdowns"];
+	    }
+	}
 	export class ImportReport {
 	    parties: number;
 	    customAdversaries: number;
@@ -1419,6 +1455,7 @@ export namespace gm {
 	    notes: number;
 	    worldNotes: number;
 	    countdowns: number;
+	    updated: ImportCounts;
 	    renamed: string[];
 	    skipped: string[];
 	
@@ -1441,9 +1478,28 @@ export namespace gm {
 	        this.notes = source["notes"];
 	        this.worldNotes = source["worldNotes"];
 	        this.countdowns = source["countdowns"];
+	        this.updated = this.convertValues(source["updated"], ImportCounts);
 	        this.renamed = source["renamed"];
 	        this.skipped = source["skipped"];
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class LootFilter {
 	    rarity: string;

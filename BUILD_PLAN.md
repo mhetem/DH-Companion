@@ -897,7 +897,8 @@ Notes on data portability:
   you authored, and it **merges**. Cards whose name is taken are renamed (`Gutter Wraith (2)`),
   and because slugs derive from names, imported encounters are remapped through a
   slug-old→slug-new table so their picks still resolve. Parties are matched by name and
-  reused rather than duplicated.
+  reused rather than duplicated. *(Revised in Phase 6.9: a match is now overwritten rather
+  than renamed around, for everything the library carries.)*
 - Import reports counts, renames and skips instead of failing whole. One bad card should not
   cost you the other forty.
 - `ExportLibrary`/`ImportLibrary` are built **entirely on existing exported `gm.Service`
@@ -1390,6 +1391,65 @@ both, but tracking it is the Phase 7 positions bullet, not this.
 
 **Done when:** a homebrew colossus can be built with its segments, priced in an encounter,
 started in the runner with its segments grouped under it, and fought down to Defeated.
+
+---
+
+## Phase 6.9 — Import overwrites instead of duplicating
+
+**Goal:** make the library export a way to keep two computers in step. Importing used to add
+everything it carried — a campaign already on the machine came in a second time, its notes
+and sessions with it, and every homebrew card arrived renamed `(2)`. Now a record that
+matches is overwritten with the imported version, and only what's genuinely new is added.
+
+- [x] Every record the library carries is matched before it's written, and a match is
+      updated in place rather than duplicated
+- [x] Unchanged matches are left alone — re-importing the same file writes nothing
+- [x] `ImportReport` separates added from updated; Settings says which
+- [x] Nothing is ever deleted by an import
+
+Notes on matching:
+- **Homebrew cards match on slug first, then on name.** A slug is fixed at creation and
+  survives a rename, so a card renamed on one machine still finds its copy on the other
+  instead of arriving as a new card beside the old name. The name fallback is what merges a
+  card that two machines created independently. A card that matches nothing is created as
+  before, still renamed if its slug happens to be taken.
+- **Everything else matches on what the GM sees**: parties, encounters and campaigns by name;
+  notes and countdowns by name within their campaign; sessions by number, which is already
+  unique per campaign; world pages by title *under the same parent*, since "History" can
+  legitimately appear in three regions. Names compare ignoring case and surrounding spaces.
+- **Each local record can be claimed once** (`claims`, lowest id first). Two imported notes
+  titled "Sabine" overwrite two local ones, not the same one twice; with only one local
+  "Sabine", the second is added. That is also what makes old duplicates — three "Ashes"
+  campaigns from before this phase — settle predictably: the oldest is kept in step, and the
+  others are left for the GM to delete.
+- **A matched record keeps its id**, so every combat, session link and encounter pick
+  pointing at it still does. Delete-and-recreate would have been less code and would have
+  quietly cut all of those.
+
+Notes on what "overwrite" means:
+- **Nothing is deleted.** A note written only on this machine survives an import from a
+  machine that never had it. Deletion would need the export to say what was removed, which
+  a snapshot can't; a record missing from a file is indistinguishable from one the other
+  machine never had.
+- **Unchanged is detected, not assumed.** Cards compare as JSON; everything else compares the
+  fields the input's own `validate()` normalises, so trimming can't make an untouched record
+  look edited. Skipping those writes is what keeps `updated_at` — the campaign picker's sort
+  order, the editors' "Saved 14:02" — meaning "last written by a person", and keeps the
+  report honest about what moved. A card exported before Phase 6.8 has no `segments` key and
+  will count as updated once.
+- **Session links are only ever added.** A link is not something the export can say was
+  removed, for the same reason as deletion.
+- **A blank master note still never overwrites a written one** — the Phase 6.5 rule, kept,
+  because a blank timeline on the other machine almost always means "never opened there".
+- **A world page that moved on the other machine arrives as a new page** under its new
+  parent, since pages match under the same parent; the old one stays where it was.
+
+Not changed: **share codes** still add and rename. A code is someone else's card arriving
+on purpose, and overwriting your own card of the same name with a stranger's would be the
+wrong default.
+
+**Done when:** importing the same export twice changes nothing, and an export from a second
+machine updates the first in place without a single `(2)`.
 
 ---
 

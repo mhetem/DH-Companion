@@ -479,11 +479,23 @@ current database to `data-replaced-<timestamp>.db`, then swaps and reopens.
 
 Readable JSON covering parties, homebrew cards (adversaries, environments, weapons, armor,
 items and consumables), encounters, and campaigns with their sessions, notes, master note,
-world pages and clocks. Import **adds** rather than replacing, and renames anything whose
-name is taken — a second `Gutter Wraith` becomes `Gutter Wraith (2)`, and imported
-encounters are remapped so their picks still resolve. The equipment, loot and world arrays
-are additive, so an export from an older build still imports and an older build ignores
-what it doesn't know. World pages travel as a nested tree, in their sibling order.
+world pages and clocks. Import **adds what's new and overwrites what matches**, and never
+deletes — so exporting on one computer and importing on another keeps the two in step, and
+importing the same file twice changes nothing. What counts as a match:
+
+| Record | Matched by |
+|---|---|
+| Homebrew cards | slug (survives a rename), then name |
+| Parties, encounters, campaigns | name |
+| Sessions | number, within the campaign |
+| Notes, countdowns | title / name, within the campaign |
+| World pages | title, under the same parent page |
+
+Names match ignoring case and surrounding spaces. Session links are only ever added, and a
+blank master note never overwrites a written one. Imported encounters are remapped so their
+picks still resolve. The equipment, loot and world arrays are additive, so an export from an
+older build still imports and an older build ignores what it doesn't know. World pages
+travel as a nested tree, in their sibling order.
 
 ### Share codes
 

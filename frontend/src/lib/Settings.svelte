@@ -74,28 +74,37 @@
       const report = await ImportLibrary()
       if (!report) return ''
       onreload?.()
+      // The report carries the same counts twice: once at the top level for what
+      // was added, and again under `updated` for what overwrote a match.
       // Annotated as tuples: inferred from the literal, each row widens to
       // (string | number)[] and the count can't be compared against a number.
-      /** @type {[number, string, string][]} */
-      const rows = [
-        [report.parties, 'party', 'parties'],
-        [report.customAdversaries, 'adversary', 'adversaries'],
-        [report.customEnvironments, 'environment', 'environments'],
-        [report.customWeapons, 'weapon', 'weapons'],
-        [report.customArmor, 'armor', 'armor'],
-        [report.customItems, 'item', 'items'],
-        [report.customConsumables, 'consumable', 'consumables'],
-        [report.encounters, 'encounter', 'encounters'],
-        [report.campaigns, 'campaign', 'campaigns'],
-        [report.sessions, 'session', 'sessions'],
-        [report.notes, 'note', 'notes'],
-        [report.worldNotes, 'world page', 'world pages'],
-        [report.countdowns, 'countdown', 'countdowns']
+      /** @param {any} c @returns {[number, string, string][]} */
+      const rows = (c) => [
+        [c.parties, 'party', 'parties'],
+        [c.customAdversaries, 'adversary', 'adversaries'],
+        [c.customEnvironments, 'environment', 'environments'],
+        [c.customWeapons, 'weapon', 'weapons'],
+        [c.customArmor, 'armor', 'armor'],
+        [c.customItems, 'item', 'items'],
+        [c.customConsumables, 'consumable', 'consumables'],
+        [c.encounters, 'encounter', 'encounters'],
+        [c.campaigns, 'campaign', 'campaigns'],
+        [c.sessions, 'session', 'sessions'],
+        [c.notes, 'note', 'notes'],
+        [c.worldNotes, 'world page', 'world pages'],
+        [c.countdowns, 'countdown', 'countdowns']
       ]
-      const counts = rows
-        .filter(([n]) => n > 0)
-        .map(([n, one, many]) => `${n} ${n === 1 ? one : many}`)
-      let msg = counts.length ? `Imported ${counts.join(', ')}.` : 'Nothing new to import.'
+      /** @param {any} c */
+      const counts = (c) =>
+        rows(c)
+          .filter(([n]) => n > 0)
+          .map(([n, one, many]) => `${n} ${n === 1 ? one : many}`)
+      const added = counts(report)
+      const updated = counts(report.updated ?? {})
+      const parts = []
+      if (added.length) parts.push(`Added ${added.join(', ')}.`)
+      if (updated.length) parts.push(`Updated ${updated.join(', ')}.`)
+      let msg = parts.length ? parts.join(' ') : 'Everything was already up to date.'
       if (report.renamed?.length) msg += ` Renamed to avoid collisions: ${report.renamed.join(', ')}.`
       if (report.skipped?.length) msg += ` Skipped ${report.skipped.length}: ${report.skipped.join('; ')}`
       return msg
@@ -140,8 +149,9 @@
     <h3>Library</h3>
     <p class="note">
       A readable JSON export of your parties, homebrew cards, encounters and campaigns.
-      Importing <strong>adds</strong> to what you have rather than replacing it, and
-      renames anything whose name is already taken.
+      Importing <strong>adds</strong> what's new and <strong>overwrites</strong> anything you
+      already have under the same name with the imported version — so exporting on one
+      computer and importing on another keeps them in step. It never deletes anything.
     </p>
     <div class="row">
       <button class="btn" onclick={exportLibrary} disabled={!!busy}>
