@@ -9,6 +9,33 @@
  */
 
 /**
+ * @typedef {Object} TableDisplay
+ * @property {number} handoutId
+ * @property {string} kind
+ * @property {string} title
+ * @property {string} body
+ * @property {string} mediaUrl
+ * @property {string} mediaType
+ */
+
+/**
+ * @typedef {Object} TableScreen
+ * @property {string} id
+ * @property {string} label
+ * @property {number} width
+ * @property {number} height
+ * @property {boolean} primary
+ * @property {boolean} here
+ */
+
+/**
+ * @typedef {Object} TableWindow
+ * @property {boolean} open
+ * @property {boolean} fullscreen
+ * @property {boolean} placeable
+ */
+
+/**
  * @typedef {Object} WindowSize
  * @property {string} label
  * @property {number} width

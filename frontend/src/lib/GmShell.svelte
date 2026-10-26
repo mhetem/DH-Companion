@@ -9,6 +9,7 @@
   import Dice from './gm/Dice.svelte'
   import CombatRunner from './gm/CombatRunner.svelte'
   import Campaigns from './gm/Campaigns.svelte'
+  import PlayerWindow from './gm/PlayerWindow.svelte'
   import Search from './gm/Search.svelte'
 
   const sections = [
@@ -16,6 +17,7 @@
     { id: 'parties', label: 'Parties', component: Parties },
     { id: 'encounters', label: 'Encounters', component: Encounters },
     { id: 'combat', label: 'Combat Runner', component: CombatRunner },
+    { id: 'table', label: 'Player window', component: PlayerWindow },
     { id: 'adversaries', label: 'Adversaries', component: Adversaries },
     { id: 'environments', label: 'Environments', component: Environments },
     { id: 'equipment', label: 'Equipment', component: Equipment },

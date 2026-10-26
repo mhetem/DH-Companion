@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
+	"sync"
 
 	"github.com/mhetem/DH-Companion/internal/db"
 	"github.com/mhetem/DH-Companion/internal/gm"
@@ -64,6 +65,11 @@ type App struct {
 	player     *player.Service
 	catalog    *srd.Catalog
 	updaterErr error
+	media      string
+
+	tableMu sync.Mutex
+	table   *application.WebviewWindow
+	showing TableDisplay
 }
 
 func NewApp(gmSvc *gm.Service, playerSvc *player.Service) *App {
@@ -91,6 +97,7 @@ func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) 
 	})
 	a.window.RegisterHook(events.Common.WindowClosing, func(*application.WindowEvent) {
 		a.rememberWindowSize()
+		go a.CloseTableWindow()
 	})
 	a.updaterErr = a.initUpdater()
 	return nil
@@ -111,12 +118,18 @@ func (a *App) open() (string, error) {
 	}
 	a.q, a.conn = q, conn
 
+	media, err := mediaDir()
+	if err != nil {
+		return "Media folder error", err
+	}
+	a.media = media
+
 	catalog, err := srd.Default()
 	if err != nil {
 		return "Reference data error", err
 	}
 	a.catalog = catalog
-	gm.Attach(a.gm, a.ctx, q, conn, catalog)
+	gm.Attach(a.gm, a.ctx, q, conn, catalog, media)
 	player.Attach(a.player, a.ctx, q, conn, catalog)
 
 	if err := a.gm.ReindexCards(); err != nil {
@@ -263,6 +276,14 @@ func dataDir(dir string) (string, error) {
 		return "", err
 	}
 	return filepath.Join(home, "DH-Companion"), nil
+}
+
+func mediaDir() (string, error) {
+	dir, err := dataDir("")
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "media"), nil
 }
 
 func Open(dir string) (*db.Queries, *sql.DB, error) {

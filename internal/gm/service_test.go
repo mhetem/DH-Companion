@@ -40,7 +40,7 @@ func newTestService(t *testing.T) *Service {
 	}
 
 	s := New()
-	Attach(s, context.Background(), db.New(conn), conn, catalog)
+	Attach(s, context.Background(), db.New(conn), conn, catalog, t.TempDir())
 	return s
 }
 

@@ -237,6 +237,18 @@ type Experience struct {
 	UpdatedAt   string
 }
 
+type Handout struct {
+	ID         int64
+	CampaignID int64
+	Kind       string
+	Title      string
+	Body       string
+	Media      string
+	MediaName  string
+	CreatedAt  string
+	UpdatedAt  string
+}
+
 type InventoryItem struct {
 	ID          int64
 	CharacterID int64

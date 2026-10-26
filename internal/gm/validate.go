@@ -16,6 +16,7 @@ var (
 	validWeaponTypes      = []string{"Physical", "Magic"}
 	validWeaponCategories = []string{"Primary", "Secondary"}
 	validLootKinds        = []string{"item", "consumable"}
+	validHandoutKinds     = []string{"map", "scene", "text"}
 )
 
 const defaultNoteKind = "npc"
@@ -102,6 +103,14 @@ func validateWorldKind(kind string) (string, error) {
 
 func (s *Service) WorldKinds() []string {
 	return slices.Clone(validWorldKinds)
+}
+
+func validateHandoutKind(kind string) (string, error) {
+	k := strings.ToLower(strings.TrimSpace(kind))
+	if !slices.Contains(validHandoutKinds, k) {
+		return "", fmt.Errorf("handout kind must be one of %s, got %q", strings.Join(validHandoutKinds, ", "), kind)
+	}
+	return k, nil
 }
 
 func validateName(name string) (string, error) {

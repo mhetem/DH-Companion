@@ -16,12 +16,13 @@ type Service struct {
 	q       *db.Queries
 	conn    *sql.DB
 	catalog *srd.Catalog
+	media   string
 }
 
 func New() *Service { return &Service{} }
 
-func Attach(s *Service, ctx context.Context, q *db.Queries, conn *sql.DB, catalog *srd.Catalog) {
-	s.ctx, s.q, s.conn, s.catalog = ctx, q, conn, catalog
+func Attach(s *Service, ctx context.Context, q *db.Queries, conn *sql.DB, catalog *srd.Catalog, media string) {
+	s.ctx, s.q, s.conn, s.catalog, s.media = ctx, q, conn, catalog, media
 }
 
 func (s *Service) tx(fn func(*db.Queries) error) error {

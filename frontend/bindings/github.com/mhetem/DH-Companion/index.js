@@ -14,5 +14,17 @@ import * as $models from "./models.js";
  */
 
 /**
+ * @typedef {$models.TableDisplay} TableDisplay
+ */
+
+/**
+ * @typedef {$models.TableScreen} TableScreen
+ */
+
+/**
+ * @typedef {$models.TableWindow} TableWindow
+ */
+
+/**
  * @typedef {$models.WindowSize} WindowSize
  */

@@ -295,7 +295,8 @@ jobs:
 
       # macOS and Windows builds are unsigned, so the first launch needs the user to
       # step past Gatekeeper / SmartScreen. Say so on the release rather than leaving
-      # them to guess.
+      # them to guess. What changed is per release: docs/releases/<tag>.md, when there
+      # is one, goes on top of the install notes that every release shares.
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
@@ -323,12 +324,16 @@ jobs:
           - **Windows** — SmartScreen: *More info* → *Run anyway*
           - **Linux** — the `.deb` needs `libgtk-4-1` (4.14 or newer) and
             `libwebkitgtk-6.0-4`, which means Ubuntu 24.04, Debian 13 or newer; the
-            AppImage carries neither, so it needs them present too
+            AppImage carries neither, so it needs them present too. Video in the player
+            window plays through GStreamer: `gstreamer1.0-plugins-good` for WebM and
+            `gstreamer1.0-libav` for MP4, which the `.deb` recommends
 
           ## Upgrading and removing
 
-          Your data lives in `~/DH-Companion/data.db` and is untouched by any upgrade.
-          There's a backup button in **Settings & data** if you want one anyway.
+          Your data lives in `~/DH-Companion` — `data.db`, plus `media/` for the player
+          window's images and videos — and is untouched by any upgrade. There's a backup
+          button in **Settings & data** if you want one anyway; it covers the database, so
+          copy `media/` alongside it.
 
           The Windows installer, the macOS app and the AppImage update themselves:
           **Settings & data → Check for updates → Update**, which downloads the new build,
@@ -347,6 +352,13 @@ jobs:
           This build bundles Daggerheart SRD 1.0 content under the Darrington Press
           Community Gaming License. See `NOTICE.md` for attribution.
           EOF
+          whats_new="docs/releases/${GITHUB_REF_NAME}.md"
+          if [ -f "$whats_new" ]; then
+            { cat "$whats_new"; echo; cat notes.md; } > notes.full.md
+            mv notes.full.md notes.md
+          else
+            echo "::notice::No $whats_new, so the release goes out with the install notes only"
+          fi
           gh release create "${GITHUB_REF_NAME}" dist/* \
             --title "Hilt ${GITHUB_REF_NAME}" \
             --notes-file notes.md

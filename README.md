@@ -86,7 +86,7 @@ database.
 - **Campaigns** — the connective tissue. A campaign owns its Fear, its **master note**, its
   numbered session log (with recaps and the encounters prepped for and actually run that
   night), its typed notes (NPC / location / faction / lore / plot, markdown body), its
-  worldbuilding pages, and its countdown clocks.
+  worldbuilding pages, its countdown clocks, and the maps and scenes for the player window.
 - **The master note** — one free-form markdown page per campaign for the running timeline,
   saved as you type. It's the campaign's landing tab, and it sits in the combat runner's rail
   too, still editable, so the timeline is on hand mid-fight.
@@ -94,6 +94,12 @@ database.
   holding places, and timelines whose events are laid out in order with their in-world
   dates. Each page is markdown, saved as you type; pages can be filtered, reordered, and
   moved anywhere in the tree, and deleting one takes everything inside it along.
+- **Player window** — a second window for the screen the players can see, opened fullscreen
+  on the other monitor. Each campaign keeps its own **maps** (shown whole, letterboxed),
+  **scenes** (filling the screen) and **text** (markdown, over an optional backdrop), as
+  images or looping video, so animated maps work too. Press **Show** and it crossfades in;
+  **Blank** takes the screen to black. Nothing you browse, edit or prepare reaches the
+  players until you press Show.
 - **Full-text search** over notes, master notes, world pages, adversaries and environments
   in one SQLite FTS5 index, with highlighted excerpts. Equipment and loot are deliberately
   left out: six hundred-odd gear rows would bury the handful of hits you actually search for.
@@ -175,7 +181,9 @@ The builds are **unsigned**, so each OS will object once:
 - **Windows** — SmartScreen: *More info* → *Run anyway*
 - **Linux** — both packages need GTK 4.14+ (`libgtk-4-1`) and WebKitGTK 6.0
   (`libwebkitgtk-6.0-4`) present, which means Ubuntu 24.04, Debian 13 or newer; the `.deb`
-  declares them, the AppImage assumes them
+  declares them, the AppImage assumes them. Animated maps in the player window play through
+  GStreamer, so WebM needs `gstreamer1.0-plugins-good` and MP4 needs `gstreamer1.0-libav` —
+  the `.deb` recommends both
 
 Then pick a side of the table. The app creates its database at `~/DH-Companion/data.db`,
 runs its migrations, and you're in.
@@ -256,6 +264,9 @@ header switches at any time without touching your data.
    default so a haul is reproducible from the SRD alone. If the players rolled their own
    d12s, type the total into **Rolled at the table?** instead and it resolves that row;
    pick the kind and the book first, since the same total names a different entry in each.
+8. **Put it on the table** (Player window). Add the campaign's maps, scenes and text — files
+   are copied into the media folder, so the originals can move — then open the player window
+   on the table's screen and press **Show** on whatever the players should see.
 
 ### As a player
 
@@ -329,7 +340,7 @@ Wails registers Go structs as services and generates a JavaScript module for eac
 Each module is its own service rather than piling every method onto one object:
 
 ```
-main.App         window size, UI scale, backup/restore, library, updates
+main.App         window size, UI scale, backup/restore, library, updates, the player window
 gm.Service       everything GM — cards, parties, encounters, combat, campaigns
 player.Service   everything Player — characters, sheet, loadout, levelling, rests
 dice.Roller      the pure roll functions
@@ -372,6 +383,7 @@ app.go                  App service: startup, the main window, window size, UI s
                         DB open + migrations
 portable.go             backup/restore, library export/import, update check (file dialogs)
 selfupdate.go           in-app update: the signed manifest, where it can install, restart
+table.go                the player window: opening it, what it shows, serving /media/
 
 internal/
   rules/                encounter budget math, loot rarity bands, the encounter view model
@@ -386,6 +398,7 @@ internal/
     search.go             FTS5 query (hand-written; see Key decisions)
     library.go            whole-library JSON export/import
     share.go              homebrew share codes
+    handouts.go           the player window's maps, scenes and text, and their media files
     validate.go           tier/type/kind lists, name and slug rules
   player/               the Player service — one file per area:
     characters.go         CRUD, the sheet view model, vitals and gold
@@ -399,7 +412,7 @@ internal/
   update/               GitHub release feed check
 
 sql/
-  schema/               goose migrations (26, embedded)
+  schema/               goose migrations (30, embedded)
   queries/              sqlc sources
 
 data/                   SRD json + //go:embed
@@ -419,6 +432,7 @@ frontend/src/
     keys.js               keyboard mechanism (see Key decisions)
     gm/                   every GM pane; api.js is the single import surface
     player/               every Player pane; same api.js convention
+    table/                the player window, mounted instead of App at /?table
 ```
 
 Several components take a `compact` prop and are reused rather than duplicated — the dice
@@ -493,11 +507,18 @@ closing it, which a plain file copy of a WAL-mode database is not. Restoring val
 incoming file first (it must carry both `settings` and `goose_db_version`), snapshots your
 current database to `data-replaced-<timestamp>.db`, then swaps and reopens.
 
+The player window's images and videos are **not** in the backup. They're copied into
+`media/` beside the database when you add them, named by their SHA-256 so the same file
+added twice is stored once, and removed when the last map or scene using them goes. Copy
+`media/` along with a backup to move everything to another machine; a map whose file didn't
+come along says *File missing* until you choose it again.
+
 ### Library export/import
 
 Readable JSON covering parties, homebrew cards (adversaries, environments, weapons, armor,
 items and consumables), encounters, and campaigns with their sessions, notes, master note,
-world pages and clocks. Import **adds what's new and overwrites what matches**, and never
+world pages and clocks — not the player window's maps, scenes and text, whose files don't
+belong in JSON. Import **adds what's new and overwrites what matches**, and never
 deletes — so exporting on one computer and importing on another keeps the two in step, and
 importing the same file twice changes nothing. What counts as a match:
 
@@ -574,6 +595,8 @@ Two workflows:
   `build/updater.pub` before going further), publishes `SHA256SUMS.txt`, and attaches
   everything to a GitHub Release. The tag is stamped into the binary via
   `-ldflags -X main.version=...`; untagged builds report `dev` and don't self-update.
+  The release notes are the install and upgrade notes every release shares, with
+  `docs/releases/<tag>.md` on top when the tag has one — write it before tagging.
 
 Release binaries are **unsigned** — macOS Gatekeeper and Windows SmartScreen will both warn
 on first run.

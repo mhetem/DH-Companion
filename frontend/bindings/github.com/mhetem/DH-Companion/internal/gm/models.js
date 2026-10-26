@@ -243,6 +243,32 @@ import * as cards$0 from "../cards/models.js";
  */
 
 /**
+ * @typedef {Object} Handout
+ * @property {number} id
+ * @property {number} campaignId
+ * @property {string} kind
+ * @property {string} title
+ * @property {string} body
+ * @property {string} mediaUrl
+ * @property {string} mediaType
+ * @property {string} mediaName
+ * @property {boolean} mediaMissing
+ * @property {string} createdAt
+ * @property {string} updatedAt
+ */
+
+/**
+ * @typedef {Object} HandoutInput
+ * @property {number | null} id
+ * @property {number} campaignId
+ * @property {string} kind
+ * @property {string} title
+ * @property {string} body
+ * @property {string} source
+ * @property {boolean} clearMedia
+ */
+
+/**
  * @typedef {Object} ImportCounts
  * @property {number} parties
  * @property {number} customAdversaries

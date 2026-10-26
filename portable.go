@@ -129,7 +129,7 @@ func (a *App) reopen() error {
 		}
 		a.catalog = catalog
 	}
-	gm.Attach(a.gm, a.ctx, q, conn, catalog)
+	gm.Attach(a.gm, a.ctx, q, conn, catalog, a.media)
 	player.Attach(a.player, a.ctx, q, conn, catalog)
 	if err := a.gm.ReindexCards(); err != nil {
 		return fmt.Errorf("rebuilding the search index: %w", err)

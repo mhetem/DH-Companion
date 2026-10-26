@@ -144,9 +144,14 @@ func (s *Service) SaveMasterNote(campaignID int64, body string) (MasterNote, err
 }
 
 func (s *Service) DeleteCampaign(id int64) error {
+	media, err := s.q.ListHandoutMediaForCampaign(s.ctx, id)
+	if err != nil {
+		return fmt.Errorf("listing the campaign's handouts: %w", err)
+	}
 	if err := s.q.DeleteCampaign(s.ctx, id); err != nil {
 		return fmt.Errorf("deleting campaign: %w", err)
 	}
+	s.releaseMedia(media...)
 	return nil
 }
 

@@ -156,7 +156,8 @@
     <p class="note">
       A backup is a consistent snapshot of the whole database — everything, exactly as it
       stands. Restoring replaces what you have now, so the current database is saved
-      alongside it first.
+      alongside it first. The images and videos behind the player window aren't in it:
+      they're in the <code>media</code> folder next to the database, so copy that along too.
     </p>
     <div class="row">
       <button class="btn" onclick={backup} disabled={!!busy}>
@@ -175,6 +176,7 @@
       Importing <strong>adds</strong> what's new and <strong>overwrites</strong> anything you
       already have under the same name with the imported version — so exporting on one
       computer and importing on another keeps them in step. It never deletes anything.
+      The player window's maps, scenes and text stay behind — their files don't fit in JSON.
     </p>
     <div class="row">
       <button class="btn" onclick={exportLibrary} disabled={!!busy}>

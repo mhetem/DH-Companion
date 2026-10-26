@@ -260,6 +260,14 @@ export function DeleteEncounter(id) {
  * @param {number} id
  * @returns {$CancellablePromise<void>}
  */
+export function DeleteHandout(id) {
+    return $Call.ByID(3737444298, id);
+}
+
+/**
+ * @param {number} id
+ * @returns {$CancellablePromise<void>}
+ */
 export function DeleteNote(id) {
     return $Call.ByID(2591795967, id);
 }
@@ -420,6 +428,14 @@ export function GetEncounter(id) {
  */
 export function GetEnvironment(slug) {
     return $Call.ByID(1258653713, slug);
+}
+
+/**
+ * @param {number} id
+ * @returns {$CancellablePromise<$models.Handout>}
+ */
+export function GetHandout(id) {
+    return $Call.ByID(2992838187, id);
 }
 
 /**
@@ -599,6 +615,14 @@ export function ListEncounters() {
 
 /**
  * @param {number} campaignID
+ * @returns {$CancellablePromise<$models.Handout[] | null>}
+ */
+export function ListHandouts(campaignID) {
+    return $Call.ByID(3539586460, campaignID);
+}
+
+/**
+ * @param {number} campaignID
  * @returns {$CancellablePromise<$models.Note[] | null>}
  */
 export function ListNotes(campaignID) {
@@ -767,6 +791,14 @@ export function SaveCountdown($in) {
  */
 export function SaveEncounter($in) {
     return $Call.ByID(3603809958, $in);
+}
+
+/**
+ * @param {$models.HandoutInput} $in
+ * @returns {$CancellablePromise<$models.Handout>}
+ */
+export function SaveHandout($in) {
+    return $Call.ByID(3223665504, $in);
 }
 
 /**

@@ -25,6 +25,27 @@ export function CheckForUpdate() {
 }
 
 /**
+ * @returns {$CancellablePromise<string>}
+ */
+export function ChooseHandoutMedia() {
+    return $Call.ByID(2257435029);
+}
+
+/**
+ * @returns {$CancellablePromise<void>}
+ */
+export function ClearTable() {
+    return $Call.ByID(750685662);
+}
+
+/**
+ * @returns {$CancellablePromise<void>}
+ */
+export function CloseTableWindow() {
+    return $Call.ByID(1996966341);
+}
+
+/**
  * @returns {$CancellablePromise<$models.WindowSize>}
  */
 export function CurrentWindowSize() {
@@ -92,6 +113,14 @@ export function OpenReleasesPage(url) {
 }
 
 /**
+ * @param {string} screenID
+ * @returns {$CancellablePromise<$models.TableWindow>}
+ */
+export function OpenTableWindow(screenID) {
+    return $Call.ByID(3109184019, screenID);
+}
+
+/**
  * @returns {$CancellablePromise<$models.SelfUpdate>}
  */
 export function SelfUpdateSupport() {
@@ -113,6 +142,42 @@ export function SetUIScale(scale) {
  */
 export function SetWindowSize(width, height) {
     return $Call.ByID(1748496514, width, height);
+}
+
+/**
+ * @param {number} id
+ * @returns {$CancellablePromise<$models.TableDisplay>}
+ */
+export function ShowHandout(id) {
+    return $Call.ByID(151360831, id);
+}
+
+/**
+ * @returns {$CancellablePromise<$models.TableDisplay>}
+ */
+export function TableNow() {
+    return $Call.ByID(3521914817);
+}
+
+/**
+ * @returns {$CancellablePromise<$models.TableScreen[] | null>}
+ */
+export function TableScreens() {
+    return $Call.ByID(3236211144);
+}
+
+/**
+ * @returns {$CancellablePromise<$models.TableWindow>}
+ */
+export function TableStatus() {
+    return $Call.ByID(1620761137);
+}
+
+/**
+ * @returns {$CancellablePromise<void>}
+ */
+export function ToggleTableFullscreen() {
+    return $Call.ByID(2149620510);
 }
 
 /**

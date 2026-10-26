@@ -1467,8 +1467,8 @@ Nothing new ships in this phase: the app should behave exactly as the v2 release
 - [x] Bindings generated into `frontend/bindings` in interfaces mode; `frontend/wailsjs`
       deleted
 - [x] `wails3 dev` driven by `build/config.yml`, with no Taskfile
-- [ ] CI and release workflows build with v3 on all three platforms
-- [ ] Packaging — the `.deb` and AppImage on GTK4 + WebKitGTK 6.0, the NSIS installer and
+- [x] CI and release workflows build with v3 on all three platforms
+- [x] Packaging — the `.deb` and AppImage on GTK4 + WebKitGTK 6.0, the NSIS installer and
       the macOS bundle built without `wails build`
 - [x] README build-from-source and architecture sections updated
 
@@ -1660,6 +1660,116 @@ key is refused.
 
 ---
 
+## Phase 6.12 — The player window
+
+**Goal:** the first part of the Phase 7 table window — a second window for the screen the
+players can see, showing the maps, scenes and text the GM picks, as images or looping video.
+Battle maps (a grid, fog of war, tokens) are still a separate decision.
+
+- [x] `handouts` (030): per campaign, kind `map | scene | text`, title, body, and the media
+      file with its original name
+- [x] `ListHandouts` / `GetHandout` / `SaveHandout` / `DeleteHandout` on `gm.Service`; files
+      copied into `<data dir>/media` on save and removed with the last handout using them,
+      campaign deletes included
+- [x] `App` opens, fullscreens and closes the player window, shows a handout or blanks the
+      screen, and serves `/media/` through an asset-server middleware
+- [x] `table:show` and `table:window` registered as typed v3 events
+- [x] `Table.svelte` at `/?table`: crossfading layers, the cursor hidden when idle
+- [x] The GM's *Player window* section: window controls, what's on the table, and the
+      campaign's maps, scenes and text with Show / Edit / Delete
+- [x] Settings and README on where the files live; GStreamer in the `.deb`'s Recommends
+
+Notes on the window:
+- **Go owns the window and what's on it.** `App.table` and `App.showing` sit behind one
+  mutex. The GM section reads both on mount and follows `table:window` and `table:show`, so
+  leaving the section, switching campaigns or reloading the GM window changes nothing the
+  players see. The player window calls `TableNow` once — after subscribing, so a switch made
+  while that answer is in flight can't be overwritten by it — then only follows `table:show`.
+  It never calls anything that writes.
+- **It's the same bundle at `/?table`.** `main.js` mounts `Table` instead of `App` and turns
+  the page black before mounting. A second Vite entry would have been a second HTML page and
+  build input for one component.
+- **Placement.** It opens centred on the screen picked in the section (remembered in
+  localStorage), defaulting to the first one the GM window isn't on, and fullscreens on
+  `WindowRuntimeReady` when that's a different screen; on the GM's own screen it stays a
+  window. **Wayland lets apps place nothing** — v3's `move` is X11-only — so there the picker
+  is hidden and the GM drags it across: auto-fullscreen would have filled the GM's own screen.
+  `TableWindow.placeable` carries that to the UI. Double-click and F11 toggle fullscreen in
+  the window itself, and Esc leaves it.
+- **The screen is picked only while it's closed.** Moving a live window is unfullscreen,
+  move, fullscreen, and the first step is asynchronous on macOS and X11, so the move would
+  race it. Close and reopen does the same job without the race.
+- **Closing the GM window closes it too.** v3 quits on the last window, not the first, so
+  otherwise the app would outlive its only controls. The hook closes it from a goroutine,
+  since `Close` waits on the main thread and the hook may be running there.
+- **Show opens the window when it's closed.** Pressing Show means "put it in front of them",
+  and a closed window would make that a silent no-op.
+- **Edits reach the table only on Save**, and only for the handout that's already up — the
+  body is never typed live onto the players' screen. **Deleting what's up blanks it first**,
+  since its file may be about to go.
+
+Notes on rendering:
+- **The kind is the layout, not a label.** A map is `object-fit: contain` — cropping one could
+  cut off the edge the party is about to walk off — a scene is `cover`, and text is markdown
+  over a dimmed, blurred backdrop. That's why `kind` has a SQL `CHECK`, like `notes.kind` and
+  unlike the world kinds.
+- **The title is the GM's label, and the table never renders it.** A text handout writes its
+  heading into the body. Showing titles would have put "Untitled" on the players' screen
+  whenever the GM left one blank. `TableDisplay` still carries the title for the GM's *On the
+  table* panel; a map's or a scene's body — the GM's notes — never crosses.
+- **Layers.** Each display mounts at opacity 0 and fades in once its image loads or its video
+  has a first frame; older layers are dropped after the fade. A layer still loading when the
+  next arrives is discarded unseen. A file that fails fades to black rather than a
+  broken-image icon. The load check also reads `complete` / `readyState`, because a cached
+  image can finish before the listener exists.
+- **Video is `autoplay muted loop playsinline`.** Muted is what every engine's autoplay policy
+  allows without a gesture, and an animated map has nothing to say. Ambient sound would be its
+  own feature.
+- **PNG, JPEG, WebP, GIF, MP4/M4V and WebM** — what WebView2, macOS 12's WKWebView and
+  WebKitGTK all decode. AVIF and MOV are out because at least one of the three can't show
+  them; SVG because a map is a picture and an SVG is a document. WebKitGTK plays video through
+  GStreamer: WebM needs `gstreamer1.0-plugins-good`, H.264 MP4 needs `gstreamer1.0-libav`.
+  The `.deb` recommends rather than depends on them, since everything else works without.
+
+Notes on media:
+- **Copied, not linked**, into `<data dir>/media` when the handout is saved, not when the file
+  is chosen, so cancelling the form leaves nothing behind. Files are named by SHA-256 plus the
+  lower-cased extension: the same file added twice is stored once, and a name never comes to
+  mean different bytes, which is what lets `/media/` answer `Cache-Control: immutable`.
+- **Not in the database.** Animated maps run to hundreds of megabytes and `VACUUM INTO` copies
+  everything every time, so a backup per session would be gigabytes. The `.db` backup and the
+  library export don't carry them, and Settings and the README say so. A handout whose file is
+  absent — a database restored on another machine — reports `mediaMissing`, and Show refuses
+  it rather than putting black on the table.
+- **A file goes only with its last reference**, counted by `CountHandoutsUsingMedia`: on
+  delete, when Save replaces or drops it, and on campaign delete, which lists its handouts'
+  files first because the cascade takes the rows that say which files they were. **There is
+  no sweep of unreferenced files.** A restored backup, or `data-replaced-*.db`, points at files
+  the live database doesn't, and a sweep would delete exactly what undoing the restore needs.
+  The cost is that a file can outlive its handout — Windows refusing to delete one the player
+  window is still streaming, say.
+- **`/media/` is an asset-server middleware on `App`.** It only answers names matching
+  `^[0-9a-f]{64}\.[a-z0-9]+$` with a known extension, and the same check guards every
+  `os.Remove`: a library import or a restored database is someone else's input, and a crafted
+  `media` value must never become a path. `http.ServeContent` answers the `Range` requests
+  video needs, and the content type comes from our own table rather than the OS's MIME
+  database, which on a bare Linux install doesn't know `.webm`.
+- **`gm.Attach` takes the media folder**, and `HandoutInput.Source` is a path on disk that the
+  frontend got from `ChooseHandoutMedia` — on `App`, because the dialog needs a window to sit
+  on.
+
+Notes on scope:
+- **Per campaign**, like world pages: a campaign's maps belong to its world. The section shares
+  `gm.campaigns.last` with Campaigns, so picking a campaign in either opens both on it.
+- **Not searchable yet.** Text handouts are prose and could join the fts5 index as a
+  campaign-scoped entity, but Search would need somewhere to send the hit.
+
+**Done when:** the GM picks a scene and it appears on the second screen, an animated map loops
+there, switching never shows the players anything from the GM's side, and closing the GM
+window takes the player window with it. ✅
+
+---
+
 ## Phase 7 — Roadmap: the first update after release
 
 **Goal:** what goes in the release *after* 1.0. Phases 0–6 are done and shipped, and the app
@@ -1704,14 +1814,10 @@ Ordered by what a user hits first, not by how interesting it is to build.
 - [ ] **Pop the notes out into their own window**, so the timeline can sit on a second
       monitor beside the runner. Wails v2 was single-window (see Phase 6.5); since Phase 6.10
       this is a second `WebviewWindow` on the same services, with no loopback server.
-- [ ] **The table window** — a second, borderless window the GM drags to the table's screen
-      and fullscreens. Scenes and world maps first (one image at a time, picked on the GM
-      side), then animated maps (video, GIF, animated WebP), then battle maps. The GM window
-      drives it over v3 events; the table window only renders and never writes. Battle maps
-      overturn "not a battle map" in the runner bullet above, so they're a separate decision.
-      Needs Phase 6.10.
-      **Done when:** the GM picks a scene and it appears on the second screen, and switching
-      scenes never shows the players anything from the GM's side.
+- [ ] **Battle maps on the player window.** Phase 6.12 built the window with maps, scenes
+      and text, still and animated. What's left is the battle-map layer: a grid, fog of war
+      revealed from the GM side, perhaps tokens. It overturns "not a battle map" in the runner
+      bullet above, so it's a separate decision.
 
 ### Distribution
 

@@ -29,6 +29,7 @@ export {
   DeleteCustomWeapon,
   DeleteCustomEnvironment,
   DeleteEncounter,
+  DeleteHandout,
   DeleteNote,
   DeleteParty,
   DeleteSession,
@@ -48,6 +49,7 @@ export {
   GetCustomWeapon,
   GetCustomEnvironment,
   GetEncounter,
+  GetHandout,
   GetItem,
   GetEnvironment,
   GetMasterNote,
@@ -66,6 +68,7 @@ export {
   ListCustomAdversaries,
   ListCustomEnvironments,
   ListEncounters,
+  ListHandouts,
   ListNotes,
   ListNotesByKind,
   ListParties,
@@ -84,6 +87,7 @@ export {
   SaveCombatant,
   SaveCountdown,
   SaveEncounter,
+  SaveHandout,
   SaveMasterNote,
   SaveNote,
   SaveSession,
@@ -116,6 +120,32 @@ export {
 // The roller is bound as its own service too — dice.Roller. Sizes() serves the
 // rollable die list, so the allowed set lives only in internal/dice.
 export { Damage, GM, Sizes } from '../../../bindings/github.com/mhetem/DH-Companion/internal/dice/roller.js'
+
+// The player window is the App's, not gm.Service's: it owns the windows, and the
+// file picker needs one to sit on. The handouts themselves are gm data, above.
+export {
+  ChooseHandoutMedia,
+  ClearTable,
+  CloseTableWindow,
+  OpenTableWindow,
+  ShowHandout,
+  TableNow,
+  TableScreens,
+  TableStatus,
+  ToggleTableFullscreen
+} from '../../../bindings/github.com/mhetem/DH-Companion/app.js'
+
+// Mirrors validHandoutKinds in internal/gm/validate.go and the handouts.kind CHECK.
+// The kind is how the player window lays the handout out, not just a label.
+export const HANDOUT_KINDS = [
+  { value: 'map', label: 'Map', plural: 'Maps', hint: 'Shown whole, letterboxed if it has to be' },
+  { value: 'scene', label: 'Scene', plural: 'Scenes', hint: 'Fills the screen, trimming the edges' },
+  { value: 'text', label: 'Text', plural: 'Text', hint: 'Markdown on a dark page, over an optional backdrop' }
+]
+
+export function handoutKindLabel(kind) {
+  return HANDOUT_KINDS.find((k) => k.value === kind)?.label ?? kind
+}
 
 // Mirrors internal/gm/validate.go — keep the two in step.
 export const TIERS = ['1', '2', '3', '4']

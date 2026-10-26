@@ -52,6 +52,7 @@ Section: games
 Priority: optional
 Architecture: amd64
 Depends: libgtk-4-1 (>= 4.14), libwebkitgtk-6.0-4
+Recommends: gstreamer1.0-plugins-good, gstreamer1.0-libav
 Maintainer: mhetem <284336022+mhetem@users.noreply.github.com>
 Homepage: https://github.com/mhetem/DH-Companion
 Description: Daggerheart Compatible desktop companion
