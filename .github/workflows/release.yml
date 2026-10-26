@@ -254,8 +254,10 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache: true
 
+      # This job only signs and verifies the manifest, which is pure Go. With cgo on,
+      # the CLI also links WebKitGTK for `wails3 doctor`, and this runner has none.
       - name: Install Wails
-        run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
+        run: CGO_ENABLED=0 go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
 
       - uses: actions/download-artifact@v8
         with:
