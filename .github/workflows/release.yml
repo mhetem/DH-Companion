@@ -8,9 +8,9 @@ permissions:
   contents: write
 
 env:
-  GO_VERSION: '1.25'
+  GO_VERSION: '1.26'
   NODE_VERSION: '22'
-  WAILS_VERSION: v2.13.0
+  WAILS_VERSION: v3.0.0
 
 jobs:
   build:
@@ -22,13 +22,10 @@ jobs:
         include:
           - os: ubuntu-latest
             label: linux-amd64
-            platform: linux/amd64
           - os: windows-latest
             label: windows-amd64
-            platform: windows/amd64
           - os: macos-latest
             label: macos-universal
-            platform: darwin/universal
     steps:
       - uses: actions/checkout@v7
 
@@ -47,14 +44,12 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+          sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
 
       - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
 
-      # windows-latest has no NSIS, and `wails build -nsis` treats that as a warning
-      # and still exits 0 — so without this the job builds happily and simply produces
-      # no installer.
+      # windows-latest has no NSIS.
       - name: Install NSIS
         if: runner.os == 'Windows'
         shell: bash
@@ -62,8 +57,10 @@ jobs:
           choco install nsis --no-progress -y
           echo "C:\Program Files (x86)\NSIS" >> "$GITHUB_PATH"
 
-      # The NSIS installer and the macOS bundle take their version from wails.json,
-      # not from ldflags, so the tag has to be written in before the build.
+      # The executable's version resource, the NSIS installer and the macOS bundle take
+      # their version from build/windows/info.json, a makensis define and
+      # build/darwin/Info.plist — not from ldflags — so the tag is written into the two
+      # files here and exported for makensis.
       #
       # It must be a bare numeric X.Y.Z: project.nsi appends ".0" to build the
       # four-part VIProductVersion, and NSIS rejects anything else — so a prerelease
@@ -73,39 +70,95 @@ jobs:
         shell: bash
         run: |
           python3 - <<'PY'
-          import json, os, pathlib, re, sys
+          import json, os, pathlib, plistlib, re, sys
           tag = os.environ['GITHUB_REF_NAME']
           m = re.match(r'v?(\d+)(?:\.(\d+))?(?:\.(\d+))?', tag)
           if not m:
               sys.exit(f'tag {tag!r} has no numeric version to stamp')
           version = '.'.join(m.group(i) or '0' for i in (1, 2, 3))
-          p = pathlib.Path('wails.json')
-          d = json.loads(p.read_text())
-          d.setdefault('info', {})['productVersion'] = version
-          p.write_text(json.dumps(d, indent=2) + '\n')
-          print(f'{tag} -> productVersion {version}')
+
+          info = pathlib.Path('build/windows/info.json')
+          d = json.loads(info.read_text(encoding='utf-8'))
+          d['fixed']['file_version'] = version
+          for strings in d['info'].values():
+              strings['ProductVersion'] = version
+          info.write_text(json.dumps(d, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          plist = pathlib.Path('build/darwin/Info.plist')
+          p = plistlib.loads(plist.read_bytes())
+          p['CFBundleVersion'] = p['CFBundleShortVersionString'] = version
+          plist.write_bytes(plistlib.dumps(p))
+
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write(f'PRODUCT_VERSION={version}\n')
+          print(f'{tag} -> {version}')
           PY
 
-      # -nsis additionally produces the Windows installer. main.version is what the
-      # in-app update check compares against; without it a build reports "dev".
+      # main.version is what the in-app update check compares against; without it a
+      # build reports "dev". The production tag drops the devtools and the dev-server
+      # hookup.
       - name: Build
         shell: bash
         run: |
-          LDFLAGS="-X main.version=${GITHUB_REF_NAME}"
+          wails3 generate bindings -i -clean=true
+          npm --prefix frontend ci
+          npm --prefix frontend run build
+
+          FLAGS=(-tags production -trimpath -buildvcs=false)
+          LDFLAGS="-w -s -X main.version=${GITHUB_REF_NAME}"
           case "$RUNNER_OS" in
             Linux)
-              wails build -clean -platform ${{ matrix.platform }} -tags webkit2_41 -ldflags "$LDFLAGS"
+              go build "${FLAGS[@]}" -ldflags "$LDFLAGS" -o build/bin/DH-Companion
               ;;
             Windows)
+              # The .syso carries the icon, manifest and version resource; go build
+              # links any .syso in the main package's directory.
+              wails3 generate syso -arch amd64 -icon build/windows/icon.ico \
+                -manifest build/windows/wails.exe.manifest -info build/windows/info.json \
+                -out wails_windows_amd64.syso
+              CGO_ENABLED=0 go build "${FLAGS[@]}" -ldflags "$LDFLAGS -H windowsgui" -o build/bin/DH-Companion.exe
+              rm wails_windows_amd64.syso
+
+              # project.nsi embeds the WebView2 bootstrapper from installer/tmp.
+              # -INPUTCHARSET because both scripts are UTF-8 without a BOM, which
+              # makensis would otherwise read in the runner's ANSI codepage.
               command -v makensis >/dev/null || { echo "makensis is not on PATH"; exit 1; }
-              wails build -clean -platform ${{ matrix.platform }} -nsis -ldflags "$LDFLAGS"
-              # A missing makensis is only a warning to Wails, so check the artifact
-              # rather than trusting the exit code.
+              wails3 generate webview2bootstrapper -dir build/windows/installer/tmp
+              (cd build/windows/installer && makensis -INPUTCHARSET UTF8 \
+                -DINFO_PRODUCTVERSION="$PRODUCT_VERSION" \
+                -DARG_WAILS_AMD64_BINARY='..\..\bin\DH-Companion.exe' project.nsi)
               test -s build/bin/DH-Companion-amd64-installer.exe \
                 || { echo "the NSIS installer was not produced"; exit 1; }
               ;;
             macOS)
-              wails build -clean -platform ${{ matrix.platform }} -ldflags "$LDFLAGS"
+              # One binary per architecture, joined with lipo into the bundle. 12.0 is
+              # Go's own floor since 1.25, and Wails v3's template default.
+              export CGO_ENABLED=1 MACOSX_DEPLOYMENT_TARGET=12.0
+              export CGO_CFLAGS=-mmacosx-version-min=12.0 CGO_LDFLAGS=-mmacosx-version-min=12.0
+              for arch in amd64 arm64; do
+                GOARCH=$arch go build "${FLAGS[@]}" -ldflags "$LDFLAGS" -o "build/bin/DH-Companion-$arch"
+              done
+
+              APP=build/bin/DH-Companion.app
+              rm -rf "$APP"
+              mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+              lipo -create -output "$APP/Contents/MacOS/DH-Companion" \
+                build/bin/DH-Companion-amd64 build/bin/DH-Companion-arm64
+              cp build/darwin/Info.plist "$APP/Contents/"
+
+              ICONSET="$RUNNER_TEMP/icons.iconset"
+              mkdir -p "$ICONSET"
+              for size in 16 32 128 256 512; do
+                sips -z $size $size build/appicon.png --out "$ICONSET/icon_${size}x${size}.png" >/dev/null
+                sips -z $((size * 2)) $((size * 2)) build/appicon.png \
+                  --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null
+              done
+              iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/icons.icns"
+
+              # Ad hoc, not a Developer ID: Apple Silicon refuses to run an unsigned
+              # binary at all, and lipo's output needs signing as a whole.
+              codesign --force --deep --sign - "$APP"
+              codesign --verify --deep --strict "$APP"
               ;;
           esac
 
@@ -129,6 +182,9 @@ jobs:
               7z a "dist/Hilt-${{ matrix.label }}.zip" \
                 ./build/bin/DH-Companion.exe ./build/bin/LICENSE \
                 ./build/bin/NOTICE.md ./build/bin/README.md
+              # What the in-app updater downloads: it swaps in an archive's single
+              # top-level entry, so the executable goes in alone.
+              7z a "dist/Hilt-update-${{ matrix.label }}.zip" ./build/bin/DH-Companion.exe
               ;;
             macOS)
               # A drag-to-Applications disk image, which is what a mac user expects.
@@ -157,6 +213,12 @@ jobs:
 
               ditto -c -k --keepParent build/bin/DH-Companion.app \
                 "dist/Hilt-${{ matrix.label }}.zip"
+              # The in-app updater's copy. It refuses an archive with more than one
+              # top-level entry, and ditto stores any extended attributes as ._
+              # AppleDouble files beside the bundle, so those are left out here. The
+              # signature lives inside the bundle and doesn't need them.
+              ditto -c -k --norsrc --noextattr --noacl --keepParent build/bin/DH-Companion.app \
+                "dist/Hilt-update-${{ matrix.label }}.zip"
               ;;
           esac
           ls -la dist/
@@ -168,8 +230,8 @@ jobs:
         run: |
           case "$RUNNER_OS" in
             Linux)   need=("dist"/*.deb "dist"/*.AppImage "dist"/*.tar.gz) ;;
-            Windows) need=("dist"/*setup.exe "dist"/*.zip) ;;
-            macOS)   need=("dist"/*.dmg "dist"/*.zip) ;;
+            Windows) need=("dist"/*setup.exe "dist"/Hilt-windows-amd64.zip "dist"/Hilt-update-windows-amd64.zip) ;;
+            macOS)   need=("dist"/*.dmg "dist"/Hilt-macos-universal.zip "dist"/Hilt-update-macos-universal.zip) ;;
           esac
           for f in "${need[@]}"; do
             [ -s "$f" ] || { echo "missing or empty: $f"; exit 1; }
@@ -187,10 +249,41 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
+
       - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
+
+      # The in-app updater reads manifest.json from the latest release and refuses any
+      # artifact whose signature doesn't verify against build/updater.pub, which is
+      # compiled into the app. One artifact per platform, each a single top-level entry:
+      # the AppImage itself, and the two Hilt-update-*.zip files holding only the
+      # Windows executable or the macOS bundle. The .deb and the tarball aren't listed —
+      # the app doesn't offer to update those in place. Verifying the manifest against
+      # the committed public key before publishing catches a secret that has drifted
+      # from it, which would otherwise ship a release no installed copy can accept.
+      - name: Update manifest
+        env:
+          UPDATER_KEY: ${{ secrets.UPDATER_KEY }}
+        run: |
+          test -n "$UPDATER_KEY" || { echo "the UPDATER_KEY secret is not set"; exit 1; }
+          KEY="$RUNNER_TEMP/updater.key"
+          (umask 077 && printf '%s\n' "$UPDATER_KEY" > "$KEY")
+          wails3 updater manifest -version "${GITHUB_REF_NAME#v}" -key "$KEY" \
+            -url-prefix "https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/" \
+            -output dist/manifest.json \
+            dist/*.AppImage dist/Hilt-update-windows-amd64.zip dist/Hilt-update-macos-universal.zip
+          rm -f "$KEY"
+          wails3 updater verify -manifest dist/manifest.json -publickey build/updater.pub -dir dist
+          cat dist/manifest.json
 
       - name: Checksums
         run: |
@@ -210,12 +303,14 @@ jobs:
 
           | Platform | Download | Notes |
           |---|---|---|
-          | Windows | `…-windows-amd64-setup.exe` | Installer. Choose Start-menu and/or desktop shortcuts, or neither. |
-          | macOS | `…-macos-universal.dmg` | Open and drag Hilt to Applications. Intel and Apple Silicon. |
+          | Windows | `…-windows-amd64-setup.exe` | Installer, for your user only — no admin prompt. Choose Start-menu and/or desktop shortcuts, or neither. |
+          | macOS | `…-macos-universal.dmg` | Open and drag Hilt to Applications. Intel and Apple Silicon, macOS 12 or later. |
           | Linux (Debian/Ubuntu) | `…-amd64.deb` | `sudo apt install ./Hilt-*.deb` |
           | Linux (any distro) | `…-x86_64.AppImage` | `chmod +x` it and run — no install needed. |
 
           The `.zip` / `.tar.gz` archives are the plain binary, if you'd rather not install.
+          `Hilt-update-*.zip` and `manifest.json` are what the in-app updater downloads —
+          you don't need them.
 
           ## Before you run it
 
@@ -224,13 +319,23 @@ jobs:
           - **macOS** — right-click the app and choose *Open*, or
             `xattr -dr com.apple.quarantine /Applications/Hilt.app`
           - **Windows** — SmartScreen: *More info* → *Run anyway*
-          - **Linux** — the `.deb` needs `libgtk-3-0` and `libwebkit2gtk-4.1-0`; the
+          - **Linux** — the `.deb` needs `libgtk-4-1` (4.14 or newer) and
+            `libwebkitgtk-6.0-4`, which means Ubuntu 24.04, Debian 13 or newer; the
             AppImage carries neither, so it needs them present too
 
           ## Upgrading and removing
 
-          Your data lives in `~/DH-Companion/data.db` and is untouched — install over the
-          top. There's a backup button in **Settings & data** if you want one anyway.
+          Your data lives in `~/DH-Companion/data.db` and is untouched by any upgrade.
+          There's a backup button in **Settings & data** if you want one anyway.
+
+          The Windows installer, the macOS app and the AppImage update themselves:
+          **Settings & data → Check for updates → Update**, which downloads the new build,
+          checks its signature and restarts into it. The `.deb` updates by installing the
+          new `.deb` over the old one.
+
+          Earlier releases installed on Windows for all users, in Program Files, and that
+          copy can't update itself. The installer says so if it finds one — remove it from
+          *Settings › Apps* afterwards.
 
           Uninstalling keeps your data by default. The Windows uninstaller offers a
           *Campaigns, encounters and homebrew* tick-box to delete it as well; it is

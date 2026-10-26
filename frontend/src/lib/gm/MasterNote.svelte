@@ -1,4 +1,5 @@
 <script>
+  import { untrack } from 'svelte'
   import { GetMasterNote, SaveMasterNote, errorMessage } from './api.js'
   import { renderMarkdown } from './markdown.js'
 
@@ -48,7 +49,7 @@
             : 'Not saved yet'
   )
 
-  GetMasterNote(campaignId)
+  GetMasterNote(untrack(() => campaignId))
     .then((note) => {
       body = note.body
       savedBody = note.body

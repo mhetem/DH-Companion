@@ -5,7 +5,7 @@
     SetWindowSize,
     UIScales,
     WindowPresets
-  } from '../../wailsjs/go/main/App.js'
+  } from '../../bindings/github.com/mhetem/DH-Companion/app.js'
   import { applyScale } from './display.js'
   import ShortcutHelp from './ShortcutHelp.svelte'
   import Settings from './Settings.svelte'

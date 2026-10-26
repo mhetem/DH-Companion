@@ -32,6 +32,11 @@ Unicode true
 ####
 ## Include the wails tools
 ####
+# Per-user, so the app can replace itself when it updates: a Program Files install
+# is read-only to it without an elevation prompt. Both have to be defined before
+# wails_tools.nsh, which only sets them when they're missing.
+!define WAILS_INSTALL_SCOPE "user"
+!define REQUEST_EXECUTION_LEVEL "user"
 !include "wails_tools.nsh"
 
 # The version information for this two must consist of 4 parts
@@ -92,6 +97,17 @@ ShowInstDetails show # This will always show the installation details.
 
 Function .onInit
    !insertmacro wails.checkArchitecture
+
+   # Earlier releases installed for all users in Program Files. That copy can't
+   # update itself and this installer can't remove it without elevating, so say so
+   # rather than quietly leave two Hilts in the Start menu.
+   SetRegView 64
+   ReadRegStr $0 HKLM "${UNINST_KEY}" "UninstallString"
+   StrCmp $0 "" machineCopyDone
+   IfSilent machineCopyDone
+   MessageBox MB_OKCANCEL|MB_ICONINFORMATION "${INFO_PRODUCTNAME} is already installed for all users in Program Files. This version installs into your own user folder instead, so it can update itself.$\r$\n$\r$\nAfter installing, remove the old copy from Settings > Apps. Your campaigns are kept either way." IDOK machineCopyDone
+   Quit
+   machineCopyDone:
 FunctionEnd
 
 Section "!${INFO_PRODUCTNAME}" SecCore

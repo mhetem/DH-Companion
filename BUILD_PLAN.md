@@ -10,7 +10,7 @@ the sqlc workflow) and drops everything web/multi-user.
 
 | Decision | Choice |
 |---|---|
-| Framework | Wails v2, Go backend + Svelte frontend |
+| Framework | Wails v3, Go backend + Svelte frontend (v2 until Phase 6.10) |
 | Storage | SQLite (local file), `sqlc` for queries, `goose` for migrations |
 | Auth | **None.** Role is a switchable view (GM / Player), not a login. Every launch opens on the picker; switch anytime without losing data |
 | GM ↔ Player data | **Fully separate.** Two schema islands in one DB, no shared records |
@@ -23,8 +23,8 @@ the sqlc workflow) and drops everything web/multi-user.
 ```
 dh-companion/
 ├── main.go                 # Wails entry
-├── app.go                  # App struct + bound methods (the JS<->Go bridge)
-├── wails.json
+├── app.go                  # App service + its methods (the JS<->Go bridge)
+├── build/                  # config.yml (wails3 dev) + per-platform packaging assets
 ├── internal/
 │   ├── rules/              # encounter_math.go (ported verbatim)
 │   ├── dice/               # duality dice (Hope/Fear) roller
@@ -1453,6 +1453,213 @@ machine updates the first in place without a single `(2)`.
 
 ---
 
+## Phase 6.10 — Wails v3
+
+**Goal:** move the shell from Wails v2 to v3 (3.0.0, the first stable release), so the app
+can open a second native window — the groundwork for the table window on the Phase 7 list.
+Nothing new ships in this phase: the app should behave exactly as the v2 release did.
+
+- [x] `go.mod` on `github.com/wailsapp/wails/v3` v3.0.0, which needs Go 1.26
+- [x] `App`, `gm.Service`, `player.Service` and `dice.Roller` registered as v3 services;
+      `startup`/`shutdown` become `ServiceStartup`/`ServiceShutdown`
+- [x] Every v2 `runtime` call replaced — window size and centring through the window, file
+      and message dialogs through `Dialog`, the releases page through `Browser`
+- [x] Bindings generated into `frontend/bindings` in interfaces mode; `frontend/wailsjs`
+      deleted
+- [x] `wails3 dev` driven by `build/config.yml`, with no Taskfile
+- [ ] CI and release workflows build with v3 on all three platforms
+- [ ] Packaging — the `.deb` and AppImage on GTK4 + WebKitGTK 6.0, the NSIS installer and
+      the macOS bundle built without `wails build`
+- [x] README build-from-source and architecture sections updated
+
+Notes on the shell:
+- **The main window is created in `App.ServiceStartup`, not in `main`.** v3 starts every
+  service before any window exists, then creates the windows asked for along the way. Opening
+  the database first and only then asking for the window means a failed start never loads a
+  frontend that would call into a nil database. On failure no window is created at all: an
+  error dialog shows on `ApplicationStarted` with a single Quit button, set as both default
+  and cancel so Esc and the close box quit too. v2 could show its dialog straight from
+  `OnStartup` because its window already existed.
+- **The saved size goes into `WebviewWindowOptions`**, so the window opens at that size
+  instead of opening at 1920×1080 and jumping. Clamping to the screen is best-effort at that
+  point: Windows knows its screens before startup, Linux and macOS only after
+  `ApplicationStarted`, so there an oversized saved size is left to the window manager.
+  `WindowPresets` and `SetWindowSize` run later and clamp against the window's own screen.
+- **The size is saved on `WindowClosing` and again in `ServiceShutdown`.** v3 cancels the app
+  context and shuts services down *before* it closes windows, so v2's "read the size in
+  shutdown" would see a destroyed window whenever the GM closes it with the close box. The
+  hook covers that path, and `ServiceShutdown` covers Cmd+Q, where services stop while the
+  window is still up. Both write through `context.WithoutCancel`, because the app context is
+  already cancelled by then.
+- **A cancelled file dialog on Windows comes back as an error**, `"cancelled by user"`, from
+  v3.0.0's common-item-dialog wrapper; Linux and macOS return an empty path. The sentinel
+  lives in an `internal` package, so `picked` matches the message. Without it, every backup,
+  restore, export or import the GM backs out of would report a failure.
+- **`gm.Attach` and `player.Attach` still take the context** — now v3's application context,
+  which has the same lifetime v2's did.
+
+Notes on the bindings:
+- **Interfaces mode (`-i`).** By default v3 generates model classes and runs every result
+  through `createFrom`, so a method returning a struct hands back a class instance. Svelte 5's
+  `$state` only proxies plain objects and arrays, so state built from those results would
+  silently stop being deeply reactive. `-i` returns the plain JSON v2 did, and leaves
+  `time.Time` as a string, as v2 did. What it gives up is `createFrom` on inputs: the four
+  call sites that built `EncounterInput`, `SwapInput`, `CompanionInput` and `LevelUpInput`
+  through it now pass object literals, which a JSDoc typedef accepts where v2's class type
+  didn't.
+- **The bindings stay committed**, as `frontend/wailsjs` was, so svelte-check and the editor
+  work on a fresh checkout. Builds regenerate them, so a stale copy can't ship.
+- **They import `@wailsio/runtime` from npm**, pinned to 3.0.0 to match the Go module, rather
+  than the bundled `/wails/runtime.js`, so Vite bundles the runtime like any other dependency.
+  The `wails('./bindings')` Vite plugin is the typed-events hook. Nothing emits events yet;
+  the table window will.
+
+Notes on the build:
+- **No Taskfile.** `wails3 init` scaffolds about 2,000 lines of Taskfiles — Docker
+  cross-compiles, garble, iOS and Android — plus its own NSIS, nfpm and DMG packaging. The
+  release already has packaging that encodes decisions (the uninstaller's data tick-box, the
+  HFS+ disk image with retries, appimagetool), so the build stays plain commands, the same way
+  CI prefers `run:` steps to wrappers. `wails3 dev` reads only `dev_mode` from
+  `build/config.yml`, and its `executes` take shell commands as readily as `wails3 task …`.
+- **A production build** is `wails3 generate bindings -i -clean=true`, `npm run build` in
+  `frontend`, then `go build -tags production -trimpath -buildvcs=false -ldflags "-w -s"`.
+  The `production` tag is what drops the devtools and the `FRONTEND_DEVSERVER_URL` hookup.
+- **Linux builds against GTK4 and WebKitGTK 6.0** (`libgtk-4-dev`, `libwebkitgtk-6.0-dev`).
+  `-tags gtk3` keeps the old stack, but only until v3.1, so it isn't worth carrying.
+- **CI's vet job installs those headers too.** v2 only compiled its cgo under the tags
+  `wails build` passed, so a tagless `go vet` never touched GTK; v3 compiles it on every
+  Linux build.
+
+Notes on packaging:
+- **The v2 build assets were templates that `wails build` filled in.** `wails_tools.nsh`,
+  `wails.exe.manifest` and `info.json` all carried `{{.Info.…}}` placeholders, and the macOS
+  `Info.plist` and `.icns` were never committed at all. v3 fills in nothing outside its own
+  Taskfile scaffold, so each is now a plain file with its values written in. The release
+  stamps the version into `info.json` and `Info.plist` — the same Python step that used to
+  stamp `wails.json`, which is gone — and hands it to makensis as `-DINFO_PRODUCTVERSION`,
+  which beats the `!ifndef` default in the nsh. The manifest's assembly version is a fixed
+  `1.0.0.0`; nothing reads it.
+- **The custom installer is unchanged** — `project.nsi`, its shortcut sections and the
+  opt-in data tick-box — and so are `package.sh`'s staging and the DMG step. The WebView2
+  bootstrapper the installer embeds now comes from `wails3 generate webview2bootstrapper`,
+  which writes the copy the CLI carries instead of downloading one.
+- **`makensis -INPUTCHARSET UTF8`.** `project.nsi` (its em dashes) and now `wails_tools.nsh`
+  (the © in the copyright) are UTF-8 without a BOM, which makensis would otherwise read in
+  the runner's ANSI codepage. It's `-` rather than `/` because Git Bash rewrites an argument
+  with a leading `/` into a Windows path.
+- **The macOS `.icns` is made on the runner with `sips` and `iconutil`.** `wails3 generate
+  icons` would do it in one line, but it also writes `build/windows/icon.ico` unless told
+  otherwise — over the committed icon.
+- **The bundle is ad hoc signed** after `lipo` joins the two architectures, because Apple
+  Silicon won't run an unsigned binary at all. That's not a Developer ID signature, so the
+  Gatekeeper warning on first launch stays.
+- **The `.deb` depends on `libgtk-4-1 (>= 4.14)`.** v3 calls `gdk_monitor_get_scale`
+  directly, which GTK added in 4.14, so the binary can't start on Ubuntu 22.04 or Debian 12.
+  The version floor makes apt refuse the install instead of the app failing at launch.
+- **The window class is pinned to `DH-Companion`** through `LinuxOptions.ProgramName`.
+  Without it GTK uses the executable's name — `hilt` from the `.deb` and AppImage, but
+  `DH-Companion` from the tarball — and only the latter matched `hilt.desktop`'s
+  `StartupWMClass`, so the packaged installs wouldn't group under their menu entry.
+- **macOS keeps v2's bundle identifier, `com.wails.DH-Companion`**, so it's the same app to
+  the OS. `localStorage` still resets once on macOS and Linux — the last campaign, the active
+  character, the dice-panel toggles — because v3 serves the page from `wails://localhost`
+  where v2 used `wails://wails`. Windows keeps both its origin (`http://wails.localhost`) and
+  its WebView2 folder (`%APPDATA%\DH-Companion.exe`), so the uninstaller's cleanup line is
+  still right. Everything that matters is in SQLite and untouched.
+- **macOS 12 is stated, not new.** Go 1.25 already dropped macOS 11, so the v2 releases
+  needed 12 too, whatever v2's generated `Info.plist` claimed (10.13). 12.0 is also v3's
+  template default; `MACOSX_DEPLOYMENT_TARGET` and `LSMinimumSystemVersion` now both say so,
+  and the README and release notes do too.
+
+**Done when:** `wails3 dev` and a production build on all three platforms behave exactly
+like the v2 release — size presets, UI scale, backup and restore, library import and
+export, the update check — and CI is green.
+
+---
+
+## Phase 6.11 — Self-update
+
+**Goal:** replace "open the download page" with an update the app installs itself, on every
+install that can take one — using v3's `pkg/updater`, which Phase 6.10 brought in.
+
+- [ ] Ed25519 key pair: the public half committed as `build/updater.pub` and embedded, the
+      private half only in the `UPDATER_KEY` secret and a password manager
+- [ ] `App.InstallUpdate` checks the signed manifest, downloads, verifies and restarts;
+      `App.SelfUpdateSupport` says whether this copy can, and why not
+- [ ] Settings offers *Update to vX*, with download progress, where supported, and the
+      download page where not
+- [ ] The Windows installer is per-user, and warns when it finds a Program Files install
+- [ ] The release publishes `Hilt-update-*.zip` for Windows and macOS, plus `manifest.json`
+      signed in CI and verified against the committed key before publishing
+- [ ] README and release notes
+
+Notes on trust:
+- **Signed, not just checksummed.** v3's GitHub provider only reads a `SHA256SUMS`-style
+  sidecar — a digest published next to the artifact, by the same account, so anyone able to
+  replace one can replace the other. The manifest's ed25519ph signatures verify against a key
+  compiled into the app, and with `Config.PublicKey` set the updater refuses an unsigned
+  release outright rather than falling back to the digest. The builds are still unsigned as
+  far as Gatekeeper and SmartScreen go; that's a separate question, and still on the Phase 7
+  list.
+- **The release job verifies the manifest against `build/updater.pub`** before publishing. A
+  secret that drifted from the committed key would otherwise ship a release that every
+  installed copy refuses, and nobody would find out until they tried to update.
+- **Losing the private key** means no installed copy will accept another update; everyone
+  would have to download one release by hand, carrying a new public key. `*.key` is
+  gitignored, and `genkey` writes outside the repository anyway.
+
+Notes on the flow:
+- **The check is still manual, and still the GitHub API.** `CheckForUpdate` works on every
+  install, `.deb` and `dev` included, and keeps answering "is there something newer" apart
+  from "can this copy install it". `InstallUpdate` then asks the updater's own manifest.
+  That's two requests for one update; the alternative was making the check depend on how
+  the app was installed.
+- **The manifest is read from `releases/latest/download/manifest.json`**, which GitHub
+  redirects to the newest published, non-prerelease release; the query string the endpoint
+  provider appends survives the redirect. A release without a manifest — everything before
+  this phase — 404s, which the provider reads as "nothing newer", so `InstallUpdate` says
+  the release can't be installed from inside the app. Artifact URLs inside it are absolute,
+  pinned to the tag.
+- **Download, verify and restart are one click.** The updater can stage an update for a
+  later restart, but a staged update is a `wails-update-*` folder beside the app — inside
+  `/Applications`, on macOS — until then. Everything autosaves, so waiting protects nothing.
+- **The swap helper is the app itself.** `Restart` relaunches the same binary with
+  environment variables that `application.New` acts on before anything else runs, then quits
+  normally — so the database closes and the window size is saved before the swap. `main`
+  must keep doing nothing with side effects before `application.New`.
+- **Progress comes as `wails:updater:download-progress` events**, because `InstallUpdate`
+  only returns once the restart is under way.
+- `dev` builds don't configure the updater at all.
+
+Notes on where it can update in place:
+- **The updater has no elevation step.** It stages the download beside what it replaces and
+  renames it over once the app exits, so it needs write access there. `SelfUpdateSupport`
+  mirrors its target resolution (the `.app` bundle on macOS, `$APPIMAGE` inside an AppImage)
+  and probes with the same `MkdirTemp`, so the button only shows where the swap will work.
+- **Windows**: the installer is now per-user (`%LOCALAPPDATA%\Programs\Hilt`, no UAC prompt),
+  as VS Code's user setup, Slack and Discord are, because a Program Files install is
+  read-only to the app. The portable zip works wherever it was unpacked. The installer can't
+  remove an old Program Files copy without elevating, so `.onInit` looks for its HKLM
+  uninstall key and says so — OK continues, Cancel quits, silent installs skip the prompt —
+  rather than leave two Start-menu entries unexplained. Known gap: a self-update doesn't
+  touch the uninstall entry, so *Settings › Apps* shows the installed version until the next
+  full install.
+- **macOS**: `/Applications/Hilt.app` is writable for admin accounts, which is the default. A
+  standard account, or a copy still translocated from the disk image, gets the download page.
+- **Linux**: the AppImage only. The `.deb` lives in `/usr/bin`, which belongs to root and apt.
+  The tarball isn't offered: the manifest's Linux artifact is the AppImage, and replacing a
+  bare binary with an AppImage would hand the user something other than what they installed.
+- **Archives have to hold exactly one top-level entry**, and the user-facing zips carry
+  `LICENSE`, `NOTICE.md` and `README.md` too. Hence `Hilt-update-*.zip`: the bare `.exe`,
+  and the `.app` zipped with `ditto --norsrc --noextattr --noacl`, so a `._` AppleDouble
+  sidecar can't become a second entry. The AppImage needs no archive.
+
+**Done when:** a copy of release N — Windows installer, macOS app, AppImage — updates to N+1
+from Settings and comes back up on N+1 with its data, and a manifest signed with any other
+key is refused.
+
+---
+
 ## Phase 7 — Roadmap: the first update after release
 
 **Goal:** what goes in the release *after* 1.0. Phases 0–6 are done and shipped, and the app
@@ -1495,19 +1702,24 @@ Ordered by what a user hits first, not by how interesting it is to build.
       Colossi raise the stakes: which segment a PC is on decides advantage and which
       segment attacks can target them (Phase 6.8).
 - [ ] **Pop the notes out into their own window**, so the timeline can sit on a second
-      monitor beside the runner. Wails v2 is single-window and `window.open` is unhandled on
-      all three platforms (see Phase 6.5), so this needs a loopback HTTP server serving a
-      small notes page that `runtime.BrowserOpenURL` opens — which is most of the LAN-sharing
-      groundwork above, and should probably ride along with it rather than land alone.
+      monitor beside the runner. Wails v2 was single-window (see Phase 6.5); since Phase 6.10
+      this is a second `WebviewWindow` on the same services, with no loopback server.
+- [ ] **The table window** — a second, borderless window the GM drags to the table's screen
+      and fullscreens. Scenes and world maps first (one image at a time, picked on the GM
+      side), then animated maps (video, GIF, animated WebP), then battle maps. The GM window
+      drives it over v3 events; the table window only renders and never writes. Battle maps
+      overturn "not a battle map" in the runner bullet above, so they're a separate decision.
+      Needs Phase 6.10.
+      **Done when:** the GM picks a scene and it appears on the second screen, and switching
+      scenes never shows the players anything from the GM's side.
 
 ### Distribution
 
 - [ ] **Code signing.** The release notes say the builds are unsigned, so macOS Gatekeeper
       and Windows SmartScreen both warn on first run. Certificates cost money and an Apple
       Developer account; until then the warning is documented rather than fixed.
-- [ ] **Real self-update.** Phase 6 shipped an update *check* — a button that compares tags
-      and opens the download page. Replacing the running executable needs a third-party
-      updater and signing to be safe, in that order, so this one waits on the line above it.
+- [x] **Real self-update.** Done in Phase 6.11, with v3's own updater and a signed update
+      manifest — it didn't need to wait for OS code signing after all.
 - [ ] **Character share codes.** `internal/share` already encodes one homebrew adversary or
       environment as `HILT1:<base64url(zlib(json))>`. A character is a bigger object with
       child tables, but the format is versioned and the decode path is already defensive

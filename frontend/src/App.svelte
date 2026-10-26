@@ -1,5 +1,5 @@
 <script>
-  import { GetUIScale } from '../wailsjs/go/main/App.js'
+  import { GetUIScale } from '../bindings/github.com/mhetem/DH-Companion/app.js'
   import { applyScale } from './lib/display.js'
   import RolePicker from './lib/RolePicker.svelte'
   import Header from './lib/Header.svelte'

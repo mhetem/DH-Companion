@@ -36,7 +36,6 @@
     "src/**/*.d.ts",
     "src/**/*.js",
     "src/**/*.svelte",
-    "wailsjs/**/*.d.ts",
-    "wailsjs/**/*.js"
+    "bindings/**/*.js"
   ]
 }

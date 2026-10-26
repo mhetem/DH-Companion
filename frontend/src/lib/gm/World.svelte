@@ -1,4 +1,5 @@
 <script>
+  import { untrack } from 'svelte'
   import {
     DeleteWorldNote,
     ListWorldNotes,
@@ -18,7 +19,7 @@
   // page is remembered under.
   let { campaignId } = $props()
 
-  const LAST_KEY = `gm.world.last.${campaignId}`
+  const LAST_KEY = untrack(() => `gm.world.last.${campaignId}`)
 
   let notes = $state([])
   let loading = $state(true)

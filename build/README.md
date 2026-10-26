@@ -1,35 +1,29 @@
 # Build Directory
 
-The build directory is used to house all the build files and assets for your application. 
+Build configuration and packaging assets. Nothing here is generated at build time — every
+file is kept by hand, and the release workflow stamps the version into the ones that carry
+it.
 
-The structure is:
-
-* bin - Output directory
-* darwin - macOS specific files
-* windows - Windows specific files
-
-## Mac
-
-The `darwin` directory holds files specific to Mac builds.
-These may be customised and used as part of the build. To return these files to the default state, simply delete them
-and
-build with `wails build`.
-
-The directory contains the following files:
-
-- `Info.plist` - the main plist file used for Mac builds. It is used when building using `wails build`.
-- `Info.dev.plist` - same as the main plist file but used when building using `wails dev`.
+* `bin/` — build output (gitignored)
+* `config.yml` — `dev_mode` for `wails3 dev`: regenerate bindings, build, run against Vite
+* `appicon.png`, `appicon.svg` — the source icon
 
 ## Windows
 
-The `windows` directory contains the manifest and rc files used when building with `wails build`.
-These may be customised for your application. To return these files to the default state, simply delete them and
-build with `wails build`.
+- `icon.ico` — the executable and installer icon.
+- `wails.exe.manifest`, `info.json` — compiled into the executable as a `.syso` by
+  `wails3 generate syso`. The release writes the tag's version into `info.json`.
+- `installer/project.nsi` — the NSIS installer, including the uninstaller's opt-in
+  *Campaigns, encounters and homebrew* tick-box. `installer/wails_tools.nsh` holds the
+  macros it uses; the version comes in as `-DINFO_PRODUCTVERSION`. The WebView2 bootstrapper
+  is written to `installer/tmp` by `wails3 generate webview2bootstrapper`.
 
-- `icon.ico` - The icon used for the application. This is used when building using `wails build`. If you wish to
-  use a different icon, simply replace this file with your own. If it is missing, a new `icon.ico` file
-  will be created using the `appicon.png` file in the build directory.
-- `installer/*` - The files used to create the Windows installer. These are used when building using `wails build`.
-- `info.json` - Application details used for Windows builds. The data here will be used by the Windows installer,
-  as well as the application itself (right click the exe -> properties -> details)
-- `wails.exe.manifest` - The main application manifest file.
+## macOS
+
+- `Info.plist` — copied into `DH-Companion.app/Contents`. The release writes the tag's
+  version into it; the `.icns` is made from `appicon.png` with `sips` and `iconutil`.
+
+## Linux
+
+- `package.sh` — builds the `.deb` and the AppImage from `bin/DH-Companion`.
+- `hilt.desktop` — the menu entry both packages install.

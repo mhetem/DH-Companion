@@ -1,6 +1,5 @@
 <script>
   import SrdText from '../SrdText.svelte'
-  import { player } from '../../../wailsjs/go/models'
   import { SwapDomainCard, errorMessage, recallCost } from './api.js'
 
   // The loadout is the five cards whose effects you can actually use, so the sheet
@@ -52,14 +51,12 @@
     busy = true
     error = ''
     try {
-      const result = await SwapDomainCard(
-        player.SwapInput.createFrom({
-          characterId,
-          recall: option.cardSlug,
-          vault: vaultSlug,
-          resting
-        })
-      )
+      const result = await SwapDomainCard({
+        characterId,
+        recall: option.cardSlug,
+        vault: vaultSlug,
+        resting
+      })
       picking = ''
       onswap?.(result)
     } catch (e) {

@@ -5,3 +5,5 @@ frontend/dist
 .local/
 dist
 build/windows/installer/tmp
+*.syso
+*.key

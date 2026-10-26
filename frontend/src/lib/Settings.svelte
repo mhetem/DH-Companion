@@ -7,9 +7,12 @@
     ExportLibrary,
     ImportDatabase,
     ImportLibrary,
+    InstallUpdate,
     OpenReleasesPage,
+    SelfUpdateSupport,
     Version
-  } from '../../wailsjs/go/main/App.js'
+  } from '../../bindings/github.com/mhetem/DH-Companion/app.js'
+  import { Events, Updater } from '@wailsio/runtime'
   import { errorMessage } from './gm/api.js'
 
   let { onreload } = $props()
@@ -22,6 +25,16 @@
   let version = $state('')
   let dataDir = $state('')
   let release = $state(null)
+  let selfUpdate = $state(null)
+  let progress = $state(null)
+
+  // The updater reports download progress as an event rather than through the
+  // InstallUpdate call, which only returns once the app is about to restart.
+  $effect(() => Events.On(Updater.Events.DownloadProgress, (e) => (progress = e.data)))
+
+  const percent = $derived(
+    progress?.total ? Math.min(100, Math.round((progress.written / progress.total) * 100)) : null
+  )
 
   function show() {
     open = true
@@ -29,6 +42,7 @@
     done = ''
     Version().then((v) => (version = v)).catch(() => {})
     DataDirectory().then((d) => (dataDir = d)).catch(() => {})
+    SelfUpdateSupport().then((s) => (selfUpdate = s)).catch(() => {})
   }
 
   // Every action reports into the same two lines, so the panel never grows a
@@ -115,6 +129,15 @@
       release = await CheckForUpdate()
       return ''
     })
+
+  // Download, verify and restart are one step: everything is already saved, so
+  // there is nothing to wait for between them.
+  const installUpdate = () =>
+    run('install', async () => {
+      progress = null
+      await InstallUpdate()
+      return `Restarting into ${release.latest}…`
+    })
 </script>
 
 <button class="iconbtn" onclick={show} title="Settings and data" aria-label="Settings">⚙</button>
@@ -169,13 +192,25 @@
       Hilt {version || '…'}{#if version === 'dev'} — an unreleased build, so update checks
         have nothing to compare against{/if}.
       Checking asks GitHub for the latest release; nothing is sent, and nothing is
-      checked unless you press the button.
+      checked unless you press the button. Updating downloads the new build, checks its
+      signature against the key built into this one, and restarts into it.
     </p>
     <div class="row">
       <button class="btn" onclick={checkUpdate} disabled={!!busy}>
         {busy === 'update' ? 'Checking…' : 'Check for updates'}
       </button>
-      {#if release?.newer}
+      {#if release?.newer && selfUpdate?.supported}
+        <button class="btn primary" onclick={installUpdate} disabled={!!busy}>
+          {#if busy === 'install'}
+            {percent === null ? 'Downloading…' : `Downloading… ${percent}%`}
+          {:else}
+            Update to {release.latest}
+          {/if}
+        </button>
+        <button class="btn ghost" onclick={() => OpenReleasesPage(release.url)}>
+          Release notes
+        </button>
+      {:else if release?.newer}
         <button class="btn primary" onclick={() => OpenReleasesPage(release.url)}>
           Get {release.latest}
         </button>
@@ -185,6 +220,9 @@
       <p class="note result">
         {#if release.newer}
           <strong>{release.latest}</strong> is out — you have {release.current}.
+          {#if selfUpdate && !selfUpdate.supported}
+            It can't update in place here: {selfUpdate.reason}.
+          {/if}
         {:else if release.known}
           You are on the latest release ({release.current}).
         {:else}

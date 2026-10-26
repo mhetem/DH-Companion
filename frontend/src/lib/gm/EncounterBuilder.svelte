@@ -1,6 +1,5 @@
 <script>
   import { untrack } from 'svelte'
-  import { gm } from '../../../wailsjs/go/models'
   import AdversaryDetail from './AdversaryDetail.svelte'
   import EnvironmentDetail from './EnvironmentDetail.svelte'
   import BudgetMeter from './BudgetMeter.svelte'
@@ -137,7 +136,7 @@
   async function save() {
     saving = true
     try {
-      const input = gm.EncounterInput.createFrom({
+      const input = {
         id: savedId,
         name: name.trim(),
         partyId: partyId === '' ? null : Number(partyId),
@@ -146,7 +145,7 @@
         // encounter) ride along in the SRD bucket — lookup checks both lists.
         adversaries: toPicks(picks.filter((p) => p.source !== 'custom')),
         customAdversaries: toPicks(picks.filter((p) => p.source === 'custom'))
-      })
+      }
       const view = await SaveEncounter(input)
       apply(view)
       error = ''

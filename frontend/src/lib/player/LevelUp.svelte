@@ -1,7 +1,6 @@
 <script>
   import Modal from '../Modal.svelte'
   import SrdText from '../SrdText.svelte'
-  import { player } from '../../../wailsjs/go/models'
   import {
     ApplyLevelUp,
     ListClasses,
@@ -166,16 +165,12 @@
     saving = true
     error = ''
     try {
-      // Nested inputs go through the generated class, the same as the GM builder's
-      // EncounterInput — a bare object literal isn't assignable to it.
-      const sheet = await ApplyLevelUp(
-        player.LevelUpInput.createFrom({
-          characterId,
-          choices: picks,
-          newExperienceName: newExperience,
-          domainCardSlug: levelCard
-        })
-      )
+      const sheet = await ApplyLevelUp({
+        characterId,
+        choices: picks,
+        newExperienceName: newExperience,
+        domainCardSlug: levelCard
+      })
       open = false
       onapplied?.(sheet)
     } catch (e) {

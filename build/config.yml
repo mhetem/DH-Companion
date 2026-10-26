@@ -1,0 +1,36 @@
+dev_mode:
+  root_path: .
+  log_level: warn
+  debounce: 1000
+  ignore:
+    dir:
+      - .git
+      - .local
+      - build
+      - dist
+      - frontend
+      - node_modules
+    file:
+      - .DS_Store
+      - .gitignore
+      - .gitkeep
+    watched_extension:
+      - "*.go"
+      - "*.sql"
+    git_ignore: true
+  executes:
+    - cmd: wails3 generate bindings -i -clean=true
+      type: blocking
+    - cmd: npm install && npm run build
+      dir: frontend
+      type: once
+    - cmd: go build -buildvcs=false -gcflags=all=-l -o build/bin/hilt-dev
+      type: blocking
+    - cmd: npm run dev
+      dir: frontend
+      type: background
+      readiness:
+        tcp: localhost:9245
+        timeout: 60s
+    - cmd: ./build/bin/hilt-dev
+      type: primary

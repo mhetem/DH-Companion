@@ -5,9 +5,9 @@
 #   version   e.g. v1.2.0 or 1.2.0 — a leading v is stripped for package metadata
 #   outdir    where the artifacts land (default: dist)
 #
-# Run `wails build -tags webkit2_41` first. Needs dpkg-deb for the .deb; the
-# AppImage step downloads appimagetool and is skipped if that download fails, so a
-# machine without network still gets the .deb.
+# Build build/bin/DH-Companion first (see the README). Needs dpkg-deb for the .deb;
+# the AppImage step downloads appimagetool and is skipped if that download fails, so
+# a machine without network still gets the .deb.
 set -euo pipefail
 
 VERSION_RAW="${1:?usage: package.sh <version> [outdir]}"
@@ -20,7 +20,7 @@ DESKTOP="$ROOT/build/linux/hilt.desktop"
 ICON_SVG="$ROOT/build/appicon.svg"
 ICON_PNG="$ROOT/build/appicon.png"
 
-[ -x "$BIN" ] || { echo "missing $BIN — run wails build first" >&2; exit 1; }
+[ -x "$BIN" ] || { echo "missing $BIN — build it first" >&2; exit 1; }
 
 mkdir -p "$ROOT/$OUTDIR"
 WORK="$(mktemp -d)"
@@ -51,7 +51,7 @@ Version: $VERSION
 Section: games
 Priority: optional
 Architecture: amd64
-Depends: libgtk-3-0, libwebkit2gtk-4.1-0
+Depends: libgtk-4-1 (>= 4.14), libwebkitgtk-6.0-4
 Maintainer: mhetem <284336022+mhetem@users.noreply.github.com>
 Homepage: https://github.com/mhetem/DH-Companion
 Description: Daggerheart Compatible desktop companion

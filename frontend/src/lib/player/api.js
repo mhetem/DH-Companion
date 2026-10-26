@@ -1,5 +1,5 @@
-// Single import surface for the Player module. Everything here is bound on the Go
-// side as window.go.player.Service.* — the generated wrappers just forward to it.
+// Single import surface for the Player module. Everything here is a method on
+// player.Service, bound as a Wails service — the generated wrappers just forward to it.
 export {
   AddClassItems,
   AddDomainCard,
@@ -59,11 +59,11 @@ export {
   ToggleCompanionUpgrade,
   Traits,
   Transform
-} from '../../../wailsjs/go/player/Service.js'
+} from '../../../bindings/github.com/mhetem/DH-Companion/internal/player/service.js'
 
 // The die sizes come from internal/dice, same as the GM side — the damage picker
 // can't offer a die the backend would reject because the set is defined once there.
-export { Sizes } from '../../../wailsjs/go/dice/Roller.js'
+export { Sizes } from '../../../bindings/github.com/mhetem/DH-Companion/internal/dice/roller.js'
 
 // Mirrors internal/player/validate.go — keep the two in step.
 export const TRAITS = [

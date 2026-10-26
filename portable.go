@@ -11,10 +11,17 @@ import (
 	"github.com/mhetem/DH-Companion/internal/player"
 	"github.com/mhetem/DH-Companion/internal/srd"
 	"github.com/mhetem/DH-Companion/internal/update"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 func stamp() string { return time.Now().Format("2006-01-02-1504") }
+
+func picked(path string, err error) (string, error) {
+	if err != nil && err.Error() == "cancelled by user" {
+		return "", nil
+	}
+	return path, err
+}
 
 func (a *App) Version() string { return version }
 
@@ -26,17 +33,18 @@ func (a *App) OpenReleasesPage(url string) {
 	if url == "" {
 		url = "https://github.com/mhetem/DH-Companion/releases"
 	}
-	runtime.BrowserOpenURL(a.ctx, url)
+	_ = a.wails.Browser.OpenURL(url)
 }
 
 func (a *App) DataDirectory() (string, error) { return dataDir("") }
 
 func (a *App) ExportDatabase() (string, error) {
-	target, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-		Title:           "Save a database backup",
-		DefaultFilename: fmt.Sprintf("hilt-backup-%s.db", stamp()),
-		Filters:         []runtime.FileFilter{{DisplayName: "SQLite database (*.db)", Pattern: "*.db"}},
-	})
+	target, err := picked(a.wails.Dialog.SaveFileWithOptions(&application.SaveFileDialogOptions{
+		Title:    "Save a database backup",
+		Filename: fmt.Sprintf("hilt-backup-%s.db", stamp()),
+		Filters:  []application.FileFilter{{DisplayName: "SQLite database (*.db)", Pattern: "*.db"}},
+		Window:   a.window,
+	}).PromptForSingleSelection())
 	if err != nil {
 		return "", fmt.Errorf("choosing a location: %w", err)
 	}
@@ -63,10 +71,11 @@ func (a *App) snapshot(target string) error {
 }
 
 func (a *App) ImportDatabase() (string, error) {
-	source, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+	source, err := picked(a.wails.Dialog.OpenFileWithOptions(&application.OpenFileDialogOptions{
 		Title:   "Open a Hilt database",
-		Filters: []runtime.FileFilter{{DisplayName: "SQLite database (*.db)", Pattern: "*.db"}},
-	})
+		Filters: []application.FileFilter{{DisplayName: "SQLite database (*.db)", Pattern: "*.db"}},
+		Window:  a.window,
+	}).PromptForSingleSelection())
 	if err != nil {
 		return "", fmt.Errorf("choosing a file: %w", err)
 	}
@@ -164,11 +173,12 @@ func (a *App) ExportLibrary() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	target, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-		Title:           "Export your library",
-		DefaultFilename: fmt.Sprintf("hilt-library-%s.json", stamp()),
-		Filters:         []runtime.FileFilter{{DisplayName: "JSON (*.json)", Pattern: "*.json"}},
-	})
+	target, err := picked(a.wails.Dialog.SaveFileWithOptions(&application.SaveFileDialogOptions{
+		Title:    "Export your library",
+		Filename: fmt.Sprintf("hilt-library-%s.json", stamp()),
+		Filters:  []application.FileFilter{{DisplayName: "JSON (*.json)", Pattern: "*.json"}},
+		Window:   a.window,
+	}).PromptForSingleSelection())
 	if err != nil {
 		return "", fmt.Errorf("choosing a location: %w", err)
 	}
@@ -182,10 +192,11 @@ func (a *App) ExportLibrary() (string, error) {
 }
 
 func (a *App) ImportLibrary() (*gm.ImportReport, error) {
-	source, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+	source, err := picked(a.wails.Dialog.OpenFileWithOptions(&application.OpenFileDialogOptions{
 		Title:   "Import a Hilt library",
-		Filters: []runtime.FileFilter{{DisplayName: "JSON (*.json)", Pattern: "*.json"}},
-	})
+		Filters: []application.FileFilter{{DisplayName: "JSON (*.json)", Pattern: "*.json"}},
+		Window:  a.window,
+	}).PromptForSingleSelection())
 	if err != nil {
 		return nil, fmt.Errorf("choosing a file: %w", err)
 	}

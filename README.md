@@ -150,6 +150,7 @@ database.
 - **Backup and restore**, whole-library JSON export/import, and paste-able
   [share codes](#share-codes) for homebrew cards.
 - **Window size and UI scale** are separate, remembered settings (80–200% scale, HD → 4K).
+- **Updates itself** when you ask it to — see [Upgrading](#upgrading).
 
 ## Install
 
@@ -158,8 +159,8 @@ Grab the latest build from **[Releases](https://github.com/mhetem/DH-Companion/r
 
 | Platform | Download | How |
 |---|---|---|
-| **Windows** | `Hilt-…-windows-amd64-setup.exe` | Run the installer. Pick a Start-menu shortcut, a desktop shortcut, both, or neither. |
-| **macOS** | `Hilt-…-macos-universal.dmg` | Open it and drag Hilt to Applications. Universal — Intel and Apple Silicon. |
+| **Windows** | `Hilt-…-windows-amd64-setup.exe` | Run the installer — it installs for your user only, with no admin prompt. Pick a Start-menu shortcut, a desktop shortcut, both, or neither. |
+| **macOS** | `Hilt-…-macos-universal.dmg` | Open it and drag Hilt to Applications. Universal — Intel and Apple Silicon, macOS 12 or later. |
 | **Linux** (Debian/Ubuntu) | `Hilt-…-amd64.deb` | `sudo apt install ./Hilt-*.deb`, then launch it from your app menu. |
 | **Linux** (any distro) | `Hilt-…-x86_64.AppImage` | `chmod +x Hilt-*.AppImage && ./Hilt-*.AppImage` — nothing to install. |
 
@@ -172,14 +173,28 @@ The builds are **unsigned**, so each OS will object once:
 - **macOS** — right-click the app and choose *Open* (not double-click), or
   `xattr -dr com.apple.quarantine /Applications/Hilt.app`
 - **Windows** — SmartScreen: *More info* → *Run anyway*
-- **Linux** — both packages need `libgtk-3-0` and `libwebkit2gtk-4.1-0` present; the `.deb`
+- **Linux** — both packages need GTK 4.14+ (`libgtk-4-1`) and WebKitGTK 6.0
+  (`libwebkitgtk-6.0-4`) present, which means Ubuntu 24.04, Debian 13 or newer; the `.deb`
   declares them, the AppImage assumes them
 
 Then pick a side of the table. The app creates its database at `~/DH-Companion/data.db`,
 runs its migrations, and you're in.
 
-Upgrading is install-over-the-top; your data is untouched. **Uninstalling keeps it too** —
-the Windows uninstaller has a *Campaigns, encounters and homebrew* tick-box that deletes
+### Upgrading
+
+**Settings & data → Check for updates.** When there's a newer release, *Update* downloads
+it, checks its signature against the key built into the copy you're running, and restarts
+into it. Everything is saved as you go, so restarting mid-session loses nothing. That works
+for the Windows installer and portable `.zip`, the macOS app and the AppImage. The `.deb`
+and the `.tar.gz` update the way you installed them — Settings links to the download page
+instead.
+
+Earlier Windows releases installed for all users, in Program Files, where the app can't
+replace itself. The current installer says so if it finds one; remove the old copy from
+*Settings › Apps* afterwards.
+
+Your data is untouched by any upgrade. **Uninstalling keeps it too** — the Windows
+uninstaller has a *Campaigns, encounters and homebrew* tick-box that deletes
 `%USERPROFILE%\DH-Companion` if you want a clean sweep, and it is unticked unless you ask.
 Removing the `.deb` or deleting the AppImage never touches your data. There's a backup
 button in **Settings & data** regardless.
@@ -189,31 +204,29 @@ button in **Settings & data** regardless.
 
 ## Building from source
 
-Requires [Go 1.25+](https://go.dev/dl/), [Node 22+](https://nodejs.org/), and the
-[Wails CLI](https://wails.io/docs/gettingstarted/installation).
+Requires [Go 1.26+](https://go.dev/dl/), [Node 22+](https://nodejs.org/), and the
+[Wails v3 CLI](https://wails.io/). On Linux, also the GTK4 and WebKitGTK 6.0 headers
+(`sudo apt install libgtk-4-dev libwebkitgtk-6.0-dev` on Ubuntu 24.04+).
 
 ```bash
-go install github.com/wailsapp/wails/v2/cmd/wails@v2.13.0
+go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0
 git clone https://github.com/mhetem/DH-Companion.git
 cd DH-Companion
-wails dev
+wails3 dev
 ```
 
-On Linux distros shipping webkit2gtk 4.1 without a 4.0 compat package (Ubuntu 24.04+,
-recent Fedora), add the build tag — otherwise the build fails at `pkg-config`:
+A production binary is three steps — bindings, frontend, then Go:
 
 ```bash
-wails dev -tags webkit2_41
+wails3 generate bindings -i -clean=true
+npm --prefix frontend ci && npm --prefix frontend run build
+go build -tags production -trimpath -ldflags "-w -s" -o build/bin/DH-Companion
+build/linux/package.sh v1.0.0 dist      # Linux -> dist/*.deb and dist/*.AppImage
 ```
 
-To produce the installable packages yourself:
-
-```bash
-wails build -tags webkit2_41            # Linux binary
-build/linux/package.sh v1.0.0 dist      # -> dist/*.deb and dist/*.AppImage
-
-wails build -nsis                       # Windows: build/bin/DH-Companion-amd64-installer.exe
-```
+The Windows installer and the macOS bundle are built in
+[`release.yml`](.github/workflows/release.yml); its *Build* step is the recipe to follow
+locally.
 
 ## Usage
 
@@ -297,8 +310,8 @@ spotlight is a rules state you set on purpose and can hold on several combatants
 
 ## Tech stack
 
-- **Go 1.25** with **[Wails v2](https://wails.io/)** — native desktop shell, WebKit-based
-  webview, no Electron.
+- **Go 1.26** with **[Wails v3](https://wails.io/)** — native desktop shell, the system
+  webview (WebKit on macOS and Linux, WebView2 on Windows), no Electron.
 - **Svelte 5** (runes) + **Vite** for the frontend, built into the binary via `//go:embed`.
 - **SQLite** through **[modernc.org/sqlite](https://gitlab.com/cznic/sqlite)** — pure Go, so
   the build needs no CGO and cross-compiles cleanly.
@@ -312,30 +325,30 @@ spotlight is a rules state you set on purpose and can hold on several combatants
 
 ### The bridge
 
-Wails binds Go structs into JavaScript. Each module is bound separately rather than piling
-every method onto one object:
+Wails registers Go structs as services and generates a JavaScript module for each one.
+Each module is its own service rather than piling every method onto one object:
 
 ```
-window.go.main.App.*        window size, UI scale, backup/restore, library, updates
-window.go.gm.Service.*      everything GM — cards, parties, encounters, combat, campaigns
-window.go.player.Service.*  everything Player — characters, sheet, loadout, levelling, rests
-window.go.dice.Roller.*     the pure roll functions
+main.App         window size, UI scale, backup/restore, library, updates
+gm.Service       everything GM — cards, parties, encounters, combat, campaigns
+player.Service   everything Player — characters, sheet, loadout, levelling, rests
+dice.Roller      the pure roll functions
 ```
 
 The two service structs never call each other. GM and Player are **separate schema islands
 in one database** — no shared records, no foreign keys across the line — so a change on one
 side can't break the other.
 
-Wails publishes *every* exported method on a bound struct, which shapes the code: `gm.Attach`
+Wails publishes *every* exported method on a service, which shapes the code: `gm.Attach`
 is a package function rather than a method, because an `Attach` method would push
-`context.Context`, `*db.Queries` and `*sql.DB` into the generated TypeScript models.
+`context.Context`, `*db.Queries` and `*sql.DB` into the generated bindings.
 
 ### Data flow
 
 ```
 Svelte component
   -> frontend/src/lib/{gm,player}/api.js   single import surface over the generated bindings
-    -> frontend/wailsjs/go/…               generated wrappers (regenerated by wails build/dev)
+    -> frontend/bindings/…                 generated wrappers (wails3 generate bindings -i)
       -> internal/{gm,player}.Service      validation, bridge types, transactions
         -> internal/db (sqlc)              type-safe queries
           -> SQLite
@@ -354,9 +367,11 @@ Two rules hold throughout:
 ### Project layout
 
 ```
-main.go                 Wails entry, window options, bound structs
-app.go                  App struct: role, window size, UI scale, DB open + migrations
+main.go                 Wails entry, services
+app.go                  App service: startup, the main window, window size, UI scale,
+                        DB open + migrations
 portable.go             backup/restore, library export/import, update check (file dialogs)
+selfupdate.go           in-app update: the signed manifest, where it can install, restart
 
 internal/
   rules/                encounter budget math, loot rarity bands, the encounter view model
@@ -453,8 +468,11 @@ and the loadout list is on the character sheet and inside the rest dialog.
 - **Managing your collection is free; recalling mid-session is not.** The Domain Cards page
   charges no Recall Cost — reorganising after a level-up isn't a recall — while swapping from
   the sheet marks the Stress, and a rest waives it. Both pages say which they are.
-- **No auto-update.** Wails v2 ships no updater, and a background check would quietly undo
-  the "no server" promise. The version check is manual and opens the download page.
+- **Updates are checked only when you ask.** A background check would quietly undo the "no
+  server" promise. Installing one is still a click: the release carries a manifest signed
+  with an Ed25519 key whose public half is compiled into the app, so a copy only accepts a
+  build signed by the same key — the OS signing these builds still lack isn't what
+  authenticates an update.
 
 ## Data
 
@@ -510,12 +528,12 @@ they are written.
 ## Running
 
 ```bash
-wails dev      # hot reload; regenerates the JS bindings
-wails build    # binary in build/bin
+wails3 dev     # Vite hot reload; rebuilds and regenerates the bindings on Go changes
 go test ./...  # backend unit tests
 ```
 
-Add `-tags webkit2_41` to `wails dev`/`wails build` on webkit2gtk 4.1 distros.
+`wails3 dev` runs the steps in [`build/config.yml`](build/config.yml) — there is no
+Taskfile. For a production binary, see [Building from source](#building-from-source).
 
 After changing anything in `sql/schema/` or `sql/queries/`, regenerate the DB layer:
 
@@ -547,12 +565,15 @@ catches a frontend call that no longer matches its Go signature. It is not in CI
 Two workflows:
 
 - **`ci.yml`** — on every push and PR: `gofmt -l` (failing on any unformatted file),
-  `go vet`, `go test ./... -race`, then a full `wails build` on Linux, Windows and macOS.
+  `go vet`, `go test ./... -race`, then a production build — bindings, frontend,
+  `go build -tags production` — on Linux, Windows and macOS.
   `fail-fast: false`, so one platform breaking still reports the others.
 - **`release.yml`** — on a `v*` tag: builds `linux/amd64`, `windows/amd64` and
-  `darwin/universal`, packages each with `LICENSE`, `NOTICE.md` and `README.md`, publishes
-  `SHA256SUMS.txt`, and attaches everything to a GitHub Release. The tag is stamped into the
-  binary via `-ldflags -X main.version=...`; untagged builds report `dev`.
+  `darwin/universal`, packages each with `LICENSE`, `NOTICE.md` and `README.md`, signs the
+  update `manifest.json` with the `UPDATER_KEY` secret (and checks it against
+  `build/updater.pub` before going further), publishes `SHA256SUMS.txt`, and attaches
+  everything to a GitHub Release. The tag is stamped into the binary via
+  `-ldflags -X main.version=...`; untagged builds report `dev` and don't self-update.
 
 Release binaries are **unsigned** — macOS Gatekeeper and Windows SmartScreen will both warn
 on first run.
@@ -576,9 +597,9 @@ Phase 7 is the shortlist for the release *after* this one, and nothing in it is 
 prerequisite for anything above. The weapon and armor datasets have since landed on the GM
 side, so what remains of that item is wiring the player sheet to them, so equipping gear
 sets your thresholds and damage die instead of you typing them in. The rest: a "took N
-damage" box that marks the right number of Hit Points, death moves, code signing, real
-self-update, and the optional LAN session view — the GM's app broadcasting Fear, countdowns
-and spotlight to read-only player devices on the same Wi-Fi.
+damage" box that marks the right number of Hit Points, death moves, code signing, and the
+optional LAN session view — the GM's app broadcasting Fear, countdowns and spotlight to
+read-only player devices on the same Wi-Fi.
 
 [BUILD_PLAN.md](BUILD_PLAN.md) has the full roadmap and, per phase, a "notes on what
 landed" section recording why things are the way they are — including the ones that were
@@ -589,7 +610,7 @@ wrong the first time.
 Contributions are welcome. A rough workflow:
 
 1. Fork the repository and create a feature branch.
-2. `wails dev` (add `-tags webkit2_41` on Linux if needed) and make your change.
+2. `wails3 dev` and make your change.
 3. If the change touches the database, add a goose migration under `sql/schema/` and the
    matching query in `sql/queries/`, then run `sqlc generate`.
 4. Run `gofmt`, `go vet` and `go test ./... -race` — CI enforces all three. If you touched

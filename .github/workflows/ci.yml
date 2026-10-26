@@ -9,9 +9,9 @@ permissions:
   contents: read
 
 env:
-  GO_VERSION: '1.25'
+  GO_VERSION: '1.26'
   NODE_VERSION: '22'
-  WAILS_VERSION: v2.13.0
+  WAILS_VERSION: v3.0.0
 
 jobs:
   test:
@@ -24,6 +24,13 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
+
+      # Wails v3 compiles its GTK4/WebKitGTK cgo on Linux whatever the build tags — v2
+      # only did under the ones `wails build` passed — so even vet needs the headers.
+      - name: Linux build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
 
       # main.go embeds frontend/dist, which is gitignored and so absent on a clean
       # checkout — without this, package main won't compile and vet dies before the
@@ -67,22 +74,25 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # Ubuntu ships webkit2gtk 4.1 with no 4.0 compat package, so the build needs
-      # the webkit2_41 tag below or it fails at pkg-config.
       - name: Linux build deps
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+          sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
 
       - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
 
+      # The same three steps as the release, minus packaging: bindings, frontend, then
+      # the production binary.
       - name: Build
         shell: bash
         run: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            wails build -tags webkit2_41 -clean
+          wails3 generate bindings -i -clean=true
+          npm --prefix frontend ci
+          npm --prefix frontend run build
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            CGO_ENABLED=0 go build -tags production -trimpath -buildvcs=false -ldflags "-w -s -H windowsgui" -o build/bin/DH-Companion.exe
           else
-            wails build -clean
+            go build -tags production -trimpath -buildvcs=false -ldflags "-w -s" -o build/bin/DH-Companion
           fi

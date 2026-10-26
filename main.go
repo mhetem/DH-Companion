@@ -2,13 +2,12 @@ package main
 
 import (
 	"embed"
+	"log"
 
 	"github.com/mhetem/DH-Companion/internal/dice"
 	"github.com/mhetem/DH-Companion/internal/gm"
 	"github.com/mhetem/DH-Companion/internal/player"
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 //go:embed all:frontend/dist
@@ -17,37 +16,31 @@ var assets embed.FS
 var version = "dev"
 
 func main() {
-
-	// Each module is bound as its own struct, so the frontend reaches the GM
-	// methods at window.go.gm.Service.* instead of piling them onto App.
 	gmSvc := gm.New()
 	playerSvc := player.New()
-	// The roller holds no state and needs no startup wiring — it's bound purely
-	// to reach the pure roll functions from JS at window.go.dice.Roller.*.
-	roller := dice.NewRoller()
 	app := NewApp(gmSvc, playerSvc)
 
-	err := wails.Run(&options.App{
-		Title:     "Hilt",
-		Width:     1920,
-		Height:    1080,
-		MinWidth:  minWindowWidth,
-		MinHeight: minWindowHeight,
-		AssetServer: &assetserver.Options{
-			Assets: assets,
+	app.wails = application.New(application.Options{
+		Name:        "Hilt",
+		Description: "A Daggerheart companion for both sides of the table.",
+		Services: []application.Service{
+			application.NewService(app),
+			application.NewService(gmSvc),
+			application.NewService(playerSvc),
+			application.NewService(dice.NewRoller()),
 		},
-		BackgroundColour: &options.RGBA{R: 16, G: 13, B: 23, A: 1},
-		OnStartup:        app.startup,
-		OnShutdown:       app.shutdown,
-		Bind: []interface{}{
-			app,
-			gmSvc,
-			playerSvc,
-			roller,
+		Assets: application.AssetOptions{
+			Handler: application.AssetFileServerFS(assets),
+		},
+		Mac: application.MacOptions{
+			ApplicationShouldTerminateAfterLastWindowClosed: true,
+		},
+		Linux: application.LinuxOptions{
+			ProgramName: "DH-Companion",
 		},
 	})
 
-	if err != nil {
-		println("Error:", err.Error())
+	if err := app.wails.Run(); err != nil {
+		log.Fatal(err)
 	}
 }

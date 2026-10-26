@@ -1,4 +1,5 @@
 <script>
+  import { untrack } from 'svelte'
   import { SaveWorldNote, WORLD_DATED_KINDS, WORLD_KINDS, errorMessage } from './api.js'
   import { renderMarkdown } from './markdown.js'
 
@@ -26,9 +27,11 @@
     page: 'Markdown — headings, **bold**, lists, > quotes.'
   }
 
-  let form = $state(fields(note))
-  let saved = $state(fields(note))
-  let updatedAt = $state(note.updatedAt)
+  const initial = untrack(() => note)
+
+  let form = $state(fields(initial))
+  let saved = $state(fields(initial))
+  let updatedAt = $state(initial.updatedAt)
   let saving = $state(false)
   let error = $state('')
   let preview = $state(false)

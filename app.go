@@ -15,7 +15,8 @@ import (
 	"github.com/mhetem/DH-Companion/internal/player"
 	"github.com/mhetem/DH-Companion/internal/srd"
 	"github.com/pressly/goose/v3"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 	_ "modernc.org/sqlite"
 )
 
@@ -26,8 +27,10 @@ const (
 	settingWindowSize = "window_size"
 	settingUIScale    = "ui_scale"
 
-	minWindowWidth  = 1100
-	minWindowHeight = 700
+	defaultWindowWidth  = 1920
+	defaultWindowHeight = 1080
+	minWindowWidth      = 1100
+	minWindowHeight     = 700
 
 	defaultUIScale = 100
 	minUIScale     = 80
@@ -52,42 +55,82 @@ var windowPresets = []WindowSize{
 }
 
 type App struct {
-	ctx     context.Context
-	q       *db.Queries
-	conn    *sql.DB
-	gm      *gm.Service
-	player  *player.Service
-	catalog *srd.Catalog
+	ctx        context.Context
+	wails      *application.App
+	window     *application.WebviewWindow
+	q          *db.Queries
+	conn       *sql.DB
+	gm         *gm.Service
+	player     *player.Service
+	catalog    *srd.Catalog
+	updaterErr error
 }
 
 func NewApp(gmSvc *gm.Service, playerSvc *player.Service) *App {
 	return &App{gm: gmSvc, player: playerSvc}
 }
 
-func (a *App) startup(ctx context.Context) {
+func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
 	a.ctx = ctx
+	if title, err := a.open(); err != nil {
+		a.fatal(title, err)
+		return nil
+	}
+
+	width, height := a.savedWindowSize()
+	a.window = a.wails.Window.NewWithOptions(application.WebviewWindowOptions{
+		Name:             "main",
+		Title:            "Hilt",
+		Width:            width,
+		Height:           height,
+		MinWidth:         minWindowWidth,
+		MinHeight:        minWindowHeight,
+		InitialPosition:  application.WindowCentered,
+		BackgroundColour: application.NewRGB(16, 13, 23),
+		URL:              "/",
+	})
+	a.window.RegisterHook(events.Common.WindowClosing, func(*application.WindowEvent) {
+		a.rememberWindowSize()
+	})
+	a.updaterErr = a.initUpdater()
+	return nil
+}
+
+func (a *App) ServiceShutdown() error {
+	if a.conn == nil {
+		return nil
+	}
+	a.rememberWindowSize()
+	return a.conn.Close()
+}
+
+func (a *App) open() (string, error) {
 	q, conn, err := Open("")
 	if err != nil {
-		a.fatal(ctx, "Database error", err)
-		return
+		return "Database error", err
 	}
 	a.q, a.conn = q, conn
 
 	catalog, err := srd.Default()
 	if err != nil {
-		a.fatal(ctx, "Reference data error", err)
-		return
+		return "Reference data error", err
 	}
 	a.catalog = catalog
-	gm.Attach(a.gm, ctx, q, conn, catalog)
-	player.Attach(a.player, ctx, q, conn, catalog)
+	gm.Attach(a.gm, a.ctx, q, conn, catalog)
+	player.Attach(a.player, a.ctx, q, conn, catalog)
 
 	if err := a.gm.ReindexCards(); err != nil {
-		a.fatal(ctx, "Search index error", err)
-		return
+		return "Search index error", err
 	}
+	return "", nil
+}
 
-	a.restoreWindowSize()
+func (a *App) fatal(title string, err error) {
+	a.wails.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
+		dialog := a.wails.Dialog.Error().SetTitle(title).SetMessage(err.Error())
+		quit := dialog.AddButton("Quit").OnClick(a.wails.Quit)
+		dialog.SetDefaultButton(quit).SetCancelButton(quit).Show()
+	})
 }
 
 func (a *App) WindowPresets() []WindowSize {
@@ -101,7 +144,7 @@ func (a *App) WindowPresets() []WindowSize {
 }
 
 func (a *App) CurrentWindowSize() WindowSize {
-	w, h := runtime.WindowGetSize(a.ctx)
+	w, h := a.window.Size()
 	return WindowSize{Label: sizeLabel(w, h), Width: w, Height: h, Fits: true}
 }
 
@@ -110,8 +153,8 @@ func (a *App) SetWindowSize(width, height int) (WindowSize, error) {
 		return WindowSize{}, fmt.Errorf("the window can't be smaller than %d×%d", minWindowWidth, minWindowHeight)
 	}
 	width, height = a.clampToScreen(width, height)
-	runtime.WindowSetSize(a.ctx, width, height)
-	runtime.WindowCenter(a.ctx)
+	a.window.SetSize(width, height)
+	a.window.Center()
 	if err := a.saveWindowSize(width, height); err != nil {
 		return WindowSize{}, err
 	}
@@ -156,25 +199,18 @@ func sizeLabel(width, height int) string {
 	return "Custom"
 }
 
-// screenSize reports the logical size of the screen the window is on. Screen.Size
-// is the logical-pixel space WindowSetSize works in; Width/Height are physical and
-// deprecated. Zero means the platform wouldn't say, and callers skip clamping.
 func (a *App) screenSize() (int, int) {
-	screens, err := runtime.ScreenGetAll(a.ctx)
-	if err != nil {
+	var screen *application.Screen
+	if a.window != nil {
+		screen, _ = a.window.GetScreen()
+	}
+	if screen == nil {
+		screen = a.wails.Screen.GetPrimary()
+	}
+	if screen == nil {
 		return 0, 0
 	}
-	for _, s := range screens {
-		if s.IsCurrent {
-			return s.Size.Width, s.Size.Height
-		}
-	}
-	for _, s := range screens {
-		if s.IsPrimary {
-			return s.Size.Width, s.Size.Height
-		}
-	}
-	return 0, 0
+	return screen.Size.Width, screen.Size.Height
 }
 
 func (a *App) clampToScreen(width, height int) (int, int) {
@@ -189,46 +225,29 @@ func (a *App) clampToScreen(width, height int) (int, int) {
 }
 
 func (a *App) saveWindowSize(width, height int) error {
-	return a.q.SetSetting(a.ctx, db.SetSettingParams{
+	return a.q.SetSetting(context.WithoutCancel(a.ctx), db.SetSettingParams{
 		Key:   settingWindowSize,
 		Value: fmt.Sprintf("%dx%d", width, height),
 	})
 }
 
-func (a *App) restoreWindowSize() {
-	raw, err := a.q.GetSetting(a.ctx, settingWindowSize)
-	if err != nil {
-		return
-	}
-	var width, height int
-	if _, err := fmt.Sscanf(raw, "%dx%d", &width, &height); err != nil {
-		return
-	}
-	if width < minWindowWidth || height < minWindowHeight {
-		return
-	}
-	width, height = a.clampToScreen(width, height)
-	runtime.WindowSetSize(a.ctx, width, height)
-	runtime.WindowCenter(a.ctx)
-}
-
-func (a *App) fatal(ctx context.Context, title string, err error) {
-	runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
-		Type: runtime.ErrorDialog, Title: title, Message: err.Error(),
-	})
-	runtime.Quit(ctx)
-}
-
-// shutdown records whatever size the window was left at, so dragging the frame is
-// remembered the same way picking a preset is.
-func (a *App) shutdown(ctx context.Context) {
-	if a.q != nil {
-		if w, h := runtime.WindowGetSize(ctx); w >= minWindowWidth && h >= minWindowHeight {
-			_ = a.saveWindowSize(w, h)
+func (a *App) savedWindowSize() (int, int) {
+	width, height := defaultWindowWidth, defaultWindowHeight
+	if raw, err := a.q.GetSetting(a.ctx, settingWindowSize); err == nil {
+		var w, h int
+		if _, err := fmt.Sscanf(raw, "%dx%d", &w, &h); err == nil && w >= minWindowWidth && h >= minWindowHeight {
+			width, height = w, h
 		}
 	}
-	if a.conn != nil {
-		a.conn.Close()
+	return a.clampToScreen(width, height)
+}
+
+func (a *App) rememberWindowSize() {
+	if a.q == nil || a.window == nil {
+		return
+	}
+	if w, h := a.window.Size(); w >= minWindowWidth && h >= minWindowHeight {
+		_ = a.saveWindowSize(w, h)
 	}
 }
 

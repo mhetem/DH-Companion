@@ -1,5 +1,5 @@
-// Single import surface for the GM module. Everything here is bound on the Go
-// side as window.go.gm.Service.* — the generated wrappers just forward to it.
+// Single import surface for the GM module. Everything here is a method on
+// gm.Service, bound as a Wails service — the generated wrappers just forward to it.
 export {
   AdjustCampaignFear,
   AdjustFear,
@@ -111,11 +111,11 @@ export {
   UpdateCustomWeapon,
   UpdateCustomEnvironment,
   UpdateParty
-} from '../../../wailsjs/go/gm/Service.js'
+} from '../../../bindings/github.com/mhetem/DH-Companion/internal/gm/service.js'
 
-// The roller is bound as its own struct too — window.go.dice.Roller.*. Sizes()
-// serves the rollable die list, so the allowed set lives only in internal/dice.
-export { Damage, GM, Sizes } from '../../../wailsjs/go/dice/Roller.js'
+// The roller is bound as its own service too — dice.Roller. Sizes() serves the
+// rollable die list, so the allowed set lives only in internal/dice.
+export { Damage, GM, Sizes } from '../../../bindings/github.com/mhetem/DH-Companion/internal/dice/roller.js'
 
 // Mirrors internal/gm/validate.go — keep the two in step.
 export const TIERS = ['1', '2', '3', '4']
