@@ -149,6 +149,17 @@ func (s *Service) ListUnassignedCountdowns() ([]Countdown, error) {
 	return countdownViews(rows)
 }
 
+func (s *Service) AdoptUnassignedCountdowns(campaignID int64) (int, error) {
+	if _, err := s.GetCampaign(campaignID); err != nil {
+		return 0, err
+	}
+	n, err := s.q.AssignUnassignedCountdowns(s.ctx, sql.NullInt64{Int64: campaignID, Valid: true})
+	if err != nil {
+		return 0, fmt.Errorf("moving countdowns into the campaign: %w", err)
+	}
+	return int(n), nil
+}
+
 func (s *Service) GetCountdown(id int64) (Countdown, error) {
 	row, err := s.q.GetCountdown(s.ctx, id)
 	if errors.Is(err, sql.ErrNoRows) {

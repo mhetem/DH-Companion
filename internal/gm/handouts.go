@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/fs"
 	"maps"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -51,18 +52,53 @@ func MediaFilter() string {
 	return strings.Join(patterns, ";")
 }
 
+const (
+	minViewZoom = 0.25
+	maxViewZoom = 8
+	maxViewPan  = 3
+)
+
+type HandoutView struct {
+	Rotate int     `json:"rotate"`
+	Zoom   float64 `json:"zoom"`
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+}
+
+func finite(v, fallback float64) float64 {
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		return fallback
+	}
+	return v
+}
+
+func NormalizeView(v HandoutView) HandoutView {
+	rotate := ((v.Rotate%360)+360)%360 + 45
+	zoom := finite(v.Zoom, 1)
+	if zoom == 0 {
+		zoom = 1
+	}
+	return HandoutView{
+		Rotate: rotate / 90 * 90 % 360,
+		Zoom:   min(max(zoom, minViewZoom), maxViewZoom),
+		X:      min(max(finite(v.X, 0), -maxViewPan), maxViewPan),
+		Y:      min(max(finite(v.Y, 0), -maxViewPan), maxViewPan),
+	}
+}
+
 type Handout struct {
-	ID           int64  `json:"id"`
-	CampaignID   int64  `json:"campaignId"`
-	Kind         string `json:"kind"`
-	Title        string `json:"title"`
-	Body         string `json:"body"`
-	MediaURL     string `json:"mediaUrl"`
-	MediaType    string `json:"mediaType"`
-	MediaName    string `json:"mediaName"`
-	MediaMissing bool   `json:"mediaMissing"`
-	CreatedAt    string `json:"createdAt"`
-	UpdatedAt    string `json:"updatedAt"`
+	ID           int64       `json:"id"`
+	CampaignID   int64       `json:"campaignId"`
+	Kind         string      `json:"kind"`
+	Title        string      `json:"title"`
+	Body         string      `json:"body"`
+	MediaURL     string      `json:"mediaUrl"`
+	MediaType    string      `json:"mediaType"`
+	MediaName    string      `json:"mediaName"`
+	MediaMissing bool        `json:"mediaMissing"`
+	View         HandoutView `json:"view"`
+	CreatedAt    string      `json:"createdAt"`
+	UpdatedAt    string      `json:"updatedAt"`
 }
 
 type HandoutInput struct {
@@ -109,8 +145,14 @@ func (s *Service) handoutView(r db.Handout) Handout {
 		Title:      r.Title,
 		Body:       r.Body,
 		MediaName:  r.MediaName,
-		CreatedAt:  r.CreatedAt,
-		UpdatedAt:  r.UpdatedAt,
+		View: HandoutView{
+			Rotate: int(r.ViewRotate),
+			Zoom:   r.ViewZoom,
+			X:      r.ViewX,
+			Y:      r.ViewY,
+		},
+		CreatedAt: r.CreatedAt,
+		UpdatedAt: r.UpdatedAt,
 	}
 	if r.Media != "" {
 		typ, ok := MediaContentType(r.Media)
@@ -223,6 +265,20 @@ func (s *Service) writeHandout(in HandoutInput, media, name string) (db.Handout,
 		return db.Handout{}, fmt.Errorf("updating handout: %w", err)
 	}
 	return row, nil
+}
+
+func (s *Service) SaveHandoutView(id int64, view HandoutView) error {
+	view = NormalizeView(view)
+	if err := s.q.SetHandoutView(s.ctx, db.SetHandoutViewParams{
+		ViewRotate: int64(view.Rotate),
+		ViewZoom:   view.Zoom,
+		ViewX:      view.X,
+		ViewY:      view.Y,
+		ID:         id,
+	}); err != nil {
+		return fmt.Errorf("saving the handout's framing: %w", err)
+	}
+	return nil
 }
 
 func (s *Service) DeleteHandout(id int64) error {

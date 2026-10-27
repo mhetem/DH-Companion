@@ -65,6 +65,45 @@ func TestCountdownWithoutBeatsHasEmptyTrail(t *testing.T) {
 	}
 }
 
+func TestAdoptUnassignedCountdowns(t *testing.T) {
+	s := newTestService(t)
+	home := newTestCampaign(t, s, "The Marius Contract")
+	other := newTestCampaign(t, s, "Age of Umbra")
+
+	for _, in := range []CountdownInput{
+		{Name: "Reinforcements", Max: 4},
+		{Name: "The tide", Max: 6},
+		{CampaignID: &other.ID, Name: "Already home", Max: 3},
+	} {
+		if _, err := s.SaveCountdown(in); err != nil {
+			t.Fatalf("SaveCountdown(%q): %v", in.Name, err)
+		}
+	}
+
+	n, err := s.AdoptUnassignedCountdowns(home.ID)
+	if err != nil {
+		t.Fatalf("AdoptUnassignedCountdowns: %v", err)
+	}
+	if n != 2 {
+		t.Fatalf("moved %d countdowns, want 2", n)
+	}
+	if loose, _ := s.ListUnassignedCountdowns(); len(loose) != 0 {
+		t.Fatalf("still unassigned: %+v", loose)
+	}
+	adopted, _ := s.ListCountdownsForCampaign(home.ID)
+	if len(adopted) != 2 {
+		t.Fatalf("campaign holds %d countdowns, want 2", len(adopted))
+	}
+	kept, _ := s.ListCountdownsForCampaign(other.ID)
+	if len(kept) != 1 || kept[0].Name != "Already home" {
+		t.Fatalf("the other campaign's clock moved: %+v", kept)
+	}
+
+	if _, err := s.AdoptUnassignedCountdowns(9999); err == nil {
+		t.Fatal("adopting into a missing campaign should fail")
+	}
+}
+
 func TestCountdownBeatsSurviveTicksAndShrink(t *testing.T) {
 	s := newTestService(t)
 

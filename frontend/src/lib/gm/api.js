@@ -3,6 +3,7 @@
 export {
   AdjustCampaignFear,
   AdjustFear,
+  AdoptUnassignedCountdowns,
   AdvanceCountdown,
   BrowseAdversaries,
   BrowseArmor,
@@ -128,6 +129,7 @@ export {
   ClearTable,
   CloseTableWindow,
   OpenTableWindow,
+  SetTableView,
   ShowHandout,
   TableNow,
   TableScreens,

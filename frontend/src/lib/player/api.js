@@ -9,12 +9,15 @@ export {
   AvailableDomainCards,
   Beastforms,
   BrowseDomainCards,
+  CreationBonuses,
   DeleteCharacter,
   DeleteCompanion,
   DropBeastform,
+  DropStance,
   DeleteExperience,
   DeleteItem,
   DomainList,
+  FavorInsteadOfHope,
   GetAncestry,
   GetCharacter,
   GetClass,
@@ -24,6 +27,7 @@ export {
   GetLoadout,
   GetSheet,
   ItemKinds,
+  LearnStance,
   Limits,
   ListAncestries,
   ListBeastforms,
@@ -32,30 +36,41 @@ export {
   ListCommunities,
   ListCompanions,
   ListExperiences,
+  ListGear,
   ListInventory,
   ListLevelUps,
+  ListTransformations,
   MarkArmor,
   MarkCompanionStress,
   MarkHP,
   MarkStress,
   MoveDomainCard,
   PlanLevelUp,
+  Refocus,
   RemoveDomainCard,
   Rest,
   RestAllowance,
   RestMoves,
+  RollBrawlersStrike,
+  RollCombo,
   RollCompanionDamage,
   RollDamage,
   RollDuality,
+  RollWeaponDamage,
   SaveCharacter,
   SaveCompanion,
   SaveExperience,
   SaveItem,
+  SetClassTracks,
   SetCompanionStress,
+  SetEffect,
   SetGold,
   SetItemEquipped,
+  SetTransformation,
   SetVitals,
+  ShiftStance,
   SwapDomainCard,
+  TakeDamage,
   ToggleCompanionUpgrade,
   Traits,
   Transform
@@ -94,6 +109,7 @@ export const DOMAINS = [
   'Blade',
   'Bone',
   'Codex',
+  'Dread',
   'Grace',
   'Midnight',
   'Sage',
@@ -120,6 +136,44 @@ export function itemKindLabel(kind) {
 
 export function traitLabel(key) {
   return TRAITS.find((t) => t.key === key)?.label ?? key
+}
+
+// The SRD gear a kind of inventory item can be picked from. Weapons are split by
+// category the same way the backend checks them, so a picked slug never fails
+// validation on save.
+export function gearFor(gear, kind) {
+  if (!gear) return []
+  if (kind === 'primary-weapon') return gear.weapons.filter((w) => w.category === 'Primary')
+  if (kind === 'secondary-weapon') return gear.weapons.filter((w) => w.category === 'Secondary')
+  if (kind === 'armor') return gear.armor
+  if (kind === 'consumable') return gear.consumables
+  return gear.items
+}
+
+// One line of the card's stats, as the SRD tables print them.
+export function gearLine(card) {
+  if (!card) return ''
+  if (card.damage) {
+    return [`Tier ${card.tier}`, card.trait, card.range, `${card.damage} ${card.damageType}`, card.burden].join(' · ')
+  }
+  if (card.baseScore !== undefined) {
+    return `Tier ${card.tier} · Armor ${card.baseScore} · Thresholds ${card.thresholdMajor}/${card.thresholdSevere} + level`
+  }
+  return card.rarity ? `${card.rarity} · ${card.table}` : card.table ?? ''
+}
+
+// Mirrors usesFavor, hasFlowState and the brawler checks in internal/player — the
+// dice panel runs standalone too, where there's no sheet to carry the flags.
+export const usesFavor = (c) => c?.classSlug === 'warlock' || c?.multiclassSlug === 'warlock'
+export const hasFlowState = (c) => c?.subclassSlug === 'martialArtist' && c?.subclassMastery >= 3
+export const isBrawler = (c) => c?.classSlug === 'brawler'
+
+// A weapon names the trait its attack rolls with. "Spellcast" isn't a trait of its
+// own — it means whichever one the subclass casts with, and a subclass that
+// doesn't cast leaves nothing to roll.
+export function weaponTrait(weapon, character) {
+  const name = weapon?.trait === 'Spellcast' ? character?.spellcastTrait : weapon?.trait
+  return (name ?? '').toLowerCase()
 }
 
 export function signed(n) {

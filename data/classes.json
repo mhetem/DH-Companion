@@ -1,4 +1,133 @@
 {
+    "assassin": {
+        "name": "Assassin",
+        "type": "Class",
+        "description": "Assassins are masters at inflicting deadly injuries with precise strikes. Unlike those who wield violence as only a means to an end, assassins approach death as a profession. Many members of this class believe theirs is a worthy, if not sacred, trade, and some join guilds to hone their craft, define their beliefs, and earn money. People from all walks of life hire assassins for their skills: powerful rulers looking to avoid all-out war, business leaders seeking to eliminate the competition, and even average people hoping to settle a grudge. Often, an assassin is the last resort for killing those previously believed to be unkillable. While some of these deadly professionals will destroy anyone in their path for the right reasons or the right price, others hold strict moral codes or personal rules that dictate their targets. Those who end up the target of an assassin should count themselves among the dead.",
+        "domains": [
+            "Blade",
+            "Midnight"
+        ],
+        "startingEvasion": "12",
+        "startingHitPoints": "5",
+        "classItems": [
+            "A list of names with several marked off",
+            "A rusted blade inscribed with an insignia"
+        ],
+        "hopeFeature": {
+            "common": "",
+            "title": "Deadly Determination",
+            "type": "Hope Feature",
+            "description": "<strong>Spend 3 Hope</strong> to clear 2 Stress."
+        },
+        "features": [
+            {
+                "common": "",
+                "title": "Marked for Death",
+                "type": "Class Feature",
+                "description": "On a successful weapon attack, you can <strong>mark a Stress</strong> to make the target <em>Marked for Death</em>. When you deal damage to a target you've <em>Marked for Death</em>, add a number of <strong>d4s</strong> equal to your tier to the damage roll.\n\nYou can have only one adversary <em>Marked for Death</em> at a time. This condition lasts until you take a rest, the current adversary <em>Marked for Death</em> is defeated, or the GM spends a number of Fear equal to your tier to clear it."
+            },
+            {
+                "common": "",
+                "title": "Get In & Get Out",
+                "type": "Class Feature",
+                "description": "<strong>Spend a Hope</strong> to ask the GM for a quick or inconspicuous way into or out of a place you can see. The next roll you make that acts on this information has advantage."
+            }
+        ],
+        "subclasses": [
+            {
+                "slug": "executionersGuild",
+                "name": "Executioners Guild",
+                "tagline": "Play the Executioners Guild if you want to strike down your targets with lethal precision.",
+                "spellcastTrait": "Agility",
+                "features": [
+                    {
+                        "common": "",
+                        "title": "First Strike",
+                        "type": "Foundation",
+                        "description": "The first time in a scene you succeed on an attack, you deal double damage."
+                    },
+                    {
+                        "common": "",
+                        "title": "Ambush",
+                        "type": "Foundation",
+                        "description": "Your \"Marked for Death\" feature uses <strong>d6s</strong> instead of d4s."
+                    },
+                    {
+                        "common": "",
+                        "title": "Death Strike",
+                        "type": "Specialization",
+                        "description": "When you deal Severe damage to a creature, you can <strong>mark a Stress</strong> to force them to mark an additional Hit Point."
+                    },
+                    {
+                        "common": "",
+                        "title": "Scorpion's Poise",
+                        "type": "Specialization",
+                        "description": "You gain a +2 bonus to your Evasion against attacks made by a creature you've <em>Marked for Death</em>."
+                    },
+                    {
+                        "common": "",
+                        "title": "True Strike",
+                        "type": "Mastery",
+                        "description": "Once per long rest when you fail an attack, you can <strong>spend a Hope</strong> to make it a success instead."
+                    },
+                    {
+                        "common": "",
+                        "title": "Backstab",
+                        "type": "Mastery",
+                        "description": "Your \"Marked for Death\" feature uses <strong>d8s</strong> instead of d6s."
+                    }
+                ]
+            },
+            {
+                "slug": "poisonersGuild",
+                "name": "Poisoners Guild",
+                "tagline": "Play the Poisoners Guild if you want to debilitate your targets with punishing afflictions.",
+                "spellcastTrait": "Knowledge",
+                "features": [
+                    {
+                        "common": "",
+                        "title": "Toxic Concoctions",
+                        "type": "Foundation",
+                        "description": "<strong>Mark a Stress</strong> to place <strong>1d4+1</strong> tokens on this card. When you make a successful weapon attack, you can spend a token to afflict the target with a poison. You know these poisons:\n\n- <strong><em>Ghost Petal:</em></strong> The target becomes temporarily <em>Vulnerable</em>.\n- <strong><em>Grave Spore:</em></strong> The target must also mark a Stress.\n- <strong><em>Leech Weed:</em></strong> You deal an extra <strong>1d6</strong> damage on this attack.\n\nWhen you take a long rest, clear all unspent tokens."
+                    },
+                    {
+                        "common": "",
+                        "title": "Poison Compendium",
+                        "type": "Specialization",
+                        "description": "You also know these poisons:\n\n- <strong><em>Midnight Vine:</em></strong> The target has disadvantage on attack rolls until it marks a Stress to clear this condition.\n- <strong><em>Gorgon Root:</em></strong> The target becomes temporarily <em>Restrained</em>."
+                    },
+                    {
+                        "common": "",
+                        "title": "Twin Fang",
+                        "type": "Specialization",
+                        "description": "When you afflict a target <em>Marked for Death</em> with a poison you know, you can spend an additional token to also inflict the effect of a second poison you know."
+                    },
+                    {
+                        "common": "",
+                        "title": "Venomancer",
+                        "type": "Mastery",
+                        "description": "You also know these poisons:\n\n- <strong><em>Blight Seed:</em></strong> The target gains a -3 penalty to their damage thresholds until the end of the scene. This effect can't stack.\n- <strong><em>Fear Leaf:</em></strong> You deal extra damage equal to the result of your Fear Die on this attack.\n- <strong><em>Corpse Thorn:</em></strong> The target gains disadvantage on reaction rolls until the end of the scene."
+                    },
+                    {
+                        "common": "",
+                        "title": "Adder's Blessing",
+                        "type": "Mastery",
+                        "description": "You are immune to poisons and other toxins."
+                    }
+                ]
+            }
+        ],
+        "backgroundQuestions": [
+            "You once killed someone you were close to. What happened, and how did it change you?",
+            "What organization trained you in the art of killing, and how did you become a member?",
+            "Throughout your career, one target has eluded you. Who are they, and how have they slipped through your fingers?"
+        ],
+        "connections": [
+            "I've killed someone for you. Who were they?",
+            "How did you save me when I was on the brink of death? What have I promised you as repayment?",
+            "What secret about myself did I tell you, and how did it change your view of me?"
+        ]
+    },
     "bard": {
         "name": "Bard",
         "type": "Class",
@@ -96,6 +225,135 @@
             "What made you realize we were going to be such good friends?",
             "What do I do that annoys you?",
             "Why do you grab my hand at night?"
+        ]
+    },
+    "brawler": {
+        "name": "Brawler",
+        "type": "Class",
+        "description": "Experts in unarmed combat, brawlers hone their bodies into lethal weapons. Whether they learned from formal training, studied with a mentor, or picked up their skills one fight at a time, the process is always rigorous as brawlers develop their body and mind to work as one. Brawlers are valued for their power and versatility and typically join a party or a cause when the need or desire arises. Because a brawler's body is their strongest weapon, they typically seek out new challenges or consistent sparring partners so they can maintain their skills and add new techniques to their repertoire. Though they might appear unassuming to those accustomed to foes who are armed to the teeth, brawlers often accomplish more with bare knuckles than an average soldier with a sword.",
+        "domains": [
+            "Valor",
+            "Bone"
+        ],
+        "startingEvasion": "10",
+        "startingHitPoints": "6",
+        "classItems": [
+            "Hand wraps from a mentor",
+            "A book about your secret hobby"
+        ],
+        "hopeFeature": {
+            "common": "",
+            "title": "Square Up",
+            "type": "Hope Feature",
+            "description": "<strong>Spend 3 Hope</strong> to intimidate a target within Close range, making them temporarily <em>Vulnerable</em>."
+        },
+        "features": [
+            {
+                "common": "",
+                "title": "I Am the Weapon",
+                "type": "Class Feature",
+                "description": "Your barehanded attacks are as strong as any blade. You have a primary weapon called Brawler's Strike equipped while you have no other Active Weapons. It uses a trait of your choice, has Melee range, and deals <strong>d8+d6</strong> physical damage using your Proficiency (both the d8 and d6 scale off your Proficiency). While this weapon is active, you gain a +1 bonus to your Evasion."
+            },
+            {
+                "common": "",
+                "title": "Combo Strike",
+                "type": "Class Feature",
+                "description": "After rolling damage on a successful attack with a Melee weapon, you can <strong>mark a Stress</strong> to start a combo strike. When you do, roll your Combo Die and note the result, then continue rolling your Combo Die until the result of your latest roll is lower than the roll that preceded it. You deal extra damage equal to the total of all rolled Combo Die results on this attack. The results can't be modified by any means.\n\nYour Combo Die starts as a <strong>d4</strong>. Once per tier, you can increase your Combo Die by one step as a level advancement option."
+            }
+        ],
+        "subclasses": [
+            {
+                "slug": "juggernaut",
+                "name": "Juggernaut",
+                "tagline": "Play the Juggernaut if you want to pulverize your opponents with crushing blows.",
+                "spellcastTrait": "",
+                "features": [
+                    {
+                        "common": "",
+                        "title": "Rugged",
+                        "type": "Foundation",
+                        "description": "Gain a permanent +3 bonus to your Severe damage threshold."
+                    },
+                    {
+                        "common": "",
+                        "title": "Overwhelm",
+                        "type": "Foundation",
+                        "description": "When you succeed on an attack against a target, you can <strong>spend a Hope</strong> to throw the target within Close range or to force them to mark a Stress."
+                    },
+                    {
+                        "common": "",
+                        "title": "Surrounded",
+                        "type": "Specialization",
+                        "description": "When you make an attack with a Melee weapon, you can <strong>spend any number of Hope</strong> to target an equal number of additional creatures within Melee range."
+                    },
+                    {
+                        "common": "",
+                        "title": "Eye for an Eye",
+                        "type": "Specialization",
+                        "description": "Once per rest when an adversary within Melee range forces you to mark any number of Hit Points, you can <strong>mark a Stress</strong> to force them to mark the same number of Hit Points."
+                    },
+                    {
+                        "common": "",
+                        "title": "Pummeljoy",
+                        "type": "Mastery",
+                        "description": "When you critically succeed on a Melee weapon attack, you gain an additional Hope, clear an additional Stress, and gain a +1 bonus to your Proficiency for that attack."
+                    },
+                    {
+                        "common": "",
+                        "title": "Not Done Yet",
+                        "type": "Mastery",
+                        "description": "When you take Severe damage, you can gain a Hope or clear a Stress."
+                    }
+                ]
+            },
+            {
+                "slug": "martialArtist",
+                "name": "Martial Artist",
+                "tagline": "Play the Martial Artist if you want to use a variety of fighting styles to eliminate your foes.",
+                "spellcastTrait": "",
+                "features": [
+                    {
+                        "common": "",
+                        "title": "Stance Fighter",
+                        "type": "Foundation",
+                        "description": "You can channel your inner resolve to shift into martial stances that grant you special benefits in combat.\n\nTake the Martial Stances sheet and choose two martial stances from Tier 1. Each time you level up your character, choose an additional stance from your tier or lower."
+                    },
+                    {
+                        "common": "",
+                        "title": "Keen Defenses",
+                        "type": "Specialization",
+                        "description": "When you're targeted by an attack, you can <strong>spend a Focus</strong> to gain a bonus to your Evasion equal to your tier against the attack."
+                    },
+                    {
+                        "common": "",
+                        "title": "Focus Cannon",
+                        "type": "Specialization",
+                        "description": "<strong>Spend a Focus</strong> to make an Instinct Roll against an adversary within Far range. On a success, deal <strong>d20+3</strong> magic damage using your Proficiency."
+                    },
+                    {
+                        "common": "",
+                        "title": "Limit Breaker",
+                        "type": "Mastery",
+                        "description": "Once per rest, you can perform an unbelievable feat of athletic prowess, such as running across water, leaping between distant rooftops, or scaling a building without needing to roll. When you do, gain a Hope and clear a Stress."
+                    },
+                    {
+                        "common": "",
+                        "title": "Flow State",
+                        "type": "Mastery",
+                        "description": "You can <strong>mark a Stress</strong> instead of spending a Focus to shift into a different stance. Additionally, you can <strong>spend a Focus</strong> instead of marking a Stress to start a combo strike."
+                    }
+                ]
+            }
+        ],
+        "backgroundQuestions": [
+            "Where did you spend time during your formative years that taught you, directly or indirectly, how to fight in the style you use?",
+            "What organization has vowed to kill you on sight, and what did you do to invoke their ire?",
+            "Who did you recently lose a fight to that you're desperate for a rematch against?"
+        ],
+        "connections": [
+            "What is one thing we're both afraid of?",
+            "What do I rely on you for during our travels? How do you feel about it?",
+            "I still haven't forgiven you for something you said to me. What was it, and why did you say it?"
         ]
     },
     "druid": {
@@ -758,6 +1016,141 @@
             "Why do we keep our shared past a secret?"
         ]
     },
+    "warlock": {
+        "name": "Warlock",
+        "type": "Class",
+        "description": "Those who've traded their lives-or perhaps even their souls-to an otherworldly patron in exchange for incredible power are known as warlocks. Often, these mortals have reached a point of desperation that leads them to make this sacrifice: they hope to protect themselves or a loved one, aid their community, seek vengeance, increase their status, or otherwise further their ambitions. The powerful entities they entreat are as varied as the warlocks themselves: gods, spirits, demons, or other beings unknown to even the mortal who makes the pact. The entities each have their own sphere of influence that defines their otherworldly power, and those that collect souls are rarely known for their benevolence. Thus, a warlock's power is defined by the relationship they maintain with their benefactor. Despite their terrifying magic, warlocks might find that someone or something else is pulling their strings.",
+        "domains": [
+            "Dread",
+            "Grace"
+        ],
+        "startingEvasion": "11",
+        "startingHitPoints": "5",
+        "classItems": [
+            "A carving that symbolizes your patron",
+            "A ring you can't remove"
+        ],
+        "hopeFeature": {
+            "common": "",
+            "title": "Patron's Boon",
+            "type": "Hope Feature",
+            "description": "When you fail a roll, you can <strong>spend 3 Hope</strong> to reroll with advantage."
+        },
+        "features": [
+            {
+                "common": "",
+                "title": "Patron's Pact",
+                "type": "Class Feature",
+                "description": "You have committed yourself to a supernatural entity-such as a god, fae, or demon-in exchange for power. Write their name on your character sheet, then work with your GM to determine their sphere of influence (such as Nature, Chaos, Wisdom, Mischief, Love, War, Justice, or Death). Before making an action roll that relates to your patron's sphere of influence, you can <strong>spend a Favor</strong> to call upon their aid, rolling your Patron Die and adding its result to the total. Your Patron Die starts at a <strong>d6</strong> and increases to a <strong>d8</strong> at level 5.\n\n<em>Sphere of influence examples:</em> Ambition, Artists, Chaos, Darkness, Death, Gamblers, Honor, Justice, Leaders, Love, Mercy, Mischief, Nature, Protectors, Revenge, Scholars, Secrets, Soldiers, Strength, Travelers, Tricksters, Truth, War, Wisdom."
+            },
+            {
+                "common": "",
+                "title": "Favor",
+                "type": "Class Feature",
+                "description": "You start with 3 Favor. You can use a downtime move to show tribute to your patron. Describe how and gain Favor equal to your Spellcast trait. Additionally, when you succeed on an action roll with Hope, you can choose to gain a Favor instead of a Hope.\n\n<em>The maximum Favor you can hold at one time is 6.</em>"
+            }
+        ],
+        "subclasses": [
+            {
+                "slug": "pactOfTheEndless",
+                "name": "Pact of the Endless",
+                "tagline": "Play the Pact of the Endless if you want to stand strong against enemies and avoid death.",
+                "spellcastTrait": "Presence",
+                "features": [
+                    {
+                        "common": "",
+                        "title": "Patron's Mantle",
+                        "type": "Foundation",
+                        "description": "<strong>Spend a Favor</strong> to cloak yourself in a terrifying aspect of your Patron that lasts until you take Severe damage or the scene ends. While this effect is active, you gain a bonus to your damage thresholds equal to your tier and have advantage on action rolls to intimidate a target."
+                    },
+                    {
+                        "common": "",
+                        "title": "Deathless Embrace",
+                        "type": "Foundation",
+                        "description": "Once per rest, <strong>spend any number of Favor</strong> to roll an equal number of Patron Dice. For each result of 4 or higher, clear a Hit Point."
+                    },
+                    {
+                        "common": "",
+                        "title": "Harrowing Invocation",
+                        "type": "Specialization",
+                        "description": "When an adversary targets you or an ally within Very Close range with an attack, you can <strong>spend a Favor</strong> to give them disadvantage on the roll. If the adversary fails the roll, they must also mark a Stress."
+                    },
+                    {
+                        "common": "",
+                        "title": "Damage Sink",
+                        "type": "Specialization",
+                        "description": "Once per rest, you can <strong>spend a Favor</strong> to halve incoming damage."
+                    },
+                    {
+                        "common": "",
+                        "title": "Dark Aegis",
+                        "type": "Mastery",
+                        "description": "Once per long rest when you would take damage, you can <strong>spend a Favor</strong> instead of marking Hit Points."
+                    },
+                    {
+                        "common": "",
+                        "title": "Draining Bane",
+                        "type": "Mastery",
+                        "description": "When an adversary targets you or an ally within Very Close range with an attack, you can <strong>spend a Favor</strong> to <em>Drain</em> them. When you do, they must mark a Stress, and you can clear a Stress. While <em>Drained</em>, the target uses a <strong>d12</strong> instead of a d20 for attack rolls (including for advantage or disadvantage) until they fail a roll."
+                    }
+                ]
+            },
+            {
+                "slug": "pactOfTheWrathful",
+                "name": "Pact of the Wrathful",
+                "tagline": "Play the Pact of the Wrathful if you want to destroy those who act against you.",
+                "spellcastTrait": "Presence",
+                "features": [
+                    {
+                        "common": "",
+                        "title": "Patron's Fury",
+                        "type": "Foundation",
+                        "description": "<strong>Spend a Favor</strong> to imbue your attacks with your Patron's power until you deal Severe damage or the scene ends. When you roll damage while this effect is active, you also roll a number of Patron Dice equal to your tier and add their total to the damage dealt."
+                    },
+                    {
+                        "common": "",
+                        "title": "Deadly Vengeance",
+                        "type": "Foundation",
+                        "description": "When you mark any number of Hit Points from an attack, you can <strong>spend a Favor</strong> to roll an equal number of Patron Dice. For each result of 4 or higher, the attacker marks a Hit Point."
+                    },
+                    {
+                        "common": "",
+                        "title": "Menacing Reach",
+                        "type": "Specialization",
+                        "description": "<strong>Spend a Favor</strong> to increase the range of your primary weapon by one step (such as Melee to Very Close or Very Close to Close) to a maximum of Very Far range. This effect ends when you make a successful attack with that weapon."
+                    },
+                    {
+                        "common": "",
+                        "title": "Diminish My Foes",
+                        "type": "Specialization",
+                        "description": "When you succeed with Hope on an action roll against a target, you can <strong>spend any number of Favor</strong> to force the target to mark an equal number of Stress."
+                    },
+                    {
+                        "common": "",
+                        "title": "Fearsome Attack",
+                        "type": "Mastery",
+                        "description": "<strong>Spend a Favor</strong> to reroll any number of your damage dice. You can continue spending Favor to use this feature on the same damage roll."
+                    },
+                    {
+                        "common": "",
+                        "title": "Otherworldly Ire",
+                        "type": "Mastery",
+                        "description": "Once per rest when you take damage, you can <strong>spend any number of Favor</strong> to roll that many Patron Dice and target a number of creatures within Close range equal to the highest result. Each target must mark a Hit Point."
+                    }
+                ]
+            }
+        ],
+        "backgroundQuestions": [
+            "Who from your community shunned you after you made a pact with your patron?",
+            "What desperate situation led you to pledge your life to your patron?",
+            "Your patron has given you one task you must accomplish above all else. What is it, and why does it worry you?"
+        ],
+        "connections": [
+            "Why do you think I confide in you about what my patron says and does?",
+            "Our relationship has changed since you saw me show tribute to my patron. What did you see, and how has it affected you?",
+            "I once did something very foolish, and you've never let me live it down. What was it?"
+        ]
+    },
     "warrior": {
         "name": "Warrior",
         "type": "Class",
@@ -861,6 +1254,123 @@
             "We knew each other long before this party came together. How?",
             "What mundane task do you usually help me with off the battlefield?",
             "What fear am I helping you overcome?"
+        ]
+    },
+    "witch": {
+        "name": "Witch",
+        "type": "Class",
+        "description": "Witches are magical practitioners who commune with the forces of nature and entities from realms beyond. These spellcasters call forth power through craft, combining the tangible and ephemeral by casting spells, murmuring incantations, creating talismans, weaving illusions, and maintaining other personalized practices. They can protect their allies and harm their enemies by invoking powerful forces beyond themselves-supernatural beings such as ancestors, deities, or aspects of nature. Often, their magical knowledge is passed down from these entities or through many generations of practitioners who gather in small groups known as covens. Witches are frequently feared and misunderstood, as their methods can appear mysterious, strange, and even macabre to the uninitiated. Whichever path they walk, a witch treads the boundary between light and shadow without fear.",
+        "domains": [
+            "Sage",
+            "Dread"
+        ],
+        "startingEvasion": "10",
+        "startingHitPoints": "6",
+        "classItems": [
+            "A small, harmless pet",
+            "A scrying stone"
+        ],
+        "hopeFeature": {
+            "common": "",
+            "title": "Witch's Charm",
+            "type": "Hope Feature",
+            "description": "When you or an ally within Far range fails an action roll, you can <strong>spend 3 Hope</strong> to change it into a success with Fear instead."
+        },
+        "features": [
+            {
+                "common": "",
+                "title": "Hex",
+                "type": "Class Feature",
+                "description": "<strong>Mark a Stress</strong> to temporarily <em>Hex</em> a target within Far range. While <em>Hexed</em>, the target gains a penalty to their damage rolls and Difficulty equal to your tier. The maximum number of creatures you can <em>Hex</em> at one time is equal to your Spellcast trait."
+            },
+            {
+                "common": "",
+                "title": "Commune",
+                "type": "Class Feature",
+                "description": "Once per long rest during a moment of calm, you can commune with an ancestor, a deity, a spirit, or an otherworldly being. Ask them a question, then roll a number of <strong>d6s</strong> equal to your Spellcast trait. Choose one of the results and reference the chart below for the effect.\n\n- <strong>1-3:</strong> You taste a flavor, smell a scent, or feel a sensation relevant to the answer.\n- <strong>4-5:</strong> You hear sounds or see a vision relevant to the answer.\n- <strong>6:</strong> You psychically experience a scene relevant to the answer as if you were there."
+            }
+        ],
+        "subclasses": [
+            {
+                "slug": "hedge",
+                "name": "Hedge",
+                "tagline": "Play the Hedge if you want to use your craft to empower yourself and your party.",
+                "spellcastTrait": "Knowledge",
+                "features": [
+                    {
+                        "common": "",
+                        "title": "Herbal Remedies",
+                        "type": "Foundation",
+                        "description": "When you or an ally in the scene clears 1 or more Hit Points or Stress as the result of using a consumable, increase the number cleared by 1."
+                    },
+                    {
+                        "common": "",
+                        "title": "Enchanted Talisman",
+                        "type": "Foundation",
+                        "description": "Once per rest, you can imbue a small item with your protective essence. <strong>Spend any number of Hope</strong> to place an equal number of tokens on this card. When the person holding the talisman takes damage, spend a token to reduce the number of Hit Points they mark by one. Clear all tokens from this card when you take a rest."
+                    },
+                    {
+                        "common": "",
+                        "title": "Walk Between Worlds",
+                        "type": "Specialization",
+                        "description": "During a moment of calm, make a <strong>Spellcast Roll (13)</strong>. Once per rest on a success, you can <strong>mark a Stress</strong> to step beyond the veil of death and converse with any nearby spirits. Place a number of tokens equal to your Spellcast trait on this card and remove one each time a spirit answers a question. When the last token is removed or at the end of the scene, you return to the Mortal Realm in the same spot you left it."
+                    },
+                    {
+                        "common": "",
+                        "title": "Vexing Malison",
+                        "type": "Specialization",
+                        "description": "You have advantage on attacks against <em>Hexed</em> creatures."
+                    },
+                    {
+                        "common": "",
+                        "title": "Circle of Power",
+                        "type": "Mastery",
+                        "description": "Once per rest, mark a circle on the ground outlining a Very Close area around you, and place a number of tokens equal to your Spellcast trait on this card. While within this circle, you and your allies gain a +2 bonus to damage thresholds, attack rolls, and Evasion. Remove a token each time you or an ally within the circle makes an action roll or evades an attack. This spell lasts until the last token is removed or you exit the circle."
+                    }
+                ]
+            },
+            {
+                "slug": "moon",
+                "name": "Moon",
+                "tagline": "Play the Moon if you want to embody celestial power to amplify your magic.",
+                "spellcastTrait": "Instinct",
+                "features": [
+                    {
+                        "common": "",
+                        "title": "Night's Glamour",
+                        "type": "Foundation",
+                        "description": "Make a <strong>Spellcast Roll (13)</strong> to <em>Glamour</em> yourself in a bewitching facade. While <em>Glamoured</em>, you have advantage on rolls that leverage your illusory appearance. Additionally, adversaries within Close range must mark a Stress to attack you.\n\nUnless you <strong>mark a Stress</strong> to maintain your <em>Glamour</em>, it drops when you mark a Hit Point or deal damage."
+                    },
+                    {
+                        "common": "",
+                        "title": "Moonbeam",
+                        "type": "Specialization",
+                        "description": "Once per session, you can conjure a column of moonlight that illuminates the area within Close range until the end of the scene. While bathed in this moonlight, you and your allies gain a +1 bonus to Spellcast Rolls and can see through illusions."
+                    },
+                    {
+                        "common": "",
+                        "title": "Ire of Pale Light",
+                        "type": "Specialization",
+                        "description": "When a <em>Hexed</em> creature within Very Far range fails an attack, they must mark a Stress."
+                    },
+                    {
+                        "common": "",
+                        "title": "Lunar Phases",
+                        "type": "Mastery",
+                        "description": "At the beginning of each session, roll a <strong>d6</strong> and place it on this card. You gain the matching effect until the end of session.\n\n- <strong>1 (New):</strong> <strong>Spend a Hope</strong> to negate Minor damage.\n- <strong>2-3 (Waxing):</strong> +2 to damage rolls.\n- <strong>4 (Full):</strong> +3 to damage thresholds.\n- <strong>5-6 (Waning):</strong> +1 to Evasion.\n\nOnce per rest, you can <strong>spend a Hope</strong> to increase the value of this die by one. If you increase the value of a 6, it becomes a 1."
+                    }
+                ]
+            }
+        ],
+        "backgroundQuestions": [
+            "Who from your community feared your magical craft? What rumor did they spread about you, and what truth did it contain?",
+            "You once used your power to help someone in a dire situation. Who were they, and why did they come to you?",
+            "Your magic once opened a door best left closed. Who or what was on the other side?"
+        ],
+        "connections": [
+            "What unique ritual or practice have I taught you that we now perform together?",
+            "I once appeared to you in a dream and shared a vision of the future. What did I tell you?",
+            "What do you typically come to me for advice about?"
         ]
     },
     "wizard": {

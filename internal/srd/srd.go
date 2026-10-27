@@ -25,6 +25,9 @@ const (
 	armorFile        = "armor.json"
 	itemsFile        = "items.json"
 	consumablesFile  = "consumables.json"
+
+	transformationsFile = "transformations.json"
+	stancesFile         = "martialStances.json"
 )
 
 type AdvancementEffect struct {
@@ -38,6 +41,7 @@ type AdvancementEffect struct {
 	Proficiency     int  `json:"proficiency"`
 	SubclassUpgrade int  `json:"subclassUpgrade"`
 	Multiclass      bool `json:"multiclass"`
+	ComboDie        int  `json:"comboDie"`
 }
 
 type Advancement struct {
@@ -81,6 +85,9 @@ type Catalog struct {
 	Items        map[string]cards.Loot
 	Consumables  map[string]cards.Loot
 	Leveling     Leveling
+
+	Transformations map[string]cards.Transformation
+	Stances         map[string]cards.Stances
 }
 
 func Load(fsys fs.FS) (*Catalog, error) {
@@ -97,6 +104,9 @@ func Load(fsys fs.FS) (*Catalog, error) {
 		Armor:        map[string]cards.Armor{},
 		Items:        map[string]cards.Loot{},
 		Consumables:  map[string]cards.Loot{},
+
+		Transformations: map[string]cards.Transformation{},
+		Stances:         map[string]cards.Stances{},
 	}
 
 	if err := decodeFile(fsys, adversariesFile, &c.Adversaries); err != nil {
@@ -205,6 +215,24 @@ func Load(fsys fs.FS) (*Catalog, error) {
 		i.Kind = cards.KindConsumable
 		i.Slug = slug
 		c.Consumables[slug] = i
+	}
+
+	if err := decodeFile(fsys, transformationsFile, &c.Transformations); err != nil {
+		return nil, err
+	}
+	for slug, t := range c.Transformations {
+		t.Kind = cards.KindTransformation
+		t.Slug = slug
+		c.Transformations[slug] = t
+	}
+
+	if err := decodeFile(fsys, stancesFile, &c.Stances); err != nil {
+		return nil, err
+	}
+	for slug, st := range c.Stances {
+		st.Kind = cards.KindStances
+		st.Slug = slug
+		c.Stances[slug] = st
 	}
 
 	if err := decodeFile(fsys, levelingFile, &c.Leveling); err != nil {
@@ -407,6 +435,25 @@ func (c *Catalog) BeastformsUpToTier(tier string) []cards.Beastform {
 func (c *Catalog) Companion(slug string) (cards.Companion, bool) {
 	p, ok := c.Companions[slug]
 	return p, ok
+}
+
+func (c *Catalog) Transformation(slug string) (cards.Transformation, bool) {
+	t, ok := c.Transformations[slug]
+	return t, ok
+}
+
+func (c *Catalog) ListTransformations() []cards.Transformation {
+	out := make([]cards.Transformation, 0, len(c.Transformations))
+	for _, t := range c.Transformations {
+		out = append(out, t)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out
+}
+
+func (c *Catalog) StanceSheet(slug string) (cards.Stances, bool) {
+	st, ok := c.Stances[slug]
+	return st, ok
 }
 
 func (c *Catalog) EnvironmentsByTier(tier string) []cards.Environment {

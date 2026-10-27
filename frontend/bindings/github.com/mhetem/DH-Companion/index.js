@@ -22,6 +22,10 @@ import * as $models from "./models.js";
  */
 
 /**
+ * @typedef {$models.TableView} TableView
+ */
+
+/**
  * @typedef {$models.TableWindow} TableWindow
  */
 

@@ -99,7 +99,8 @@ database.
   **scenes** (filling the screen) and **text** (markdown, over an optional backdrop), as
   images or looping video, so animated maps work too. Press **Show** and it crossfades in;
   **Blank** takes the screen to black. Nothing you browse, edit or prepare reaches the
-  players until you press Show.
+  players until you press Show. **Turn, zoom and drag** what's showing from the GM's preview
+  or on the player window itself — each map remembers how it was framed.
 - **Full-text search** over notes, master notes, world pages, adversaries and environments
   in one SQLite FTS5 index, with highlighted excerpts. Equipment and loot are deliberately
   left out: six hundred-odd gear rows would bury the handful of hits you actually search for.
@@ -109,22 +110,35 @@ database.
 ### Player
 
 - **Character creation** — a seven-step wizard through class, subclass, ancestry, community
-  and traits, over the full SRD catalog (9 classes and their subclasses, 19 ancestries, 9
-  communities), with the text for every option shown beside the picker.
+  and traits, over the full SRD catalog (13 classes and their subclasses — the Assassin,
+  Brawler, Warlock and Witch included — 19 ancestries, 9 communities), with the text for
+  every option shown beside the picker.
 - **The sheet** — traits, live-tracked Hit Points, Stress, Hope and armor slots, Evasion and
   both damage thresholds, gold in handfuls/bags/chests, and your class, subclass, ancestry
   and community features on the page.
 - **Your loadout, in full, on the sheet** — the five cards whose effects you can actually
   use, with their complete text, right where you're playing from.
 - **Loadout and vault** — you know two domain cards at level 1 and one more per level; five
-  of them can sit in your loadout at a time, the rest in the vault (189 cards in the
-  catalog). The pool only ever offers cards in your domains at or below your level.
+  of them can sit in your loadout at a time, the rest in the vault (210 cards across ten
+  domains, Dread included). The pool only ever offers cards in your domains at or below your
+  level.
 - **Recall Cost is enforced.** Swapping a card in from your vault mid-session marks Stress
   equal to its Recall Cost — and that cost is waived on a rest, so the short/long rest dialog
   offers the same swap for free. The app tells you the price before you pay it, and refuses
   the swap with the arithmetic spelled out if you can't.
 - **Inventory** — gear and consumables, with one primary weapon, one secondary and one set of
-  armor equipped at a time, plus a one-press way to add your class's starting items.
+  armor equipped at a time, plus a one-press way to add your class's starting items. Pick
+  gear from the SRD tables as you type its name — every weapon, armor, item and consumable —
+  or keep anything else as free text. **Equipping SRD armor sets your Armor Score and both
+  thresholds**, and gear features like a shield's *+1 to Armor Score* or heavy armor's
+  *−1 to Evasion* are applied while it's on; a two-handed weapon takes both hands.
+- **Abilities count themselves in** — subclass features like the Stalwart's *Unwavering*,
+  the Galapa's *Shell*, and loadout cards like *Fortified Armor* or *Untouchable* adjust
+  Evasion, Armor Score, thresholds and slots as you level, equip and swap cards, and the
+  Defenses card lists what it counted. Situational ones stay yours to apply.
+- **Taking damage** — type the damage you took and the sheet marks the right number of Hit
+  Points off your thresholds, optionally through an Armor Slot, and tells you when it's your
+  last.
 - **Levelling** — the tier advancement table with its slot boxes, remembering what you spent
   at earlier levels in the same tier, and applying the tier achievements at 2, 5 and 8.
   Every advancement that needs a follow-up choice grows it inline, a disabled *Level up*
@@ -135,14 +149,28 @@ database.
   given once you're there.
 - **Duality dice** — 2d12 read as Hope and Fear with your trait and Experience modifiers.
   A roll with Hope grants you a Hope and a critical also clears a Stress, written to your
-  sheet as part of the roll. Damage rolls use your Proficiency as the dice count. The roller
-  sits in a collapsible block on the sheet as well as in its own section, and **clicking any
-  trait rolls it**.
+  sheet as part of the roll. Damage rolls use your Proficiency as the dice count, and each
+  equipped SRD weapon gets **Attack** (its trait) and **Damage** (its die and modifier)
+  buttons. The roller sits in a collapsible block on the sheet as well as in its own section,
+  and **clicking any trait rolls it**.
 - **Rests** — choose your downtime moves (two on a short rest, three on a long one) rather
   than clearing everything by default, and each one reports the roll behind it.
 - **Beastform** for druids — every form at your tier or lower with its trait and Evasion
   bonuses, attack and features. Transforming marks a Stress and shows your effective Evasion
   while you're in it.
+- **Transformations** — Demigod, Ghost, Reanimated, Shapeshifter, Vampire and Werewolf, taken
+  on the sheet when the GM grants one, with their features and questions beside your
+  ancestry and community.
+- **Martial Stances** for Martial Artist brawlers — mark the stances you know (within your
+  allowance and tier), shift into one by spending a Focus, and the sheet drops you out on
+  Severe damage. Focus is a track with a *Refocus* roll beside it.
+- **Class trackers** — a warlock's Favor (with *Favor instead of Hope* after a roll and *Show
+  Tribute* on a rest), a brawler's Combo Die (raised as a level-up advancement, rolled as a
+  combo strike), and Brawler's Strike in the dice panel while barehanded.
+- **What's true right now** — Eldritch Flesh, Conjure Shield, your stance, your Beastform, and
+  toggles for timed effects like Patron's Mantle, Rogue's Dodge, Channeling or Frenzy adjust
+  the Evasion and thresholds a hit is judged against, without touching your base numbers, and
+  end themselves on the hit or rest that ends them.
 - **Companion sheet** for Beastbound rangers — name, Evasion, attack, damage die and range,
   a Stress track, Companion Experiences, and the level-up options as a checklist. Damage
   rolls use your Proficiency and their die.
@@ -319,6 +347,19 @@ a field, and while a dialog is open.
 Selection is the keyboard's cursor over the roster and is deliberately *not* spotlight —
 spotlight is a rules state you set on purpose and can hold on several combatants at once.
 
+### Player window
+
+These work on the player window itself, so they aren't on the <kbd>?</kbd> sheet.
+
+| Key | Action |
+|---|---|
+| <kbd>F11</kbd> / double-click | Toggle fullscreen |
+| <kbd>Esc</kbd> | Leave fullscreen |
+| <kbd>r</kbd> / <kbd>R</kbd> | Turn what's showing right / left |
+| <kbd>+</kbd> / <kbd>−</kbd> | Zoom in / out — the mouse wheel zooms at the cursor |
+| <kbd>0</kbd> | Reset the framing |
+| Drag | Move what's showing |
+
 ## Tech stack
 
 - **Go 1.26** with **[Wails v3](https://wails.io/)** — native desktop shell, the system
@@ -406,13 +447,18 @@ internal/
     leveling.go           the advancement plan and its application
     rest.go               downtime moves, short and long
     roll.go               duality and damage rolls that write back
+    equipment.go          SRD gear, defenses kept in step with it, weapon damage
+    abilities.go          the abilities with fixed bonuses, Bare Bones, and what the wizard adds
+    effects.go            what's true right now: stress-, hope- and stance-driven bonuses, toggles
+    classfeatures.go      Favor, Focus, stances, combo strikes, Brawler's Strike
+    damage.go             taking damage against the thresholds
     beastform.go          druid forms
     companion.go          the Beastbound ranger's companion
   share/                the versioned share-code codec
   update/               GitHub release feed check
 
 sql/
-  schema/               goose migrations (30, embedded)
+  schema/               goose migrations (34, embedded)
   queries/              sqlc sources
 
 data/                   SRD json + //go:embed
@@ -650,7 +696,7 @@ The **software** — Go, Svelte, CSS, SQL, build config, and the Hilt name and l
 [MIT](LICENSE).
 
 The **game content in `data/`** is not. It comes from the Daggerheart System Reference
-Document 1.0, © Critical Role, LLC, used under the
+Document 2.0, © Critical Role, LLC, used under the
 [Darrington Press Community Gaming License](https://darringtonpress.com/license/), and stays
 the property of its owner. The required attribution, and what applies to you if you fork
 this, are in [NOTICE.md](NOTICE.md).

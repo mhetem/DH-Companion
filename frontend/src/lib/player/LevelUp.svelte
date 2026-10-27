@@ -14,6 +14,7 @@
   let { open = $bindable(false), characterId, onapplied, oncancel } = $props()
 
   let plan = $state(null)
+  let classes = $state([])
   let loading = $state(false)
   let saving = $state(false)
   let error = $state('')
@@ -35,11 +36,32 @@
 
   const cardsChosen = $derived([levelCard, ...picks.map((p) => p.domainCardSlug)].filter(Boolean))
 
+  // Multiclassing opens the new class's domains in this same level-up, so their
+  // cards join the pool as soon as the class is picked, and leave it if the pick
+  // changes. The backend applies the multiclass before it checks the cards, so it
+  // accepts the same thing.
+  const newDomains = $derived.by(() => {
+    const slug = picks.find((p) => p.multiclassSlug)?.multiclassSlug
+    return classes.find((k) => k.slug === slug)?.domains ?? []
+  })
+  const pool = $derived([
+    ...(plan?.availableCards ?? []),
+    ...(plan?.multiclassCards ?? []).filter((c) => newDomains.includes(c.domain))
+  ])
+
+  $effect(() => {
+    const offered = new Set(pool.map((c) => c.slug))
+    if (levelCard && !offered.has(levelCard)) levelCard = ''
+    for (const pick of picks) {
+      if (pick.domainCardSlug && !offered.has(pick.domainCardSlug)) pick.domainCardSlug = ''
+    }
+  })
+
   // Picking a card by name alone meant levelling up blind. The select stays the
   // control — a stable option list is what keeps the binding from desyncing — and
   // the card it lands on is rendered underneath so you can read it before committing.
   function cardBySlug(slug) {
-    return plan?.availableCards.find((c) => c.slug === slug) ?? null
+    return pool.find((c) => c.slug === slug) ?? null
   }
 
   // What's still missing, in words. A disabled button with no reason attached is the
@@ -82,8 +104,6 @@
   })
 
   const complete = $derived(blockers.length === 0)
-
-  let classes = $state([])
 
   $effect(() => {
     if (!open || !characterId) return
@@ -316,7 +336,7 @@
                   <span>Extra domain card</span>
                   <select bind:value={pick.domainCardSlug}>
                     <option value="">Choose a card…</option>
-                    {#each plan.availableCards as card (card.slug)}
+                    {#each pool as card (card.slug)}
                       <option value={card.slug} disabled={card.slug !== pick.domainCardSlug && cardsChosen.includes(card.slug)}>
                         {card.name} — {card.domain} {card.level}
                       </option>
@@ -358,7 +378,7 @@
       <h3>Level {plan.toLevel} domain card</h3>
       <select bind:value={levelCard}>
         <option value="">Choose a card…</option>
-        {#each plan.availableCards as card (card.slug)}
+        {#each pool as card (card.slug)}
           <option value={card.slug} disabled={card.slug !== levelCard && picks.some((p) => p.domainCardSlug === card.slug)}>
             {card.name} — {card.domain} {card.level} ({card.type})
           </option>

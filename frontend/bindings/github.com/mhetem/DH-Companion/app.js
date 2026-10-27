@@ -128,6 +128,16 @@ export function SelfUpdateSupport() {
 }
 
 /**
+ * @param {number} handoutID
+ * @param {gm$0.HandoutView} view
+ * @param {string} origin
+ * @returns {$CancellablePromise<gm$0.HandoutView>}
+ */
+export function SetTableView(handoutID, view, origin) {
+    return $Call.ByID(48644480, handoutID, view, origin);
+}
+
+/**
  * @param {number} scale
  * @returns {$CancellablePromise<void>}
  */

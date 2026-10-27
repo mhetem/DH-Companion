@@ -4,19 +4,23 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
+	"github.com/mhetem/DH-Companion/internal/cards"
 	"github.com/mhetem/DH-Companion/internal/db"
 )
 
 type Item struct {
-	ID       int64  `json:"id"`
-	Name     string `json:"name"`
-	Kind     string `json:"kind"`
-	Qty      int    `json:"qty"`
-	Equipped bool   `json:"equipped"`
-	Detail   string `json:"detail"`
+	ID       int64         `json:"id"`
+	Name     string        `json:"name"`
+	Kind     string        `json:"kind"`
+	Qty      int           `json:"qty"`
+	Equipped bool          `json:"equipped"`
+	Detail   string        `json:"detail"`
+	SrdSlug  string        `json:"srdSlug"`
+	Weapon   *cards.Weapon `json:"weapon"`
+	Armor    *cards.Armor  `json:"armor"`
+	Loot     *cards.Loot   `json:"loot"`
 }
 
 type ItemInput struct {
@@ -27,17 +31,41 @@ type ItemInput struct {
 	Qty         int    `json:"qty"`
 	Equipped    bool   `json:"equipped"`
 	Detail      string `json:"detail"`
+	SrdSlug     string `json:"srdSlug"`
 }
 
-func itemView(r db.InventoryItem) Item {
-	return Item{
+func (s *Service) itemView(r db.InventoryItem) Item {
+	item := Item{
 		ID:       r.ID,
 		Name:     r.Name,
 		Kind:     r.Kind,
 		Qty:      int(r.Qty),
 		Equipped: r.Equipped == 1,
 		Detail:   r.Detail,
+		SrdSlug:  r.SrdSlug,
 	}
+	if r.SrdSlug == "" {
+		return item
+	}
+	switch r.Kind {
+	case "primary-weapon", "secondary-weapon":
+		if w, ok := s.catalog.Weapon(r.SrdSlug); ok {
+			item.Weapon = &w
+		}
+	case "armor":
+		if a, ok := s.catalog.ArmorPiece(r.SrdSlug); ok {
+			item.Armor = &a
+		}
+	case "item":
+		if l, ok := s.catalog.Item(r.SrdSlug); ok {
+			item.Loot = &l
+		}
+	case "consumable":
+		if l, ok := s.catalog.Consumable(r.SrdSlug); ok {
+			item.Loot = &l
+		}
+	}
+	return item
 }
 
 func (s *Service) ListInventory(characterID int64) ([]Item, error) {
@@ -47,7 +75,7 @@ func (s *Service) ListInventory(characterID int64) ([]Item, error) {
 	}
 	out := make([]Item, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, itemView(r))
+		out = append(out, s.itemView(r))
 	}
 	return out, nil
 }
@@ -61,6 +89,10 @@ func (s *Service) SaveItem(in ItemInput) ([]Item, error) {
 	if err != nil {
 		return nil, err
 	}
+	slug, err := s.validateItemSlug(kind, in.SrdSlug)
+	if err != nil {
+		return nil, err
+	}
 	qty := clamp(in.Qty, 0, 999)
 	if in.ID == nil && in.Qty == 0 {
 		qty = 1
@@ -69,55 +101,54 @@ func (s *Service) SaveItem(in ItemInput) ([]Item, error) {
 	if in.Equipped {
 		equipped = 1
 	}
+	detail := strings.TrimSpace(in.Detail)
 
 	characterID := in.CharacterID
 	if in.ID == nil {
 		if _, err := s.character(characterID); err != nil {
 			return nil, err
 		}
-		if equipped == 1 && slices.Contains(equipExclusiveKinds, kind) {
-			if err := s.unequipKind(characterID, kind); err != nil {
-				return nil, err
-			}
-		}
-		if _, err := s.q.CreateInventoryItem(s.ctx, db.CreateInventoryItemParams{
-			CharacterID: characterID,
-			Name:        name,
-			Kind:        kind,
-			Qty:         int64(qty),
-			Equipped:    equipped,
-			Detail:      strings.TrimSpace(in.Detail),
-		}); err != nil {
-			return nil, fmt.Errorf("creating item: %w", err)
-		}
-		return s.ListInventory(characterID)
-	}
-
-	existing, err := s.q.GetInventoryItem(s.ctx, *in.ID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, notFound("item", fmt.Sprint(*in.ID))
-	}
-	if err != nil {
-		return nil, fmt.Errorf("loading item: %w", err)
-	}
-	characterID = existing.CharacterID
-
-	if equipped == 1 && slices.Contains(equipExclusiveKinds, kind) {
-		if err := s.unequipKind(characterID, kind); err != nil {
+	} else {
+		existing, err := s.inventoryItem(*in.ID)
+		if err != nil {
 			return nil, err
 		}
+		characterID = existing.CharacterID
 	}
-	if _, err := s.q.UpdateInventoryItem(s.ctx, db.UpdateInventoryItemParams{
-		Name:     name,
-		Kind:     kind,
-		Qty:      int64(qty),
-		Equipped: equipped,
-		Detail:   strings.TrimSpace(in.Detail),
-		ID:       *in.ID,
-	}); err != nil {
-		return nil, fmt.Errorf("updating item: %w", err)
-	}
-	return s.ListInventory(characterID)
+
+	return s.changeEquipment(characterID, func(q *db.Queries) error {
+		if equipped == 1 {
+			if err := s.makeRoom(q, characterID, kind, slug); err != nil {
+				return err
+			}
+		}
+		if in.ID == nil {
+			if _, err := q.CreateInventoryItem(s.ctx, db.CreateInventoryItemParams{
+				CharacterID: characterID,
+				Name:        name,
+				Kind:        kind,
+				Qty:         int64(qty),
+				Equipped:    equipped,
+				Detail:      detail,
+				SrdSlug:     slug,
+			}); err != nil {
+				return fmt.Errorf("creating item: %w", err)
+			}
+			return nil
+		}
+		if _, err := q.UpdateInventoryItem(s.ctx, db.UpdateInventoryItemParams{
+			Name:     name,
+			Kind:     kind,
+			Qty:      int64(qty),
+			Equipped: equipped,
+			Detail:   detail,
+			SrdSlug:  slug,
+			ID:       *in.ID,
+		}); err != nil {
+			return fmt.Errorf("updating item: %w", err)
+		}
+		return nil
+	})
 }
 
 func (s *Service) AdjustItemQty(id int64, delta int) ([]Item, error) {
@@ -132,40 +163,36 @@ func (s *Service) AdjustItemQty(id int64, delta int) ([]Item, error) {
 }
 
 func (s *Service) SetItemEquipped(id int64, equipped bool) ([]Item, error) {
-	existing, err := s.q.GetInventoryItem(s.ctx, id)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, notFound("item", fmt.Sprint(id))
-	}
+	existing, err := s.inventoryItem(id)
 	if err != nil {
-		return nil, fmt.Errorf("loading item: %w", err)
+		return nil, err
 	}
-	if equipped && slices.Contains(equipExclusiveKinds, existing.Kind) {
-		if err := s.unequipKind(existing.CharacterID, existing.Kind); err != nil {
-			return nil, err
+	return s.changeEquipment(existing.CharacterID, func(q *db.Queries) error {
+		flag := int64(0)
+		if equipped {
+			flag = 1
+			if err := s.makeRoom(q, existing.CharacterID, existing.Kind, existing.SrdSlug); err != nil {
+				return err
+			}
 		}
-	}
-	flag := int64(0)
-	if equipped {
-		flag = 1
-	}
-	if _, err := s.q.SetInventoryEquipped(s.ctx, db.SetInventoryEquippedParams{Equipped: flag, ID: id}); err != nil {
-		return nil, fmt.Errorf("equipping item: %w", err)
-	}
-	return s.ListInventory(existing.CharacterID)
+		if _, err := q.SetInventoryEquipped(s.ctx, db.SetInventoryEquippedParams{Equipped: flag, ID: id}); err != nil {
+			return fmt.Errorf("equipping item: %w", err)
+		}
+		return nil
+	})
 }
 
 func (s *Service) DeleteItem(id int64) ([]Item, error) {
-	existing, err := s.q.GetInventoryItem(s.ctx, id)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, notFound("item", fmt.Sprint(id))
-	}
+	existing, err := s.inventoryItem(id)
 	if err != nil {
-		return nil, fmt.Errorf("loading item: %w", err)
+		return nil, err
 	}
-	if err := s.q.DeleteInventoryItem(s.ctx, id); err != nil {
-		return nil, fmt.Errorf("deleting item: %w", err)
-	}
-	return s.ListInventory(existing.CharacterID)
+	return s.changeEquipment(existing.CharacterID, func(q *db.Queries) error {
+		if err := q.DeleteInventoryItem(s.ctx, id); err != nil {
+			return fmt.Errorf("deleting item: %w", err)
+		}
+		return nil
+	})
 }
 
 func (s *Service) AddClassItems(characterID int64) ([]Item, error) {
@@ -196,8 +223,19 @@ func (s *Service) AddClassItems(characterID int64) ([]Item, error) {
 	return s.ListInventory(characterID)
 }
 
-func (s *Service) unequipKind(characterID int64, kind string) error {
-	if err := s.q.UnequipInventoryKind(s.ctx, db.UnequipInventoryKindParams{
+func (s *Service) inventoryItem(id int64) (db.InventoryItem, error) {
+	row, err := s.q.GetInventoryItem(s.ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return db.InventoryItem{}, notFound("item", fmt.Sprint(id))
+	}
+	if err != nil {
+		return db.InventoryItem{}, fmt.Errorf("loading item: %w", err)
+	}
+	return row, nil
+}
+
+func (s *Service) unequipKind(q *db.Queries, characterID int64, kind string) error {
+	if err := q.UnequipInventoryKind(s.ctx, db.UnequipInventoryKindParams{
 		CharacterID: characterID,
 		Kind:        kind,
 	}); err != nil {

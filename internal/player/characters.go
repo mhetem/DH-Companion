@@ -44,6 +44,8 @@ type Character struct {
 	SpellcastTrait         string         `json:"spellcastTrait"`
 	BeastformSlug          string         `json:"beastformSlug"`
 	BeastformName          string         `json:"beastformName"`
+	TransformationSlug     string         `json:"transformationSlug"`
+	TransformationName     string         `json:"transformationName"`
 	HPMax                  int            `json:"hpMax"`
 	HPMarked               int            `json:"hpMarked"`
 	StressMax              int            `json:"stressMax"`
@@ -55,6 +57,16 @@ type Character struct {
 	ArmorMarked            int            `json:"armorMarked"`
 	ThresholdMajor         int            `json:"thresholdMajor"`
 	ThresholdSevere        int            `json:"thresholdSevere"`
+	EffectiveEvasion       int            `json:"effectiveEvasion"`
+	EffectiveMajor         int            `json:"effectiveMajor"`
+	EffectiveSevere        int            `json:"effectiveSevere"`
+	Live                   []Bonus        `json:"live"`
+	Favor                  int            `json:"favor"`
+	Focus                  int            `json:"focus"`
+	ComboDie               int            `json:"comboDie"`
+	KnownStances           []string       `json:"knownStances"`
+	ActiveStance           string         `json:"activeStance"`
+	ActiveEffects          []string       `json:"activeEffects"`
 	Gold                   Gold           `json:"gold"`
 	Background             string         `json:"background"`
 	Connections            string         `json:"connections"`
@@ -71,6 +83,8 @@ type Sheet struct {
 	MulticlassSubclass *cards.Subclass       `json:"multiclassSubclass"`
 	Ancestry           *cards.Ancestry       `json:"ancestry"`
 	Community          *cards.Community      `json:"community"`
+	Transformation     *cards.Transformation `json:"transformation"`
+	Stances            *cards.Stances        `json:"stances"`
 	Loadout            []DomainCard          `json:"loadout"`
 	Vault              []DomainCard          `json:"vault"`
 	Inventory          []Item                `json:"inventory"`
@@ -78,6 +92,12 @@ type Sheet struct {
 	LoadoutMax         int                   `json:"loadoutMax"`
 	LevelUps           []LevelUpRecord       `json:"levelUps"`
 	CanLevelUp         bool                  `json:"canLevelUp"`
+	Bonuses            []Bonus               `json:"bonuses"`
+	Effects            []EffectOption        `json:"effects"`
+	StanceAllowance    int                   `json:"stanceAllowance"`
+	UsesFavor          bool                  `json:"usesFavor"`
+	UsesFocus          bool                  `json:"usesFocus"`
+	FlowState          bool                  `json:"flowState"`
 }
 
 type CharacterInput struct {
@@ -124,19 +144,26 @@ func (s *Service) characterView(r db.Character) Character {
 			"presence":  int(r.Presence),
 			"knowledge": int(r.Knowledge),
 		},
-		MarkedTraits:    decodeTraitList(r.MarkedTraits),
-		BeastformSlug:   r.BeastformSlug,
-		HPMax:           int(r.HpMax),
-		HPMarked:        int(r.HpMarked),
-		StressMax:       int(r.StressMax),
-		StressMarked:    int(r.StressMarked),
-		Hope:            int(r.Hope),
-		HopeMax:         HopeMax,
-		Evasion:         int(r.Evasion),
-		ArmorScore:      int(r.ArmorScore),
-		ArmorMarked:     int(r.ArmorMarked),
-		ThresholdMajor:  int(r.ThresholdMajor),
-		ThresholdSevere: int(r.ThresholdSevere),
+		MarkedTraits:       decodeTraitList(r.MarkedTraits),
+		BeastformSlug:      r.BeastformSlug,
+		TransformationSlug: r.TransformationSlug,
+		HPMax:              int(r.HpMax),
+		HPMarked:           int(r.HpMarked),
+		StressMax:          int(r.StressMax),
+		StressMarked:       int(r.StressMarked),
+		Hope:               int(r.Hope),
+		HopeMax:            HopeMax,
+		Evasion:            int(r.Evasion),
+		ArmorScore:         int(r.ArmorScore),
+		ArmorMarked:        int(r.ArmorMarked),
+		ThresholdMajor:     int(r.ThresholdMajor),
+		ThresholdSevere:    int(r.ThresholdSevere),
+		Favor:              int(r.Favor),
+		Focus:              int(r.Focus),
+		ComboDie:           int(r.ComboDie),
+		KnownStances:       decodeTraitList(r.KnownStances),
+		ActiveStance:       r.ActiveStance,
+		ActiveEffects:      decodeTraitList(r.ActiveEffects),
 		Gold: Gold{
 			Handfuls: int(r.GoldHandfuls),
 			Bags:     int(r.GoldBags),
@@ -174,6 +201,19 @@ func (s *Service) characterView(r db.Character) Character {
 		if form, ok := s.catalog.Beastform(r.BeastformSlug); ok {
 			c.BeastformName = form.Name
 		}
+	}
+	if t, ok := s.catalog.Transformation(r.TransformationSlug); ok && r.TransformationSlug != "" {
+		c.TransformationName = t.Name
+	}
+
+	held, _ := s.q.ListCharacterDomainCards(s.ctx, r.ID)
+	live, bonuses := s.liveBonuses(r, held)
+	c.EffectiveEvasion = max(c.Evasion+live.evasion, 0)
+	c.EffectiveMajor = max(c.ThresholdMajor+live.major, 0)
+	c.EffectiveSevere = max(c.ThresholdSevere+live.severe, 0)
+	c.Live = bonuses
+	if c.Live == nil {
+		c.Live = []Bonus{}
 	}
 	if a, ok := s.catalog.Ancestry(r.AncestrySlug); ok {
 		c.AncestryName = a.Name
@@ -232,6 +272,10 @@ func (s *Service) GetSheet(id int64) (Sheet, error) {
 	if m, ok := s.catalog.Community(row.CommunitySlug); ok {
 		sheet.Community = &m
 	}
+	if t, ok := s.catalog.Transformation(row.TransformationSlug); ok && row.TransformationSlug != "" {
+		sheet.Transformation = &t
+	}
+	sheet.Stances = s.stanceSheet(row)
 
 	loadout, vault, err := s.domainCards(id)
 	if err != nil {
@@ -249,6 +293,24 @@ func (s *Service) GetSheet(id int64) (Sheet, error) {
 		return Sheet{}, err
 	}
 	sheet.CanLevelUp = sheet.Level < MaxLevel
+
+	snap, err := s.snapshot(s.q, id)
+	if err != nil {
+		return Sheet{}, err
+	}
+	sheet.Bonuses = snap.bonuses
+	if sheet.Bonuses == nil {
+		sheet.Bonuses = []Bonus{}
+	}
+	held, err := s.q.ListCharacterDomainCards(s.ctx, id)
+	if err != nil {
+		return Sheet{}, fmt.Errorf("listing domain cards: %w", err)
+	}
+	sheet.Effects = s.effectOptions(row, held)
+	sheet.StanceAllowance = s.stanceAllowance(row)
+	sheet.UsesFavor = usesFavor(row)
+	sheet.UsesFocus = usesFocus(row)
+	sheet.FlowState = hasFlowState(row)
 
 	return sheet, nil
 }
@@ -305,6 +367,12 @@ func (s *Service) SaveCharacter(in CharacterInput) (Character, error) {
 		})
 		if err != nil {
 			return Character{}, fmt.Errorf("creating character: %w", err)
+		}
+		if row.ClassSlug == warlockClass {
+			row, err = s.q.SetCharacterTracks(s.ctx, db.SetCharacterTracksParams{Favor: StartingFavor, ID: row.ID})
+			if err != nil {
+				return Character{}, fmt.Errorf("setting starting Favor: %w", err)
+			}
 		}
 	} else {
 		row, err = s.q.UpdateCharacter(s.ctx, db.UpdateCharacterParams{

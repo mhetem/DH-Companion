@@ -4,15 +4,25 @@
   import ResourceTrack from './ResourceTrack.svelte'
   import { active } from './active.svelte.js'
   import {
+    FavorInsteadOfHope,
     GetCharacter,
     ListExperiences,
+    ListInventory,
+    RollBrawlersStrike,
+    RollCombo,
     RollDamage,
     RollDuality,
+    RollWeaponDamage,
     SetVitals,
     Sizes,
     TRAITS,
     errorMessage,
-    signed
+    hasFlowState,
+    isBrawler,
+    signed,
+    traitLabel,
+    usesFavor,
+    weaponTrait
   } from './api.js'
 
   // Standalone (the Dice nav section) this loads its own character. Embedded in the
@@ -27,6 +37,7 @@
 
   let owned = $state(null)
   let ownedExperiences = $state([])
+  let ownedInventory = $state([])
   let selfLoading = $state(true)
   let error = $state('')
   let rolling = $state(false)
@@ -35,6 +46,20 @@
   const loading = $derived(embedded ? false : selfLoading)
   const character = $derived(provided ?? owned)
   const experiences = $derived(providedExperiences ?? ownedExperiences)
+
+  // Embedded, the character is the whole sheet and carries its inventory. Only
+  // weapons linked to the SRD tables are here: those are the ones whose trait and
+  // damage the app actually knows.
+  const weapons = $derived((character?.inventory ?? ownedInventory).filter((i) => i.equipped && i.weapon))
+
+  // A brawler with nothing in hand fights with Brawler's Strike — any equipped
+  // weapon, linked to the SRD or not, puts it away.
+  const barehanded = $derived(
+    isBrawler(character) &&
+      !(character?.inventory ?? ownedInventory).some(
+        (i) => i.equipped && (i.kind === 'primary-weapon' || i.kind === 'secondary-weapon')
+      )
+  )
 
   let trait = $state('')
   let picked = $state([])
@@ -73,10 +98,11 @@
       return
     }
     selfLoading = true
-    Promise.all([GetCharacter(target), ListExperiences(target)])
-      .then(([c, x]) => {
+    Promise.all([GetCharacter(target), ListExperiences(target), ListInventory(target)])
+      .then(([c, x, inv]) => {
         owned = c
         ownedExperiences = x ?? []
+        ownedInventory = inv ?? []
         error = ''
       })
       .catch((e) => (error = errorMessage(e)))
@@ -111,7 +137,7 @@
     flashTimer = setTimeout(() => (flash = null), 2200)
   }
 
-  async function roll() {
+  async function roll(label = '') {
     if (rolling || !character) return
     rolling = true
     try {
@@ -123,7 +149,7 @@
         advantage,
         disadvantage,
         spendHope: Number(spendHope || 0),
-        label: trait ? TRAITS.find((t) => t.key === trait)?.label : ''
+        label: label || (trait ? TRAITS.find((t) => t.key === trait)?.label : '')
       })
       // The roll returns the character it just wrote, so Hope and Stress on screen
       // are the row's values rather than a local guess.
@@ -144,6 +170,72 @@
     try {
       const result = await RollDamage(character.id, Number(damageSides), Number(damageBonus || 0), damageCrit)
       show({ kind: 'damage', ...result })
+      error = ''
+    } catch (e) {
+      error = errorMessage(e)
+    } finally {
+      rolling = false
+    }
+  }
+
+  // An attack is a duality roll with the weapon's trait, so the Experiences,
+  // bonus, advantage and Hope set above all still apply to it.
+  function attack(item) {
+    trait = weaponTrait(item.weapon, character)
+    return roll(`${item.name} attack`)
+  }
+
+  async function weaponDamage(item) {
+    if (rolling || !character) return
+    rolling = true
+    try {
+      const result = await RollWeaponDamage(character.id, item.id, damageCrit)
+      show({ kind: 'damage', ...result })
+      error = ''
+    } catch (e) {
+      error = errorMessage(e)
+    } finally {
+      rolling = false
+    }
+  }
+
+  async function strikeDamage() {
+    if (rolling || !character) return
+    rolling = true
+    try {
+      show({ kind: 'damage', ...(await RollBrawlersStrike(character.id, damageCrit)) })
+      error = ''
+    } catch (e) {
+      error = errorMessage(e)
+    } finally {
+      rolling = false
+    }
+  }
+
+  async function combo(payWith) {
+    if (rolling || !character) return
+    rolling = true
+    try {
+      const result = await RollCombo(character.id, payWith)
+      applyCharacter(result.character)
+      show({ kind: 'combo', ...result })
+      error = ''
+    } catch (e) {
+      error = errorMessage(e)
+    } finally {
+      rolling = false
+    }
+  }
+
+  // "When you succeed on an action roll with Hope, you can choose to gain a Favor
+  // instead of a Hope." The roll already took the Hope, so this trades it back —
+  // offered once, on the latest roll only.
+  async function favorInstead(entry) {
+    if (rolling || !character) return
+    rolling = true
+    try {
+      applyCharacter(await FavorInsteadOfHope(character.id))
+      entry.traded = true
       error = ''
     } catch (e) {
       error = errorMessage(e)
@@ -255,9 +347,41 @@
           <span>Disadvantage</span>
         </label>
         <span class="total">{signed(preview)}</span>
-        <button class="btn primary" disabled={rolling} onclick={roll}>Roll duality</button>
+        <button class="btn primary" disabled={rolling} onclick={() => roll()}>Roll duality</button>
       </div>
     </section>
+
+    {#if weapons.length || barehanded}
+      <section class="build">
+        <h3>Weapons</h3>
+        <ul class="weapons">
+          {#if barehanded}
+            <li>
+              <span class="wname">Brawler's Strike</span>
+              <span class="wline">
+                {trait ? `${traitLabel(trait)} ${signed(character.traits[trait])}` : 'Any trait — pick one above'} · Melee
+                · {character.proficiency}d8+{character.proficiency}d6 phy · +1 Evasion while active
+              </span>
+              <button class="btn ghost" disabled={rolling || !trait} onclick={() => roll("Brawler's Strike attack")}>Attack</button>
+              <button class="btn ghost" disabled={rolling} onclick={strikeDamage}>Damage</button>
+            </li>
+          {/if}
+          {#each weapons as item (item.id)}
+            {@const key = weaponTrait(item.weapon, character)}
+            <li>
+              <span class="wname">{item.name}</span>
+              <span class="wline">
+                {key ? `${traitLabel(key)} ${signed(character.traits[key])}` : 'No Spellcast trait'} · {item.weapon.range}
+                · {character.proficiency}{item.weapon.damage} {item.weapon.damageType}
+              </span>
+              <button class="btn ghost" disabled={rolling || !key} onclick={() => attack(item)}>Attack</button>
+              <button class="btn ghost" disabled={rolling} onclick={() => weaponDamage(item)}>Damage</button>
+            </li>
+          {/each}
+        </ul>
+        <p class="hint">Attack rolls duality with the weapon's trait and whatever is set above; Damage counts the Critical box below.</p>
+      </section>
+    {/if}
 
     <section class="build">
       <h3>Damage</h3>
@@ -280,6 +404,22 @@
         </button>
       </div>
       <p class="hint">Damage rolls use your Proficiency ({character.proficiency}) as the dice count.</p>
+      {#if isBrawler(character)}
+        <div class="row">
+          <button class="btn ghost" disabled={rolling} onclick={() => combo('stress')}>
+            Combo strike — d{character.comboDie}, mark a Stress
+          </button>
+          {#if hasFlowState(character)}
+            <button class="btn ghost" disabled={rolling} onclick={() => combo('focus')}>
+              Combo strike — spend a Focus
+            </button>
+          {/if}
+        </div>
+        <p class="hint">
+          After damage on a successful Melee attack: the Combo Die keeps rolling until a result comes up
+          lower than the one before, and every result is added on.
+        </p>
+      {/if}
     </section>
 
     {#if log.length}
@@ -308,6 +448,15 @@
                   {#if entry.stressCleared}· −{entry.stressCleared} Stress{/if}
                 </span>
                 <RollResult value={entry.result} max={24} crit={entry.critical} compact />
+                {#if i === 0 && usesFavor(character) && (entry.withHope || entry.critical) && !entry.traded}
+                  <button class="btn ghost" disabled={rolling || character.hope < 1} onclick={() => favorInstead(entry)}>
+                    Favor instead of Hope
+                  </button>
+                {/if}
+              {:else if entry.kind === 'combo'}
+                <span class="what">Combo strike d{entry.die}: {entry.rolls.join(' → ')}</span>
+                <span class="gains">{entry.paid}</span>
+                <RollResult value={entry.total} max={entry.die * entry.rolls.length} compact />
               {:else}
                 <span class="what">{entry.label}{#if entry.modifier}{signed(entry.modifier)}{/if} damage</span>
                 <span class="gains">{entry.critical ? 'critical' : ''}</span>
@@ -328,6 +477,10 @@
           {flash.critical ? 'Critical success' : flash.withHope ? 'with Hope' : 'with Fear'}
         </p>
         <p class="flash-sub">Hope {flash.hope} · Fear {flash.fear}</p>
+      {:else if flash.kind === 'combo'}
+        <RollResult value={flash.total} max={flash.die * flash.rolls.length} big />
+        <p class="flash-tag">Combo strike</p>
+        <p class="flash-sub">{flash.rolls.join(' → ')}</p>
       {:else}
         <RollResult value={flash.total} max={flash.sides * flash.count} big />
         <p class="flash-tag">{flash.label} damage</p>
@@ -464,6 +617,31 @@
   .hint {
     margin: 0.5rem 0 0;
     font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .weapons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .weapons li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .wname { font-size: 0.85rem; }
+
+  .wline {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.75rem;
     color: var(--muted);
   }
 

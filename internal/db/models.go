@@ -58,6 +58,13 @@ type Character struct {
 	CreatedAt              string
 	UpdatedAt              string
 	BeastformSlug          string
+	TransformationSlug     string
+	Favor                  int64
+	Focus                  int64
+	ComboDie               int64
+	KnownStances           string
+	ActiveStance           string
+	ActiveEffects          string
 }
 
 type CharacterDomainCard struct {
@@ -247,6 +254,10 @@ type Handout struct {
 	MediaName  string
 	CreatedAt  string
 	UpdatedAt  string
+	ViewRotate int64
+	ViewZoom   float64
+	ViewX      float64
+	ViewY      float64
 }
 
 type InventoryItem struct {
@@ -259,6 +270,7 @@ type InventoryItem struct {
 	Detail      string
 	CreatedAt   string
 	UpdatedAt   string
+	SrdSlug     string
 }
 
 type Note struct {

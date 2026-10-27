@@ -29,6 +29,12 @@ import * as cards$0 from "../cards/models.js";
  */
 
 /**
+ * @typedef {Object} Bonus
+ * @property {string} source
+ * @property {string} effect
+ */
+
+/**
  * @typedef {Object} Character
  * @property {number} id
  * @property {string} name
@@ -55,6 +61,8 @@ import * as cards$0 from "../cards/models.js";
  * @property {string} spellcastTrait
  * @property {string} beastformSlug
  * @property {string} beastformName
+ * @property {string} transformationSlug
+ * @property {string} transformationName
  * @property {number} hpMax
  * @property {number} hpMarked
  * @property {number} stressMax
@@ -66,6 +74,16 @@ import * as cards$0 from "../cards/models.js";
  * @property {number} armorMarked
  * @property {number} thresholdMajor
  * @property {number} thresholdSevere
+ * @property {number} effectiveEvasion
+ * @property {number} effectiveMajor
+ * @property {number} effectiveSevere
+ * @property {Bonus[] | null} live
+ * @property {number} favor
+ * @property {number} focus
+ * @property {number} comboDie
+ * @property {string[] | null} knownStances
+ * @property {string} activeStance
+ * @property {string[] | null} activeEffects
  * @property {Gold} gold
  * @property {string} background
  * @property {string} connections
@@ -93,6 +111,15 @@ import * as cards$0 from "../cards/models.js";
  * @property {string} background
  * @property {string} connections
  * @property {string} notes
+ */
+
+/**
+ * @typedef {Object} ComboResult
+ * @property {number} die
+ * @property {number[] | null} rolls
+ * @property {number} total
+ * @property {string} paid
+ * @property {Character} character
  */
 
 /**
@@ -142,6 +169,23 @@ import * as cards$0 from "../cards/models.js";
  */
 
 /**
+ * @typedef {Object} CreationBonus
+ * @property {number} evasion
+ * @property {number} hpMax
+ * @property {number} stressMax
+ * @property {number} major
+ * @property {number} severe
+ * @property {Bonus[] | null} sources
+ */
+
+/**
+ * @typedef {Object} DamageInput
+ * @property {number} characterId
+ * @property {number} amount
+ * @property {boolean} useArmor
+ */
+
+/**
  * @typedef {Object} DamageResult
  * @property {string} label
  * @property {number} count
@@ -149,6 +193,18 @@ import * as cards$0 from "../cards/models.js";
  * @property {number} modifier
  * @property {number} total
  * @property {boolean} critical
+ */
+
+/**
+ * @typedef {Object} DamageTaken
+ * @property {number} amount
+ * @property {string} severity
+ * @property {string} reduced
+ * @property {number} hpMarked
+ * @property {boolean} armorUsed
+ * @property {boolean} downed
+ * @property {string[] | null} ended
+ * @property {Character} character
  */
 
 /**
@@ -179,6 +235,17 @@ import * as cards$0 from "../cards/models.js";
  * @property {number} proficiency
  * @property {number} subclassUpgrade
  * @property {boolean} multiclass
+ * @property {number} comboDie
+ */
+
+/**
+ * @typedef {Object} EffectOption
+ * @property {string} id
+ * @property {string} source
+ * @property {string} label
+ * @property {string} effect
+ * @property {string} ends
+ * @property {boolean} active
  */
 
 /**
@@ -197,6 +264,21 @@ import * as cards$0 from "../cards/models.js";
  */
 
 /**
+ * @typedef {Object} FocusRoll
+ * @property {number[] | null} rolls
+ * @property {number} focus
+ * @property {Character} character
+ */
+
+/**
+ * @typedef {Object} Gear
+ * @property {cards$0.Weapon[] | null} weapons
+ * @property {cards$0.Armor[] | null} armor
+ * @property {cards$0.Loot[] | null} items
+ * @property {cards$0.Loot[] | null} consumables
+ */
+
+/**
  * @typedef {Object} Gold
  * @property {number} handfuls
  * @property {number} bags
@@ -211,6 +293,10 @@ import * as cards$0 from "../cards/models.js";
  * @property {number} qty
  * @property {boolean} equipped
  * @property {string} detail
+ * @property {string} srdSlug
+ * @property {cards$0.Weapon | null} weapon
+ * @property {cards$0.Armor | null} armor
+ * @property {cards$0.Loot | null} loot
  */
 
 /**
@@ -222,6 +308,7 @@ import * as cards$0 from "../cards/models.js";
  * @property {number} qty
  * @property {boolean} equipped
  * @property {string} detail
+ * @property {string} srdSlug
  */
 
 /**
@@ -252,6 +339,7 @@ import * as cards$0 from "../cards/models.js";
  * @property {number} domainCardsPerLevel
  * @property {PlanOption[] | null} options
  * @property {cards$0.DomainCard[] | null} availableCards
+ * @property {cards$0.DomainCard[] | null} multiclassCards
  * @property {Experience[] | null} experiences
  * @property {{ [_ in string]?: number } | null} traits
  * @property {string[] | null} markedTraits
@@ -377,6 +465,8 @@ import * as cards$0 from "../cards/models.js";
  * @property {string} spellcastTrait
  * @property {string} beastformSlug
  * @property {string} beastformName
+ * @property {string} transformationSlug
+ * @property {string} transformationName
  * @property {number} hpMax
  * @property {number} hpMarked
  * @property {number} stressMax
@@ -388,6 +478,16 @@ import * as cards$0 from "../cards/models.js";
  * @property {number} armorMarked
  * @property {number} thresholdMajor
  * @property {number} thresholdSevere
+ * @property {number} effectiveEvasion
+ * @property {number} effectiveMajor
+ * @property {number} effectiveSevere
+ * @property {Bonus[] | null} live
+ * @property {number} favor
+ * @property {number} focus
+ * @property {number} comboDie
+ * @property {string[] | null} knownStances
+ * @property {string} activeStance
+ * @property {string[] | null} activeEffects
  * @property {Gold} gold
  * @property {string} background
  * @property {string} connections
@@ -400,6 +500,8 @@ import * as cards$0 from "../cards/models.js";
  * @property {cards$0.Subclass | null} multiclassSubclass
  * @property {cards$0.Ancestry | null} ancestry
  * @property {cards$0.Community | null} community
+ * @property {cards$0.Transformation | null} transformation
+ * @property {cards$0.Stances | null} stances
  * @property {DomainCard[] | null} loadout
  * @property {DomainCard[] | null} vault
  * @property {Item[] | null} inventory
@@ -407,6 +509,12 @@ import * as cards$0 from "../cards/models.js";
  * @property {number} loadoutMax
  * @property {LevelUpRecord[] | null} levelUps
  * @property {boolean} canLevelUp
+ * @property {Bonus[] | null} bonuses
+ * @property {EffectOption[] | null} effects
+ * @property {number} stanceAllowance
+ * @property {boolean} usesFavor
+ * @property {boolean} usesFocus
+ * @property {boolean} flowState
  */
 
 /**

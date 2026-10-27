@@ -27,7 +27,11 @@ jobs:
 
       # Wails v3 compiles its GTK4/WebKitGTK cgo on Linux whatever the build tags — v2
       # only did under the ones `wails build` passed — so even vet needs the headers.
+      # The runners' Ubuntu mirror sometimes serves packages at a few dozen KB/s, which
+      # turns this half-minute step into most of an hour. The timeout fails it instead,
+      # for a re-run to land on a faster one.
       - name: Linux build deps
+        timeout-minutes: 10
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
@@ -76,6 +80,7 @@ jobs:
 
       - name: Linux build deps
         if: runner.os == 'Linux'
+        timeout-minutes: 10
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev

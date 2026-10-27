@@ -83,6 +83,16 @@ export function BrowseDomainCards(f) {
 }
 
 /**
+ * @param {string} classSlug
+ * @param {string} subclassSlug
+ * @param {string} ancestrySlug
+ * @returns {$CancellablePromise<$models.CreationBonus>}
+ */
+export function CreationBonuses(classSlug, subclassSlug, ancestrySlug) {
+    return $Call.ByID(695079433, classSlug, subclassSlug, ancestrySlug);
+}
+
+/**
  * @param {number} id
  * @returns {$CancellablePromise<void>}
  */
@@ -127,6 +137,22 @@ export function DomainList() {
  */
 export function DropBeastform(characterID) {
     return $Call.ByID(2829377319, characterID);
+}
+
+/**
+ * @param {number} characterID
+ * @returns {$CancellablePromise<$models.Character>}
+ */
+export function DropStance(characterID) {
+    return $Call.ByID(2571002774, characterID);
+}
+
+/**
+ * @param {number} characterID
+ * @returns {$CancellablePromise<$models.Character>}
+ */
+export function FavorInsteadOfHope(characterID) {
+    return $Call.ByID(539969054, characterID);
 }
 
 /**
@@ -201,6 +227,16 @@ export function ItemKinds() {
 }
 
 /**
+ * @param {number} characterID
+ * @param {string} title
+ * @param {boolean} known
+ * @returns {$CancellablePromise<$models.Character>}
+ */
+export function LearnStance(characterID, title, known) {
+    return $Call.ByID(2319681883, characterID, title, known);
+}
+
+/**
  * @returns {$CancellablePromise<{ [_ in string]?: number } | null>}
  */
 export function Limits() {
@@ -259,6 +295,13 @@ export function ListExperiences(characterID) {
 }
 
 /**
+ * @returns {$CancellablePromise<$models.Gear>}
+ */
+export function ListGear() {
+    return $Call.ByID(509394204);
+}
+
+/**
  * @param {number} characterID
  * @returns {$CancellablePromise<$models.Item[] | null>}
  */
@@ -272,6 +315,13 @@ export function ListInventory(characterID) {
  */
 export function ListLevelUps(characterID) {
     return $Call.ByID(2710138663, characterID);
+}
+
+/**
+ * @returns {$CancellablePromise<cards$0.Transformation[] | null>}
+ */
+export function ListTransformations() {
+    return $Call.ByID(242137471);
 }
 
 /**
@@ -330,6 +380,14 @@ export function PlanLevelUp(characterID) {
 
 /**
  * @param {number} characterID
+ * @returns {$CancellablePromise<$models.FocusRoll>}
+ */
+export function Refocus(characterID) {
+    return $Call.ByID(103293942, characterID);
+}
+
+/**
+ * @param {number} characterID
  * @param {string} slug
  * @returns {$CancellablePromise<$models.Loadout>}
  */
@@ -354,11 +412,30 @@ export function RestAllowance(long) {
 }
 
 /**
+ * @param {number} characterID
  * @param {boolean} long
  * @returns {$CancellablePromise<$models.RestMove[] | null>}
  */
-export function RestMoves(long) {
-    return $Call.ByID(1009694613, long);
+export function RestMoves(characterID, long) {
+    return $Call.ByID(1009694613, characterID, long);
+}
+
+/**
+ * @param {number} characterID
+ * @param {boolean} critical
+ * @returns {$CancellablePromise<$models.DamageResult>}
+ */
+export function RollBrawlersStrike(characterID, critical) {
+    return $Call.ByID(1682448558, characterID, critical);
+}
+
+/**
+ * @param {number} characterID
+ * @param {string} payWith
+ * @returns {$CancellablePromise<$models.ComboResult>}
+ */
+export function RollCombo(characterID, payWith) {
+    return $Call.ByID(3304772066, characterID, payWith);
 }
 
 /**
@@ -388,6 +465,16 @@ export function RollDamage(characterID, sides, bonus, critical) {
  */
 export function RollDuality(req) {
     return $Call.ByID(351908394, req);
+}
+
+/**
+ * @param {number} characterID
+ * @param {number} itemID
+ * @param {boolean} critical
+ * @returns {$CancellablePromise<$models.DamageResult>}
+ */
+export function RollWeaponDamage(characterID, itemID, critical) {
+    return $Call.ByID(2197896833, characterID, itemID, critical);
 }
 
 /**
@@ -424,11 +511,31 @@ export function SaveItem($in) {
 
 /**
  * @param {number} characterID
+ * @param {number} favor
+ * @param {number} focus
+ * @returns {$CancellablePromise<$models.Character>}
+ */
+export function SetClassTracks(characterID, favor, focus) {
+    return $Call.ByID(2263006827, characterID, favor, focus);
+}
+
+/**
+ * @param {number} characterID
  * @param {number} value
  * @returns {$CancellablePromise<$models.CompanionView>}
  */
 export function SetCompanionStress(characterID, value) {
     return $Call.ByID(2691359633, characterID, value);
+}
+
+/**
+ * @param {number} characterID
+ * @param {string} id
+ * @param {boolean} on
+ * @returns {$CancellablePromise<$models.Character>}
+ */
+export function SetEffect(characterID, id, on) {
+    return $Call.ByID(3954703112, characterID, id, on);
 }
 
 /**
@@ -452,6 +559,15 @@ export function SetItemEquipped(id, equipped) {
 }
 
 /**
+ * @param {number} characterID
+ * @param {string} slug
+ * @returns {$CancellablePromise<$models.Character>}
+ */
+export function SetTransformation(characterID, slug) {
+    return $Call.ByID(1943645852, characterID, slug);
+}
+
+/**
  * @param {number} id
  * @param {number} hpMarked
  * @param {number} stressMarked
@@ -464,11 +580,29 @@ export function SetVitals(id, hpMarked, stressMarked, hope, armorMarked) {
 }
 
 /**
+ * @param {number} characterID
+ * @param {string} title
+ * @param {string} payWith
+ * @returns {$CancellablePromise<$models.Character>}
+ */
+export function ShiftStance(characterID, title, payWith) {
+    return $Call.ByID(1217748857, characterID, title, payWith);
+}
+
+/**
  * @param {$models.SwapInput} $in
  * @returns {$CancellablePromise<$models.SwapResult>}
  */
 export function SwapDomainCard($in) {
     return $Call.ByID(1316022478, $in);
+}
+
+/**
+ * @param {$models.DamageInput} $in
+ * @returns {$CancellablePromise<$models.DamageTaken>}
+ */
+export function TakeDamage($in) {
+    return $Call.ByID(4231501681, $in);
 }
 
 /**

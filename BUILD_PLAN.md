@@ -1529,6 +1529,12 @@ Notes on the build:
 - **CI's vet job installs those headers too.** v2 only compiled its cgo under the tags
   `wails build` passed, so a tagless `go vet` never touched GTK; v3 compiles it on every
   Linux build.
+- **The apt step has a 10-minute timeout.** The runners' mirror
+  (`azure.archive.ubuntu.com`) intermittently serves packages at a few dozen KB/s: the index
+  still arrives in a second, then GTK4 and WebKitGTK crawl in over most of an hour. It hit a
+  CI run and the v2.1.0 release on the same day, while the step normally takes 30–55
+  seconds. The timeout turns that into a failure worth re-running — a re-run usually lands on
+  a fast mirror.
 
 Notes on packaging:
 - **The v2 build assets were templates that `wails build` filled in.** `wails_tools.nsh`,
@@ -1573,7 +1579,7 @@ Notes on packaging:
 
 **Done when:** `wails3 dev` and a production build on all three platforms behave exactly
 like the v2 release — size presets, UI scale, backup and restore, library import and
-export, the update check — and CI is green.
+export, the update check — and CI is green. ✅
 
 ---
 
@@ -1582,16 +1588,16 @@ export, the update check — and CI is green.
 **Goal:** replace "open the download page" with an update the app installs itself, on every
 install that can take one — using v3's `pkg/updater`, which Phase 6.10 brought in.
 
-- [ ] Ed25519 key pair: the public half committed as `build/updater.pub` and embedded, the
+- [x] Ed25519 key pair: the public half committed as `build/updater.pub` and embedded, the
       private half only in the `UPDATER_KEY` secret and a password manager
-- [ ] `App.InstallUpdate` checks the signed manifest, downloads, verifies and restarts;
+- [x] `App.InstallUpdate` checks the signed manifest, downloads, verifies and restarts;
       `App.SelfUpdateSupport` says whether this copy can, and why not
-- [ ] Settings offers *Update to vX*, with download progress, where supported, and the
+- [x] Settings offers *Update to vX*, with download progress, where supported, and the
       download page where not
-- [ ] The Windows installer is per-user, and warns when it finds a Program Files install
-- [ ] The release publishes `Hilt-update-*.zip` for Windows and macOS, plus `manifest.json`
+- [x] The Windows installer is per-user, and warns when it finds a Program Files install
+- [x] The release publishes `Hilt-update-*.zip` for Windows and macOS, plus `manifest.json`
       signed in CI and verified against the committed key before publishing
-- [ ] README and release notes
+- [x] README and release notes
 
 Notes on trust:
 - **Signed, not just checksummed.** v3's GitHub provider only reads a `SHA256SUMS`-style
@@ -1656,7 +1662,7 @@ Notes on where it can update in place:
 
 **Done when:** a copy of release N — Windows installer, macOS app, AppImage — updates to N+1
 from Settings and comes back up on N+1 with its data, and a manifest signed with any other
-key is refused.
+key is refused. ✅
 
 ---
 
@@ -1770,6 +1776,332 @@ window takes the player window with it. ✅
 
 ---
 
+## Phase 6.13 — The sheet does the arithmetic
+
+**Goal:** the three Phase 7 items that left the player transcribing numbers — gear stats,
+taking damage, and the multiclass card pool — plus two housekeeping items.
+
+- [x] `inventory_items.srd_slug` (031) links an item to an SRD weapon, armor, item or
+      consumable; `SaveItem` checks the slug against the kind
+- [x] Equipping, unequipping, editing or deleting linked gear keeps Evasion, Armor Score and
+      both thresholds in step, in one transaction; a two-handed primary frees the off hand
+- [x] Abilities with a fixed bonus — subclass features as mastery unlocks them, Galapa's
+      Shell, and loadout cards — are counted in by the same sync, wherever the loadout,
+      level or equipment changes; the sheet lists what it counted, and the wizard adds the
+      creation-time ones
+- [x] `RollWeaponDamage` rolls Proficiency × the weapon's die plus its modifier;
+      the dice panel offers Attack and Damage per equipped SRD weapon
+- [x] `TakeDamage` marks HP by the thresholds, optionally through an Armor Slot, and says
+      when the last Hit Point goes
+- [x] `PlanLevelUp.multiclassCards`, so a multiclass and a card from its domains can be
+      picked in the same level-up
+- [x] `DualityDice` / `GMDice` carry json tags
+- [x] `AdoptUnassignedCountdowns`, offered from a campaign's Countdowns tab
+- [x] Player-side tests: the package had none, so it gets the same in-memory harness as `gm`
+
+Notes on gear:
+- **The data was already there.** The Phase 7 item said `data/` had no weapon or armor json;
+  the GM's Equipment browser had brought both in since. This phase is the player side of it.
+- **Linked, not copied.** An item stores the slug and the view attaches the card, so a
+  corrected SRD entry corrects every sheet carrying it. `detail` stays the player's own line.
+  The name box is the picker — a datalist of the kind's SRD names — and a name that matches
+  nothing stays free text. A linked item keeps its card through a rename until it's unlinked
+  on purpose, so "Grandfather's longsword" is still a longsword.
+- **Defenses are set when the gear changes, not derived every time they're read.** Every
+  existing character has hand-typed values with whatever bonuses its domain cards add folded
+  in, and there's no way to tell those apart after the fact. So the stored columns stay the
+  truth, still editable by hand, and an equipment change applies the difference:
+  - **Linked armor** sets Armor Score to its base and the thresholds to its pair plus the
+    character's level — the same "+1 per level" the level-up already applies, so the two stay
+    consistent.
+  - **No armor at all** is the SRD's unarmored line: Armor Score 0, thresholds of level and
+    twice the level.
+  - **Free-text armor** leaves them alone — its numbers are only known to the player.
+  - **Anything else** — a shield, a heavy weapon, a change that doesn't touch the armor slot —
+    applies only the difference in what the equipped gear's features add, so a character who
+    never put armor in their inventory keeps their typed thresholds when they pick up a sword.
+- **Features are read for fixed numbers only**: `+N to Armor Score`, `±N to Evasion` (including
+  "+1 Evasion" and "−1 to all character traits and Evasion"), `+N to damage thresholds`, `+N to
+  Severe damage threshold`. Anything conditional or scaled ("equal to your Presence", "until
+  you clear an Armor Slot", "−5 penalty … until you repair") is left as reminder text on the
+  sheet, and so are trait changes: traits are what level-ups mark and raise, and quietly
+  moving them under the player would be worse than a line of text.
+- **Armor marks follow a smaller score down**, so swapping heavy armor for light can't leave
+  more slots marked than exist.
+- **The two-handed rule is last-one-wins**, like the rest of equipping: a two-handed primary
+  takes the secondary off, and taking a secondary up puts a two-handed primary down. It only
+  knows burden for linked weapons.
+- **Known gap:** an unarmored character's Severe threshold should rise by 2 a level, and the
+  level-up adds 1. The level-up can't tell an unarmored character from one whose armor was
+  typed by hand, so it isn't special-cased; equipping or unequipping armor resets it.
+
+Notes on abilities:
+- **The armor recompute made this necessary.** Setting the thresholds to armor plus level
+  threw away any +1 a player had typed in for Unwavering, so abilities had to become part of
+  what the sync knows rather than something added by hand on top of it.
+- **An explicit table, not the text.** Gear features say "+1 to Armor Score" in one shape;
+  abilities say "Gain a permanent +1 bonus to your damage thresholds", "equal to your
+  Proficiency", "while you are wearing armor", "when 4 or more of the domain cards in your
+  loadout…". There are about a dozen with fixed numbers, so they're listed in `abilities.go`
+  by subclass feature, ancestry feature and card slug, each a function of what it depends on.
+- **What counts:** Stalwart's Unwavering, Unrelenting and Undaunted (cumulative), Vengeance's
+  At Ease, Nightwalker's Fleeting Shadow, Winged Sentinel's Ascendant and School of War's
+  Battlemage, each from the mastery that unlocks it — a multiclass subclass only ever gives its
+  foundation. Galapa's Shell follows Proficiency. In the loadout, not the vault: Fortified
+  Armor and Armorer while any armor is worn, Rise Up (Proficiency), Untouchable (half Agility,
+  rounded down), and Blade-, Valor- and Splendor-Touched with four cards of their domain.
+- **What doesn't:** anything situational — "in low light", "until your next rest", "spend a
+  Hope", "while Channeling" — and Vitality, which is a choice the app doesn't ask. Those that
+  can be switched on and off, and the Beastform, became Phase 6.16's live layer.
+- **The same before/after sync as gear.** Every change that can move a bonus — equipping, a
+  card added, moved, swapped or removed, a level-up — snapshots gear and abilities before and
+  after, in one transaction, and applies the difference. Hit Point and Stress slots are in it
+  too, with marks following a smaller maximum down. A level-up that raises Proficiency moves
+  Shell and Rise Up by itself.
+- **Recomputing for armor counts them in**, so equipping SRD armor sets the thresholds to
+  armor + level + every bonus that applies, rather than wiping the ones typed by hand.
+- **Creation-time bonuses go through the wizard.** Simiah's Nimble, the Giant's Endurance and
+  the Human's High Stamina apply "at character creation", once, so they're never part of the
+  sync. `CreationBonuses` gives the wizard those plus the subclass foundation and Shell, and it
+  adds the Evasion, Hit Point and Stress parts to the class's numbers on the Defenses step,
+  once per class, subclass and ancestry, so going back and forth can't add them twice.
+- **Existing characters keep their typed numbers** until something changes. Their values
+  already hold whatever they added by hand, and a sync only ever applies a difference — or,
+  for armor, recomputes the whole thing correctly.
+- **The sheet says what it counted** — "Unwavering +1 to damage thresholds", "Chainmail Armor
+  −1 Evasion" — so a number that moved on its own can be traced.
+
+Notes on damage:
+- **Typed in, not rolled.** The GM rolls and says the number; the sheet only applies it. The
+  severity comes from the stored thresholds, so it can't disagree with the Defenses card.
+- **An Armor Slot drops the severity one step** before HP is marked, and is refused when
+  there's none left. Minor through an Armor Slot is nothing.
+- **Not modelled:** resistance (halving, with no rounding rule in the SRD), the optional
+  massive-damage rule, and armor features like Fortified or Lined that change the step — those
+  stay on the sheet as reminders. Marking the last Hit Point says it's time for a death move;
+  death moves themselves are still Phase 7.
+
+Notes on rolling:
+- **Attack is a duality roll with the weapon's trait**, so Experiences, bonus, advantage and
+  Hope set in the panel still apply. `Spellcast` resolves to the subclass's spellcast trait;
+  a weapon that casts in a subclass that doesn't leaves Attack disabled and says why.
+- **Damage counts Proficiency dice of the weapon's size plus its flat modifier**, and a
+  critical adds the dice's maximum, the same as the manual roller. Features that add damage
+  (Paired, Sharpwing) aren't applied.
+
+Notes on the level-up:
+- **The pool is the character's domains plus, separately, every other domain's cards.** The
+  frontend adds the second list's cards for the class picked in the multiclass advancement,
+  and drops a chosen card again if that pick changes. The data's multiclass text says it
+  grants access to the class's domains, plural, which is what both `ApplyLevelUp` and the
+  sheet already did.
+
+Notes on housekeeping:
+- **The dice structs' json tags** change `GM()`'s result from `Result`/`Msg` to
+  `result`/`msg`; `Dice.svelte` was the only reader.
+- **Unassigned countdowns can be adopted, but the query stays.** A fight started without a
+  campaign still makes campaign-less clocks, so `ListUnassignedCountdowns` still has a job.
+  What changed is that a campaign's Countdowns tab now lists them and offers to move them all
+  in, instead of leaving them reachable only from a campaign-less fight.
+
+**Done when:** a character equips armor and a weapon from the SRD and the Defenses card moves
+with them, a typed "took 12 damage" marks the right HP, a weapon's attack and damage roll from
+the dice panel, and a multiclass level-up can take a card from the new class's domains. ✅
+
+---
+
+## Phase 6.14 — Framing the player window
+
+**Goal:** turn, zoom and move what's on the player window — from the GM's preview, or by
+handling the player window itself.
+
+- [x] `handouts.view_rotate`, `view_zoom`, `view_x`, `view_y` (032), and `SaveHandoutView`
+- [x] `TableDisplay.view`, `App.SetTableView`, and a `table:view` event carrying the framing
+      and which window it came from
+- [x] `view.js`: the framing maths, wheel-and-drag gestures and a throttle, shared by both
+      windows
+- [x] The player window: wheel zooms at the cursor, drag pans, <kbd>R</kbd> / <kbd>Shift</kbd>
+      +<kbd>R</kbd> turn, <kbd>+</kbd> <kbd>−</kbd> zoom, <kbd>0</kbd> resets
+- [x] The GM's *On the table* preview takes the same wheel and drag, with turn, zoom and reset
+      buttons; the cards show each handout's saved framing
+
+Notes on the model:
+- **The framing belongs to the handout**, not to the window. A portrait map turned to fit a
+  landscape screen, or every map turned toward the players around a screen lying flat, stays
+  turned the next time it's shown, and the GM can frame a map before the session.
+- **Quarter turns only**, a zoom from 25% to 800%, and a pan of up to three screens either
+  way. Pan is in fractions of the screen, so the 16:9 preview and the table's window agree on
+  what a drag moved even though they're different sizes.
+- **A quarter turn swaps the box the content is laid out in** before rotating it, so a map
+  turned sideways is fitted to the screen it ends up on: contain and cover still mean "whole"
+  and "fill" after the turn. Zoom keeps the point under the cursor fixed.
+- **Text turns and zooms too.** The article reflows in the swapped box, which is what a screen
+  lying flat needs.
+
+Notes on the flow:
+- **This changes the Phase 6.12 rule that the player window never writes.** Handling it
+  directly — the point of this phase — means it sends the framing back. That is the only call
+  it makes besides `TableNow`; it still can't change what's shown, only how it sits.
+- **Each window applies its own changes at once and sends them throttled**, at most every 40ms.
+  Go stores the framing as part of what's showing, emits `table:view` to both windows, and
+  each ignores the events marked with its own origin — an echo of a drag arriving after the
+  next movement would otherwise pull the image back.
+- **A framing change for anything but what's on the table is ignored**, so a late update from
+  the previous handout can't land on the next one.
+- **Saving waits for a 400ms pause.** Every update resets a timer that writes the latest
+  framing to the handout, and showing a handout, or closing the GM window, flushes it first.
+  A drag is a few dozen updates a second and none of them needs to reach the disk.
+  A change made in the last 400ms before Cmd+Q is lost: services stop first and the app
+  context is already cancelled, so the pending write fails with it.
+
+**Done when:** a map can be turned, zoomed and dragged from either window, both windows agree
+while it happens, and showing it again later brings it back framed the same way. ✅
+
+---
+
+## Phase 6.15 — SRD 2.0 on the player side
+
+**Goal:** the player-side content SRD 2.0 adds — four classes, the Dread domain, and
+transformations — playable through the same wizard, sheet and level-up as the rest.
+
+- [x] `classes.json`: Assassin, Brawler, Warlock and Witch, with their eight subclasses
+- [x] `domainCards.json`: the 21 Dread cards; `Dread` in the domain lists on both sides of the
+      bridge
+- [x] `transformations.json`, `characters.transformation_slug` (033), `ListTransformations` /
+      `SetTransformation`, and the sheet's picker beside ancestry and community
+- [x] `martialStances.json`, carried on the sheet of a Martial Artist (main or multiclass)
+- [x] Juggernaut's Rugged and the Brawler's I Am the Weapon in the ability table
+- [x] NOTICE, README and release notes credit SRD 2.0, which builds on 1.0 and supersedes it
+
+Notes on the content:
+- **Transcribed from the SRD 2.0 pages, in the existing data's style**: ASCII apostrophes and
+  quotes, em and en dashes as hyphens, minus signs as hyphens, bold and italic as `<strong>`
+  and `<em>`, lists as `- ` lines. The nine existing classes match 2.0 feature for feature,
+  so they're untouched. Two fixes to the source: "vampirisim" and a doubled full stop at the
+  end of Invoke Torment.
+- **The Witch's domains are stored as Sage & Dread**, the order her class page gives; the
+  class-domains list says Dread & Sage. Order means nothing to the app.
+- **Juggernaut and Martial Artist have no spellcast trait** — the SRD gives them none — so
+  their subclasses carry an empty one, which the wizard shows as a dash.
+- **The Warlock's sphere-of-influence examples** are appended to Patron's Pact rather than
+  made a feature of their own, and Favor's maximum is kept as its closing line.
+- **The Witch's Commune and the Moon's Lunar Phases tables** are stored as lists, the way the
+  existing data stores the Troubadour's songs.
+
+Notes on transformations:
+- **On the sheet, not in the wizard.** The SRD calls them optional and the GM's to give, at
+  creation or during play, so the sheet takes one when it's granted rather than every new
+  character being asked. One at most, as the SRD says; taking another replaces it.
+- **Shown with the heritage**, because the SRD says to treat the card "as if it were part of
+  your character's heritage" — it doesn't count toward the loadout, and it isn't a domain card.
+- **None of the six changes a stat**, so none is in the ability table. Demigod's +1 is to
+  rolls, not to a defense.
+
+Notes on the Brawler:
+- **I Am the Weapon's +1 Evasion is counted while no weapon is equipped** — the SRD's "while
+  you have no other Active Weapons" — and taken away when one is. A new Brawler starts
+  barehanded, so the wizard adds it.
+- **Rugged** is a flat +3 to Severe, counted like Ascendant.
+- **The stance sheet is reference, not a tracker.** It shows the rules and every stance by
+  tier, dimming those above the character's tier.
+
+The trackers and rolls this phase left out — Favor, Focus, known and active stances, the
+Combo Die, Brawler's Strike, and the bonuses that move with Stress, Hope or a timed effect —
+are Phase 6.16.
+
+**Done when:** a new character can be built as each of the four classes, take Dread cards in
+the wizard and at level-up, carry a transformation, and a Martial Artist sees the stance
+sheet. ✅
+
+---
+
+## Phase 6.16 — Class trackers, and what's true right now
+
+**Goal:** the trackers and rolls the new classes need, Bare Bones, and the bonuses that change
+too often to store — so the sheet's defenses are right mid-fight, not only between scenes.
+
+- [x] Migration 034: `favor`, `focus`, `combo_die`, `known_stances`, `active_stance`,
+      `active_effects` on `characters`
+- [x] Favor (warlocks start with 3) and Focus as tracks; `Refocus` rolls Instinct d6s;
+      `FavorInsteadOfHope` after a roll with Hope; *Show Tribute* as a warlock-only downtime
+      move
+- [x] `LearnStance`, `ShiftStance` (a Focus, or a Stress with Flow State), `DropStance`
+- [x] The Combo Die as a brawler-only advancement; `RollCombo`; `RollBrawlersStrike`
+- [x] Bare Bones as a defense baseline
+- [x] The live layer: `Character.effective*` and `live`, `SetEffect` toggles, and the hits and
+      rests that end them
+- [x] `RestMoves` takes the character, so it can offer class moves
+
+Notes on the live layer:
+- **Two layers, not one.** The stored Evasion and thresholds are what the sync manages and what
+  a player types; they stay as they are. On top, `characterView` adds what's true *right now*
+  and returns `effectiveEvasion`, `effectiveMajor`, `effectiveSevere` and the list of what it
+  added. The sheet shows the effective numbers with the base beside them when they differ, and
+  `TakeDamage` judges severity against them. The wizard keeps editing the stored ones, so
+  saving a character mid-effect can't fold a temporary bonus into its base.
+- **Why not more sync:** Eldritch Flesh follows marked Stress and Conjure Shield follows Hope,
+  and both move several times a scene through a dozen code paths — every roll, rest, swap and
+  pip click. Computing them on read means none of those paths has to know.
+- **What's in it:**
+  - Always on: Eldritch Flesh (+1 thresholds per marked Stress, from the loadout), Conjure
+    Shield (+Proficiency Evasion at 2 or more Hope, from School of War's specialization), the
+    active stance (Anchored +2 thresholds, Aggressive -1 Evasion), and the Beastform — its
+    Evasion bonus, and Thick Hide, Hollow Bones, Physical Defense and Undaunted on thresholds.
+  - Toggled on the Defenses card: Patron's Mantle (+tier), Rogue's Dodge (+2 Evasion),
+    Channeling Earth (+Proficiency) or Air (+1 Evasion, with Elemental Dominion), Transcendence's
+    +4 Severe and +2 Evasion, Circle of Power, the Full and Waning moons of Lunar Phases,
+    Shadowhunter, and Frenzy. Only what the character has is offered; channels are one at a
+    time, and so are moons.
+- **They end where the SRD says.** Severe damage ends Patron's Mantle and Channeling; a hit
+  that lands ends Rogue's Dodge; a rest ends everything that lasts "until your next rest", plus
+  the stance and Frenzy. Severe damage or marking the last Hit Point drops the stance. What
+  ended comes back with the damage or rest report. The moons wait for the end of the session,
+  which the app doesn't know about, so they're switched off by hand.
+- **Frenzy refuses Armor Slots** while it's on, as its text says.
+- **Per-attack bonuses stay manual** — Battle-Bonded, Keen Defenses, Natural Evasion, I See It
+  Coming — because they apply to one attack from one attacker, and the sheet doesn't know who's
+  attacking.
+
+Notes on Bare Bones:
+- **A baseline, like armor.** Without armor and with the card in the loadout, the base Armor
+  Score is 3 + Strength and the base thresholds come from the tier table (9/19, 11/24, 13/31,
+  15/38), with the level added on top the same way it is for armor. The snapshot's baseline now
+  has a key — the armor item, the Bare Bones tier and Strength, or plain unarmored — and the
+  sync recomputes whenever the key changes, so entering a new tier or raising Strength moves it.
+
+Notes on the trackers:
+- **Favor and Focus are 0-6 columns**, shown only to who has them: Favor for a warlock, main or
+  multiclass; Focus for a Martial Artist. A new warlock is created with 3.
+- **Refocus** clears Focus and rolls Instinct d6s, keeping the highest. Instinct of 0 or less
+  rolls nothing, per the SRD's rule that a trait at +0 or less grants no uses.
+- **Favor instead of Hope** trades back the Hope the roll already gave, offered once on the
+  latest roll with Hope. Whether the roll succeeded is the GM's call, so the button doesn't
+  try to judge it.
+- **Show Tribute** gains Favor equal to the warlock subclass's spellcast trait, capped at 6.
+
+Notes on stances:
+- **The allowance is two, plus one per level since the subclass was taken**: level + 1 for a
+  Martial Artist from creation, and from the level of the multiclass record for one who
+  multiclassed in. Learning is refused above it and above the character's tier.
+- **Shifting costs a Focus**, or a Stress with Flow State (mastery). Shifting into the stance
+  you're already in costs nothing and does nothing.
+
+Notes on the Brawler:
+- **The Combo Die advancement** is added to the tier's table only for a brawler, costs one
+  advancement, has one slot per tier like the rest, and steps d4, d6, d8, d10, d12.
+- **A combo strike** marks a Stress (or spends a Focus with Flow State), then rolls until a
+  result is lower than the one before, adding every roll. It's capped at 100 rolls so a
+  pathological run can't hang.
+- **Brawler's Strike** rolls Proficiency d8s plus Proficiency d6s, and a critical adds both
+  dice's maximums. It's refused while any weapon is equipped, and the dice panel only offers
+  it barehanded. Its attack uses whatever trait is picked, since the SRD lets you choose.
+
+**Done when:** a warlock's Favor and a Martial Artist's Focus, stances and combos are tracked on
+the sheet; Bare Bones sets an unarmored character's defenses; and toggling Patron's Mantle or
+marking Stress with Eldritch Flesh moves the thresholds a hit is judged against. ✅
+
+---
+
 ## Phase 7 — Roadmap: the first update after release
 
 **Goal:** what goes in the release *after* 1.0. Phases 0–6 are done and shipped, and the app
@@ -1777,23 +2109,32 @@ is complete without any of this. Nothing below is a prerequisite for anything ab
 
 Ordered by what a user hits first, not by how interesting it is to build.
 
+### SRD 2.0 content still to bring in
+
+- [ ] **Ancestries and communities from SRD 2.0.** Phase 6.15 brought in the classes, the Dread
+      domain and transformations, but `ancestries.json` (19) and `communities.json` (9) are
+      still the 1.0 transcription. Compare both against the 2.0 pages: add anything new, and
+      update any feature whose wording or numbers changed, in the existing data's style
+      (ASCII quotes, dashes as hyphens, `<strong>`/`<em>`, `- ` lists). Then check what reads
+      them by title:
+      - `abilities.go` keys Galapa's Shell, Simiah's Nimble, the Giant's Endurance and the
+        Human's High Stamina by ancestry slug and feature title — a renamed feature or a
+        changed number silently stops counting.
+      - Any new ancestry or community feature with a fixed bonus to Evasion, Armor Score,
+        thresholds or slots joins the ability table, as an always-on bonus or, if it only
+        applies at character creation, through `CreationBonuses`.
+      - The README's counts ("19 ancestries, 9 communities"), the only place that quotes them.
+      **Done when:** every 2.0 ancestry and community is in the wizard with its 2.0 text, and
+      the ancestry bonuses still count.
+
 ### Rules the sheet still leaves to the player
 
-- [ ] **Armor and weapon datasets.** `data/` has no armor or weapon json, which is why the
-      wizard asks for Armor Score and both damage thresholds outright and the damage roller
-      takes a die size by hand. Both are printed tables. With them, equipping a weapon sets
-      the damage die and equipping armor sets the thresholds, and Inventory becomes a picker
-      that still accepts free text — the sheet's last big pile of manual transcription.
-- [ ] **Taking damage.** The Defenses card prints the threshold rule and leaves the
-      arithmetic to the player. A "took N damage" box that marks the right number of Hit
-      Points is the smallest automation still missing from the sheet.
+- [x] **Armor and weapon datasets.** Done in Phase 6.13: the data had arrived with the GM's
+      Equipment browser, and Inventory is now a picker over it that still accepts free text.
+- [x] **Taking damage.** Done in Phase 6.13.
 - [ ] **Death moves** — Blaze of Glory, Avoid Death, Risk It All. Not modelled at all: a
       character at full HP marks is just a character with a full track.
-- [ ] **The level-up card pool is a level behind a multiclass.** `PlanLevelUp.availableCards`
-      comes from the domains you hold *now*, so picking multiclass and a level card in the
-      same level-up won't offer the new class's domain. `ApplyLevelUp` already accepts it —
-      it validates against the post-multiclass domains — so this is a picker fix, not a rules
-      one.
+- [x] **The level-up card pool is a level behind a multiclass.** Done in Phase 6.13.
 
 ### GM side
 
@@ -1844,11 +2185,9 @@ Ordered by what a user hits first, not by how interesting it is to build.
 
 - [ ] **`SHORTCUTS` in `keys.js` isn't checked against anything.** It feeds the `?` sheet
       while the components bind their key strings by hand, so the two can drift silently.
-- [ ] **`DualityDice` and `GMDice` carry no json tags**, so they cross the bridge with
-      capitalised field names (`Hope`, `Result`, `Msg`) unlike every other type in the app.
-- [ ] **Countdowns predating Phase 4 have no campaign.** `ListUnassignedCountdowns` is how
-      they stay reachable; a one-time "assign these to a campaign" prompt would let that
-      query retire.
+- [x] **`DualityDice` and `GMDice` carry no json tags.** Done in Phase 6.13.
+- [x] **Countdowns predating Phase 4 have no campaign.** Phase 6.13 added the prompt; the query
+      stays, because a fight run without a campaign still makes campaign-less clocks.
 
 **Done when:** there is a v1.1 tag. Which of these it carries is a decision for the day it
 is cut, not today.

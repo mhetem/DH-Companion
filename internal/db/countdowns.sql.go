@@ -40,6 +40,21 @@ func (q *Queries) AdjustCountdown(ctx context.Context, arg AdjustCountdownParams
 	return i, err
 }
 
+const assignUnassignedCountdowns = `-- name: AssignUnassignedCountdowns :execrows
+UPDATE countdowns SET
+  campaign_id = ?,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE campaign_id IS NULL
+`
+
+func (q *Queries) AssignUnassignedCountdowns(ctx context.Context, campaignID sql.NullInt64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, assignUnassignedCountdowns, campaignID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const createCountdown = `-- name: CreateCountdown :one
 INSERT INTO countdowns (name, value, max, kind, campaign_id, beats)
 VALUES (?,?,?,?,?,?)

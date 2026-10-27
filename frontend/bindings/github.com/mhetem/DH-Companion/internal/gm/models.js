@@ -253,6 +253,7 @@ import * as cards$0 from "../cards/models.js";
  * @property {string} mediaType
  * @property {string} mediaName
  * @property {boolean} mediaMissing
+ * @property {HandoutView} view
  * @property {string} createdAt
  * @property {string} updatedAt
  */
@@ -266,6 +267,14 @@ import * as cards$0 from "../cards/models.js";
  * @property {string} body
  * @property {string} source
  * @property {boolean} clearMedia
+ */
+
+/**
+ * @typedef {Object} HandoutView
+ * @property {number} rotate
+ * @property {number} zoom
+ * @property {number} x
+ * @property {number} y
  */
 
 /**

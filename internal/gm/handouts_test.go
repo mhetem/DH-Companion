@@ -3,6 +3,7 @@ package gm
 import (
 	"errors"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
@@ -205,6 +206,45 @@ func TestHandoutReportsMissingMedia(t *testing.T) {
 	}
 	if !got.MediaMissing {
 		t.Fatalf("a handout whose file is gone should say so: %+v", got)
+	}
+}
+
+func TestNormalizeView(t *testing.T) {
+	for _, tc := range []struct {
+		in, want HandoutView
+	}{
+		{HandoutView{}, HandoutView{Zoom: 1}},
+		{HandoutView{Rotate: 90, Zoom: 2, X: 0.5, Y: -0.25}, HandoutView{Rotate: 90, Zoom: 2, X: 0.5, Y: -0.25}},
+		{HandoutView{Rotate: -90, Zoom: 1}, HandoutView{Rotate: 270, Zoom: 1}},
+		{HandoutView{Rotate: 450, Zoom: 1}, HandoutView{Rotate: 90, Zoom: 1}},
+		{HandoutView{Rotate: 314, Zoom: 1}, HandoutView{Rotate: 270, Zoom: 1}},
+		{HandoutView{Rotate: 316, Zoom: 1}, HandoutView{Rotate: 0, Zoom: 1}},
+		{HandoutView{Zoom: 100, X: 9, Y: -9}, HandoutView{Zoom: maxViewZoom, X: maxViewPan, Y: -maxViewPan}},
+		{HandoutView{Zoom: 0.01}, HandoutView{Zoom: minViewZoom}},
+		{HandoutView{Zoom: math.NaN(), X: math.Inf(1)}, HandoutView{Zoom: 1}},
+	} {
+		if got := NormalizeView(tc.in); got != tc.want {
+			t.Errorf("NormalizeView(%+v) = %+v, want %+v", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestHandoutViewRoundTrips(t *testing.T) {
+	s := newTestService(t)
+	c := newTestCampaign(t, s, "Age of Umbra")
+
+	h := saveHandout(t, s, HandoutInput{CampaignID: c.ID, Kind: "map", Source: writeSource(t, "region.png", "x")})
+	if h.View != (HandoutView{Zoom: 1}) {
+		t.Fatalf("a new handout should start unframed, got %+v", h.View)
+	}
+
+	if err := s.SaveHandoutView(h.ID, HandoutView{Rotate: 90, Zoom: 1.5, X: 0.2, Y: -0.1}); err != nil {
+		t.Fatalf("SaveHandoutView: %v", err)
+	}
+	renamed := saveHandout(t, s, HandoutInput{ID: &h.ID, CampaignID: c.ID, Kind: "map", Title: "The Drowned South"})
+	want := HandoutView{Rotate: 90, Zoom: 1.5, X: 0.2, Y: -0.1}
+	if renamed.View != want {
+		t.Fatalf("editing the handout should keep its framing: got %+v, want %+v", renamed.View, want)
 	}
 }
 

@@ -23,6 +23,14 @@ UPDATE handouts SET
 WHERE id = ?
 RETURNING *;
 
+-- name: SetHandoutView :exec
+UPDATE handouts SET
+  view_rotate = ?,
+  view_zoom = ?,
+  view_x = ?,
+  view_y = ?
+WHERE id = ?;
+
 -- name: DeleteHandout :exec
 DELETE FROM handouts
 WHERE id = ?;

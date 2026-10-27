@@ -1,6 +1,6 @@
 -- name: CreateInventoryItem :one
-INSERT INTO inventory_items (character_id, name, kind, qty, equipped, detail)
-VALUES (?,?,?,?,?,?)
+INSERT INTO inventory_items (character_id, name, kind, qty, equipped, detail, srd_slug)
+VALUES (?,?,?,?,?,?,?)
 RETURNING *;
 
 -- name: GetInventoryItem :one
@@ -19,6 +19,7 @@ UPDATE inventory_items SET
   qty = sqlc.arg(qty),
   equipped = sqlc.arg(equipped),
   detail = sqlc.arg(detail),
+  srd_slug = sqlc.arg(srd_slug),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = sqlc.arg(id)
 RETURNING *;

@@ -13,6 +13,7 @@ declare module "@wailsio/runtime" {
     namespace Events {
         interface CustomEvents {
             "table:show": main$0.TableDisplay;
+            "table:view": main$0.TableView;
             "table:window": main$0.TableWindow;
         }
     }

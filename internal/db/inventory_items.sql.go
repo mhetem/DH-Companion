@@ -14,7 +14,7 @@ UPDATE inventory_items SET
   qty = max(0, min(999, qty + CAST(?1 AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, character_id, name, kind, qty, equipped, detail, created_at, updated_at
+RETURNING id, character_id, name, kind, qty, equipped, detail, created_at, updated_at, srd_slug
 `
 
 type AdjustInventoryQtyParams struct {
@@ -35,14 +35,15 @@ func (q *Queries) AdjustInventoryQty(ctx context.Context, arg AdjustInventoryQty
 		&i.Detail,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SrdSlug,
 	)
 	return i, err
 }
 
 const createInventoryItem = `-- name: CreateInventoryItem :one
-INSERT INTO inventory_items (character_id, name, kind, qty, equipped, detail)
-VALUES (?,?,?,?,?,?)
-RETURNING id, character_id, name, kind, qty, equipped, detail, created_at, updated_at
+INSERT INTO inventory_items (character_id, name, kind, qty, equipped, detail, srd_slug)
+VALUES (?,?,?,?,?,?,?)
+RETURNING id, character_id, name, kind, qty, equipped, detail, created_at, updated_at, srd_slug
 `
 
 type CreateInventoryItemParams struct {
@@ -52,6 +53,7 @@ type CreateInventoryItemParams struct {
 	Qty         int64
 	Equipped    int64
 	Detail      string
+	SrdSlug     string
 }
 
 func (q *Queries) CreateInventoryItem(ctx context.Context, arg CreateInventoryItemParams) (InventoryItem, error) {
@@ -62,6 +64,7 @@ func (q *Queries) CreateInventoryItem(ctx context.Context, arg CreateInventoryIt
 		arg.Qty,
 		arg.Equipped,
 		arg.Detail,
+		arg.SrdSlug,
 	)
 	var i InventoryItem
 	err := row.Scan(
@@ -74,6 +77,7 @@ func (q *Queries) CreateInventoryItem(ctx context.Context, arg CreateInventoryIt
 		&i.Detail,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SrdSlug,
 	)
 	return i, err
 }
@@ -89,7 +93,7 @@ func (q *Queries) DeleteInventoryItem(ctx context.Context, id int64) error {
 }
 
 const getInventoryItem = `-- name: GetInventoryItem :one
-SELECT id, character_id, name, kind, qty, equipped, detail, created_at, updated_at FROM inventory_items
+SELECT id, character_id, name, kind, qty, equipped, detail, created_at, updated_at, srd_slug FROM inventory_items
 WHERE id = ?
 `
 
@@ -106,12 +110,13 @@ func (q *Queries) GetInventoryItem(ctx context.Context, id int64) (InventoryItem
 		&i.Detail,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SrdSlug,
 	)
 	return i, err
 }
 
 const listInventoryItems = `-- name: ListInventoryItems :many
-SELECT id, character_id, name, kind, qty, equipped, detail, created_at, updated_at FROM inventory_items
+SELECT id, character_id, name, kind, qty, equipped, detail, created_at, updated_at, srd_slug FROM inventory_items
 WHERE character_id = ?
 ORDER BY equipped DESC, name ASC
 `
@@ -135,6 +140,7 @@ func (q *Queries) ListInventoryItems(ctx context.Context, characterID int64) ([]
 			&i.Detail,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SrdSlug,
 		); err != nil {
 			return nil, err
 		}
@@ -154,7 +160,7 @@ UPDATE inventory_items SET
   equipped = ?1,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, character_id, name, kind, qty, equipped, detail, created_at, updated_at
+RETURNING id, character_id, name, kind, qty, equipped, detail, created_at, updated_at, srd_slug
 `
 
 type SetInventoryEquippedParams struct {
@@ -175,6 +181,7 @@ func (q *Queries) SetInventoryEquipped(ctx context.Context, arg SetInventoryEqui
 		&i.Detail,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SrdSlug,
 	)
 	return i, err
 }
@@ -203,9 +210,10 @@ UPDATE inventory_items SET
   qty = ?3,
   equipped = ?4,
   detail = ?5,
+  srd_slug = ?6,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-WHERE id = ?6
-RETURNING id, character_id, name, kind, qty, equipped, detail, created_at, updated_at
+WHERE id = ?7
+RETURNING id, character_id, name, kind, qty, equipped, detail, created_at, updated_at, srd_slug
 `
 
 type UpdateInventoryItemParams struct {
@@ -214,6 +222,7 @@ type UpdateInventoryItemParams struct {
 	Qty      int64
 	Equipped int64
 	Detail   string
+	SrdSlug  string
 	ID       int64
 }
 
@@ -224,6 +233,7 @@ func (q *Queries) UpdateInventoryItem(ctx context.Context, arg UpdateInventoryIt
 		arg.Qty,
 		arg.Equipped,
 		arg.Detail,
+		arg.SrdSlug,
 		arg.ID,
 	)
 	var i InventoryItem
@@ -237,6 +247,7 @@ func (q *Queries) UpdateInventoryItem(ctx context.Context, arg UpdateInventoryIt
 		&i.Detail,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SrdSlug,
 	)
 	return i, err
 }

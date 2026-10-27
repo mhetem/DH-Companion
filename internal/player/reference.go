@@ -8,7 +8,7 @@ import (
 	"github.com/mhetem/DH-Companion/internal/cards"
 )
 
-var Domains = []string{"Arcana", "Blade", "Bone", "Codex", "Grace", "Midnight", "Sage", "Splendor", "Valor"}
+var Domains = []string{"Arcana", "Blade", "Bone", "Codex", "Dread", "Grace", "Midnight", "Sage", "Splendor", "Valor"}
 
 type DomainFilter struct {
 	Domain   string `json:"domain"`

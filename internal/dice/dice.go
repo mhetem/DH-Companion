@@ -5,15 +5,15 @@ import (
 )
 
 type DualityDice struct {
-	Hope   int
-	Fear   int
-	Result int
-	Msg    string
+	Hope   int    `json:"hope"`
+	Fear   int    `json:"fear"`
+	Result int    `json:"result"`
+	Msg    string `json:"msg"`
 }
 
 type GMDice struct {
-	Result int
-	Msg    string
+	Result int    `json:"result"`
+	Msg    string `json:"msg"`
 }
 
 func RollDice(sides Sides) int {

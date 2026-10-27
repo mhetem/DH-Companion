@@ -2,6 +2,7 @@
   import FeatureList from '../gm/FeatureList.svelte'
   import SrdText from '../SrdText.svelte'
   import {
+    CreationBonuses,
     ListAncestries,
     ListClasses,
     ListCommunities,
@@ -121,6 +122,29 @@
       form.evasion = Number(k.startingEvasion) || 10
     }
   }
+
+  // What the subclass's foundation and the ancestry add at creation — Nimble's
+  // Evasion, a Human's extra Stress slot, Battlemage's Hit Point. It's added to the
+  // class's numbers once per combination, so stepping back and returning doesn't
+  // add it twice and a number typed over it stays put.
+  let bonus = $state(null)
+  let bonusKey = ''
+
+  $effect(() => {
+    if (editing || step !== STEPS.length - 1 || !pickedClass) return
+    const key = `${form.classSlug}|${form.subclassSlug}|${form.ancestrySlug}`
+    if (key === bonusKey) return
+    bonusKey = key
+    const base = pickedClass
+    CreationBonuses(form.classSlug, form.subclassSlug, form.ancestrySlug)
+      .then((b) => {
+        bonus = b
+        form.hpMax = (Number(base.startingHitPoints) || 6) + b.hpMax
+        form.stressMax = 6 + b.stressMax
+        form.evasion = (Number(base.startingEvasion) || 10) + b.evasion
+      })
+      .catch((e) => (error = errorMessage(e)))
+  })
 
   function assignTrait(key, value) {
     form.traits[key] = Number(value)
@@ -345,8 +369,19 @@
         <div class="stack">
           <p class="blurb">
             Hit Points and Evasion come from your class. Armor Score and both thresholds come from the
-            armor you're wearing — fill them in from your armor card.
+            armor you're wearing: pick it from the SRD tables in Inventory and equipping it fills these
+            in, or type them from your armor card.
           </p>
+          {#if !editing && bonus?.sources.length}
+            <p class="blurb">
+              Your choices add {bonus.sources.map((b) => `${b.source} (${b.effect})`).join(', ')}. Hit Points,
+              Stress and Evasion below already include them.
+              {#if bonus.major || bonus.severe}
+                Thresholds pick theirs up when you equip SRD armor in Inventory — if you type them here, add
+                them in.
+              {/if}
+            </p>
+          {/if}
           <div class="grid">
             <label><span>Hit Points</span><input type="number" min="1" max="20" bind:value={form.hpMax} /></label>
             <label><span>Stress</span><input type="number" min="1" max="20" bind:value={form.stressMax} /></label>

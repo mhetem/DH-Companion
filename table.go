@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/mhetem/DH-Companion/internal/gm"
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -18,18 +19,33 @@ const (
 	tableWindowName  = "table"
 	eventTableShow   = "table:show"
 	eventTableWindow = "table:window"
+	eventTableView   = "table:view"
 
 	tableWidth  = 1280
 	tableHeight = 720
+
+	viewSaveDelay = 400 * time.Millisecond
 )
 
 type TableDisplay struct {
-	HandoutID int64  `json:"handoutId"`
-	Kind      string `json:"kind"`
-	Title     string `json:"title"`
-	Body      string `json:"body"`
-	MediaURL  string `json:"mediaUrl"`
-	MediaType string `json:"mediaType"`
+	HandoutID int64          `json:"handoutId"`
+	Kind      string         `json:"kind"`
+	Title     string         `json:"title"`
+	Body      string         `json:"body"`
+	MediaURL  string         `json:"mediaUrl"`
+	MediaType string         `json:"mediaType"`
+	View      gm.HandoutView `json:"view"`
+}
+
+type TableView struct {
+	HandoutID int64          `json:"handoutId"`
+	View      gm.HandoutView `json:"view"`
+	Origin    string         `json:"origin"`
+}
+
+type pendingView struct {
+	handoutID int64
+	view      gm.HandoutView
 }
 
 type TableWindow struct {
@@ -50,6 +66,7 @@ type TableScreen struct {
 func init() {
 	application.RegisterEvent[TableDisplay](eventTableShow)
 	application.RegisterEvent[TableWindow](eventTableWindow)
+	application.RegisterEvent[TableView](eventTableView)
 }
 
 func canPlaceWindows() bool {
@@ -152,6 +169,13 @@ func (a *App) CloseTableWindow() {
 	}
 }
 
+func (a *App) shutTable() {
+	a.tableMu.Lock()
+	a.flushView()
+	a.tableMu.Unlock()
+	a.CloseTableWindow()
+}
+
 func (a *App) ToggleTableFullscreen() {
 	a.tableMu.Lock()
 	w := a.table
@@ -168,6 +192,10 @@ func (a *App) TableNow() TableDisplay {
 }
 
 func (a *App) ShowHandout(id int64) (TableDisplay, error) {
+	a.tableMu.Lock()
+	a.flushView()
+	a.tableMu.Unlock()
+
 	h, err := a.gm.GetHandout(id)
 	if err != nil {
 		return TableDisplay{}, err
@@ -181,12 +209,47 @@ func (a *App) ShowHandout(id int64) (TableDisplay, error) {
 		Title:     h.Title,
 		MediaURL:  h.MediaURL,
 		MediaType: h.MediaType,
+		View:      gm.NormalizeView(h.View),
 	}
 	if h.Kind == "text" {
 		display.Body = h.Body
 	}
 	a.show(display)
 	return display, nil
+}
+
+func (a *App) SetTableView(handoutID int64, view gm.HandoutView, origin string) gm.HandoutView {
+	a.tableMu.Lock()
+	defer a.tableMu.Unlock()
+	if handoutID == 0 || handoutID != a.showing.HandoutID {
+		return a.showing.View
+	}
+	view = gm.NormalizeView(view)
+	a.showing.View = view
+	a.wails.Event.Emit(eventTableView, TableView{HandoutID: handoutID, View: view, Origin: origin})
+
+	if a.viewPending != nil && a.viewPending.handoutID != handoutID {
+		a.flushView()
+	}
+	a.viewPending = &pendingView{handoutID: handoutID, view: view}
+	if a.viewTimer != nil {
+		a.viewTimer.Stop()
+	}
+	a.viewTimer = time.AfterFunc(viewSaveDelay, func() {
+		a.tableMu.Lock()
+		defer a.tableMu.Unlock()
+		a.flushView()
+	})
+	return view
+}
+
+func (a *App) flushView() {
+	if a.viewPending == nil {
+		return
+	}
+	p := *a.viewPending
+	a.viewPending = nil
+	_ = a.gm.SaveHandoutView(p.handoutID, p.view)
 }
 
 func (a *App) ClearTable() {

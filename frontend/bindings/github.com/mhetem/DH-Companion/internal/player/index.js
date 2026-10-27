@@ -18,11 +18,19 @@ import * as $models from "./models.js";
  */
 
 /**
+ * @typedef {$models.Bonus} Bonus
+ */
+
+/**
  * @typedef {$models.Character} Character
  */
 
 /**
  * @typedef {$models.CharacterInput} CharacterInput
+ */
+
+/**
+ * @typedef {$models.ComboResult} ComboResult
  */
 
 /**
@@ -42,7 +50,19 @@ import * as $models from "./models.js";
  */
 
 /**
+ * @typedef {$models.CreationBonus} CreationBonus
+ */
+
+/**
+ * @typedef {$models.DamageInput} DamageInput
+ */
+
+/**
  * @typedef {$models.DamageResult} DamageResult
+ */
+
+/**
+ * @typedef {$models.DamageTaken} DamageTaken
  */
 
 /**
@@ -58,11 +78,23 @@ import * as $models from "./models.js";
  */
 
 /**
+ * @typedef {$models.EffectOption} EffectOption
+ */
+
+/**
  * @typedef {$models.Experience} Experience
  */
 
 /**
  * @typedef {$models.ExperienceInput} ExperienceInput
+ */
+
+/**
+ * @typedef {$models.FocusRoll} FocusRoll
+ */
+
+/**
+ * @typedef {$models.Gear} Gear
  */
 
 /**

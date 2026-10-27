@@ -14,7 +14,7 @@ UPDATE characters SET
   armor_marked = max(0, min(armor_score, armor_marked + CAST(?1 AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
 `
 
 type AdjustCharacterArmorParams struct {
@@ -64,6 +64,13 @@ func (q *Queries) AdjustCharacterArmor(ctx context.Context, arg AdjustCharacterA
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
 	)
 	return i, err
 }
@@ -73,7 +80,7 @@ UPDATE characters SET
   hp_marked = max(0, min(hp_max, hp_marked + CAST(?1 AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
 `
 
 type AdjustCharacterHPParams struct {
@@ -123,6 +130,13 @@ func (q *Queries) AdjustCharacterHP(ctx context.Context, arg AdjustCharacterHPPa
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
 	)
 	return i, err
 }
@@ -132,7 +146,7 @@ UPDATE characters SET
   hope = max(0, min(6, hope + CAST(?1 AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
 `
 
 type AdjustCharacterHopeParams struct {
@@ -182,6 +196,13 @@ func (q *Queries) AdjustCharacterHope(ctx context.Context, arg AdjustCharacterHo
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
 	)
 	return i, err
 }
@@ -191,7 +212,7 @@ UPDATE characters SET
   stress_marked = max(0, min(stress_max, stress_marked + CAST(?1 AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
 `
 
 type AdjustCharacterStressParams struct {
@@ -241,6 +262,13 @@ func (q *Queries) AdjustCharacterStress(ctx context.Context, arg AdjustCharacter
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
 	)
 	return i, err
 }
@@ -253,7 +281,7 @@ INSERT INTO characters (
   threshold_major, threshold_severe, background, connections
 )
 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
 `
 
 type CreateCharacterParams struct {
@@ -344,6 +372,13 @@ func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
 	)
 	return i, err
 }
@@ -359,7 +394,7 @@ func (q *Queries) DeleteCharacter(ctx context.Context, id int64) error {
 }
 
 const getCharacter = `-- name: GetCharacter :one
-SELECT id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug FROM characters
+SELECT id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects FROM characters
 WHERE id = ?
 `
 
@@ -405,12 +440,19 @@ func (q *Queries) GetCharacter(ctx context.Context, id int64) (Character, error)
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
 	)
 	return i, err
 }
 
 const listCharacters = `-- name: ListCharacters :many
-SELECT id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug FROM characters
+SELECT id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects FROM characters
 ORDER BY updated_at DESC
 `
 
@@ -462,6 +504,13 @@ func (q *Queries) ListCharacters(ctx context.Context) ([]Character, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.BeastformSlug,
+			&i.TransformationSlug,
+			&i.Favor,
+			&i.Focus,
+			&i.ComboDie,
+			&i.KnownStances,
+			&i.ActiveStance,
+			&i.ActiveEffects,
 		); err != nil {
 			return nil, err
 		}
@@ -481,7 +530,7 @@ UPDATE characters SET
   beastform_slug = ?1,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?2
-RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
 `
 
 type SetCharacterBeastformParams struct {
@@ -531,6 +580,79 @@ func (q *Queries) SetCharacterBeastform(ctx context.Context, arg SetCharacterBea
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
+	)
+	return i, err
+}
+
+const setCharacterEffects = `-- name: SetCharacterEffects :one
+UPDATE characters SET
+  active_effects = ?1,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = ?2
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
+`
+
+type SetCharacterEffectsParams struct {
+	ActiveEffects string
+	ID            int64
+}
+
+func (q *Queries) SetCharacterEffects(ctx context.Context, arg SetCharacterEffectsParams) (Character, error) {
+	row := q.db.QueryRowContext(ctx, setCharacterEffects, arg.ActiveEffects, arg.ID)
+	var i Character
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Pronouns,
+		&i.ClassSlug,
+		&i.SubclassSlug,
+		&i.SubclassMastery,
+		&i.MulticlassSlug,
+		&i.MulticlassSubclassSlug,
+		&i.AncestrySlug,
+		&i.CommunitySlug,
+		&i.Level,
+		&i.Proficiency,
+		&i.Agility,
+		&i.Strength,
+		&i.Finesse,
+		&i.Instinct,
+		&i.Presence,
+		&i.Knowledge,
+		&i.MarkedTraits,
+		&i.HpMax,
+		&i.HpMarked,
+		&i.StressMax,
+		&i.StressMarked,
+		&i.Hope,
+		&i.Evasion,
+		&i.ArmorScore,
+		&i.ArmorMarked,
+		&i.ThresholdMajor,
+		&i.ThresholdSevere,
+		&i.GoldHandfuls,
+		&i.GoldBags,
+		&i.GoldChests,
+		&i.Background,
+		&i.Connections,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
 	)
 	return i, err
 }
@@ -542,7 +664,7 @@ UPDATE characters SET
   gold_chests = max(0, min(99, CAST(?3 AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?4
-RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
 `
 
 type SetCharacterGoldParams struct {
@@ -599,6 +721,308 @@ func (q *Queries) SetCharacterGold(ctx context.Context, arg SetCharacterGoldPara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
+	)
+	return i, err
+}
+
+const setCharacterStances = `-- name: SetCharacterStances :one
+UPDATE characters SET
+  known_stances = ?1,
+  active_stance = ?2,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = ?3
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
+`
+
+type SetCharacterStancesParams struct {
+	KnownStances string
+	ActiveStance string
+	ID           int64
+}
+
+func (q *Queries) SetCharacterStances(ctx context.Context, arg SetCharacterStancesParams) (Character, error) {
+	row := q.db.QueryRowContext(ctx, setCharacterStances, arg.KnownStances, arg.ActiveStance, arg.ID)
+	var i Character
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Pronouns,
+		&i.ClassSlug,
+		&i.SubclassSlug,
+		&i.SubclassMastery,
+		&i.MulticlassSlug,
+		&i.MulticlassSubclassSlug,
+		&i.AncestrySlug,
+		&i.CommunitySlug,
+		&i.Level,
+		&i.Proficiency,
+		&i.Agility,
+		&i.Strength,
+		&i.Finesse,
+		&i.Instinct,
+		&i.Presence,
+		&i.Knowledge,
+		&i.MarkedTraits,
+		&i.HpMax,
+		&i.HpMarked,
+		&i.StressMax,
+		&i.StressMarked,
+		&i.Hope,
+		&i.Evasion,
+		&i.ArmorScore,
+		&i.ArmorMarked,
+		&i.ThresholdMajor,
+		&i.ThresholdSevere,
+		&i.GoldHandfuls,
+		&i.GoldBags,
+		&i.GoldChests,
+		&i.Background,
+		&i.Connections,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
+	)
+	return i, err
+}
+
+const setCharacterStats = `-- name: SetCharacterStats :one
+UPDATE characters SET
+  evasion = ?1,
+  armor_score = ?2,
+  armor_marked = ?3,
+  threshold_major = ?4,
+  threshold_severe = ?5,
+  hp_max = ?6,
+  hp_marked = ?7,
+  stress_max = ?8,
+  stress_marked = ?9,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = ?10
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
+`
+
+type SetCharacterStatsParams struct {
+	Evasion         int64
+	ArmorScore      int64
+	ArmorMarked     int64
+	ThresholdMajor  int64
+	ThresholdSevere int64
+	HpMax           int64
+	HpMarked        int64
+	StressMax       int64
+	StressMarked    int64
+	ID              int64
+}
+
+func (q *Queries) SetCharacterStats(ctx context.Context, arg SetCharacterStatsParams) (Character, error) {
+	row := q.db.QueryRowContext(ctx, setCharacterStats,
+		arg.Evasion,
+		arg.ArmorScore,
+		arg.ArmorMarked,
+		arg.ThresholdMajor,
+		arg.ThresholdSevere,
+		arg.HpMax,
+		arg.HpMarked,
+		arg.StressMax,
+		arg.StressMarked,
+		arg.ID,
+	)
+	var i Character
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Pronouns,
+		&i.ClassSlug,
+		&i.SubclassSlug,
+		&i.SubclassMastery,
+		&i.MulticlassSlug,
+		&i.MulticlassSubclassSlug,
+		&i.AncestrySlug,
+		&i.CommunitySlug,
+		&i.Level,
+		&i.Proficiency,
+		&i.Agility,
+		&i.Strength,
+		&i.Finesse,
+		&i.Instinct,
+		&i.Presence,
+		&i.Knowledge,
+		&i.MarkedTraits,
+		&i.HpMax,
+		&i.HpMarked,
+		&i.StressMax,
+		&i.StressMarked,
+		&i.Hope,
+		&i.Evasion,
+		&i.ArmorScore,
+		&i.ArmorMarked,
+		&i.ThresholdMajor,
+		&i.ThresholdSevere,
+		&i.GoldHandfuls,
+		&i.GoldBags,
+		&i.GoldChests,
+		&i.Background,
+		&i.Connections,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
+	)
+	return i, err
+}
+
+const setCharacterTracks = `-- name: SetCharacterTracks :one
+UPDATE characters SET
+  favor = max(0, min(6, CAST(?1 AS INTEGER))),
+  focus = max(0, min(6, CAST(?2 AS INTEGER))),
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = ?3
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
+`
+
+type SetCharacterTracksParams struct {
+	Favor int64
+	Focus int64
+	ID    int64
+}
+
+func (q *Queries) SetCharacterTracks(ctx context.Context, arg SetCharacterTracksParams) (Character, error) {
+	row := q.db.QueryRowContext(ctx, setCharacterTracks, arg.Favor, arg.Focus, arg.ID)
+	var i Character
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Pronouns,
+		&i.ClassSlug,
+		&i.SubclassSlug,
+		&i.SubclassMastery,
+		&i.MulticlassSlug,
+		&i.MulticlassSubclassSlug,
+		&i.AncestrySlug,
+		&i.CommunitySlug,
+		&i.Level,
+		&i.Proficiency,
+		&i.Agility,
+		&i.Strength,
+		&i.Finesse,
+		&i.Instinct,
+		&i.Presence,
+		&i.Knowledge,
+		&i.MarkedTraits,
+		&i.HpMax,
+		&i.HpMarked,
+		&i.StressMax,
+		&i.StressMarked,
+		&i.Hope,
+		&i.Evasion,
+		&i.ArmorScore,
+		&i.ArmorMarked,
+		&i.ThresholdMajor,
+		&i.ThresholdSevere,
+		&i.GoldHandfuls,
+		&i.GoldBags,
+		&i.GoldChests,
+		&i.Background,
+		&i.Connections,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
+	)
+	return i, err
+}
+
+const setCharacterTransformation = `-- name: SetCharacterTransformation :one
+UPDATE characters SET
+  transformation_slug = ?1,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = ?2
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
+`
+
+type SetCharacterTransformationParams struct {
+	TransformationSlug string
+	ID                 int64
+}
+
+func (q *Queries) SetCharacterTransformation(ctx context.Context, arg SetCharacterTransformationParams) (Character, error) {
+	row := q.db.QueryRowContext(ctx, setCharacterTransformation, arg.TransformationSlug, arg.ID)
+	var i Character
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Pronouns,
+		&i.ClassSlug,
+		&i.SubclassSlug,
+		&i.SubclassMastery,
+		&i.MulticlassSlug,
+		&i.MulticlassSubclassSlug,
+		&i.AncestrySlug,
+		&i.CommunitySlug,
+		&i.Level,
+		&i.Proficiency,
+		&i.Agility,
+		&i.Strength,
+		&i.Finesse,
+		&i.Instinct,
+		&i.Presence,
+		&i.Knowledge,
+		&i.MarkedTraits,
+		&i.HpMax,
+		&i.HpMarked,
+		&i.StressMax,
+		&i.StressMarked,
+		&i.Hope,
+		&i.Evasion,
+		&i.ArmorScore,
+		&i.ArmorMarked,
+		&i.ThresholdMajor,
+		&i.ThresholdSevere,
+		&i.GoldHandfuls,
+		&i.GoldBags,
+		&i.GoldChests,
+		&i.Background,
+		&i.Connections,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
 	)
 	return i, err
 }
@@ -611,7 +1035,7 @@ UPDATE characters SET
   armor_marked = max(0, min(armor_score, CAST(?4 AS INTEGER))),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?5
-RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
 `
 
 type SetCharacterVitalsParams struct {
@@ -670,6 +1094,13 @@ func (q *Queries) SetCharacterVitals(ctx context.Context, arg SetCharacterVitals
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
 	)
 	return i, err
 }
@@ -702,7 +1133,7 @@ UPDATE characters SET
   notes = ?21,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?22
-RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
 `
 
 type UpdateCharacterParams struct {
@@ -795,6 +1226,13 @@ func (q *Queries) UpdateCharacter(ctx context.Context, arg UpdateCharacterParams
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
 	)
 	return i, err
 }
@@ -818,9 +1256,10 @@ UPDATE characters SET
   evasion = ?15,
   threshold_major = ?16,
   threshold_severe = ?17,
+  combo_die = ?18,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-WHERE id = ?18
-RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug
+WHERE id = ?19
+RETURNING id, name, pronouns, class_slug, subclass_slug, subclass_mastery, multiclass_slug, multiclass_subclass_slug, ancestry_slug, community_slug, level, proficiency, agility, strength, finesse, instinct, presence, knowledge, marked_traits, hp_max, hp_marked, stress_max, stress_marked, hope, evasion, armor_score, armor_marked, threshold_major, threshold_severe, gold_handfuls, gold_bags, gold_chests, background, connections, notes, created_at, updated_at, beastform_slug, transformation_slug, favor, focus, combo_die, known_stances, active_stance, active_effects
 `
 
 type UpdateCharacterProgressParams struct {
@@ -841,6 +1280,7 @@ type UpdateCharacterProgressParams struct {
 	Evasion                int64
 	ThresholdMajor         int64
 	ThresholdSevere        int64
+	ComboDie               int64
 	ID                     int64
 }
 
@@ -863,6 +1303,7 @@ func (q *Queries) UpdateCharacterProgress(ctx context.Context, arg UpdateCharact
 		arg.Evasion,
 		arg.ThresholdMajor,
 		arg.ThresholdSevere,
+		arg.ComboDie,
 		arg.ID,
 	)
 	var i Character
@@ -905,6 +1346,13 @@ func (q *Queries) UpdateCharacterProgress(ctx context.Context, arg UpdateCharact
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.BeastformSlug,
+		&i.TransformationSlug,
+		&i.Favor,
+		&i.Focus,
+		&i.ComboDie,
+		&i.KnownStances,
+		&i.ActiveStance,
+		&i.ActiveEffects,
 	)
 	return i, err
 }

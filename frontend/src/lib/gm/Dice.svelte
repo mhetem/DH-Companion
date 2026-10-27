@@ -59,9 +59,9 @@
       error = ''
       record({
         kind: 'd20',
-        value: Number(roll.Result),
+        value: Number(roll.result),
         max: 20 + Number(modifier),
-        note: roll.Msg,
+        note: roll.msg,
         detail: describeD20()
       })
     } catch (e) {

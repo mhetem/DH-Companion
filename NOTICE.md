@@ -2,7 +2,7 @@
 
 ## Daggerheart
 
-This product includes materials from the Daggerheart System Reference Document 1.0,
+This product includes materials from the Daggerheart System Reference Document 2.0,
 © Critical Role, LLC. under the terms of the Darrington Press Community Gaming (DPCGL)
 License. More information can be found at https://www.daggerheart.com. There are no
 previous modifications by others.
@@ -25,7 +25,7 @@ or affiliated with Darrington Press, LLC or Critical Role, LLC.
 |---|---|---|
 | Go, Svelte, CSS, SQL, build config | Project author | MIT — see [LICENSE](LICENSE) |
 | The Hilt name, logo and lockup | Project author | MIT — see [LICENSE](LICENSE) |
-| `data/*.json` — adversaries, environments, domain cards, classes, ancestries, communities, beastforms, ranger companion | Critical Role, LLC | DPCGL — not MIT |
+| `data/*.json` — adversaries, environments, domain cards, classes, ancestries, communities, transformations, beastforms, ranger companion, martial stances, weapons, armor, items, consumables | Critical Role, LLC | DPCGL — not MIT |
 
 The MIT License covers the software only. It grants no rights in the Daggerheart System
 Reference Document and no rights in any Darrington Press or Critical Role trademark, logo

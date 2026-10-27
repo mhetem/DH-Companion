@@ -30,6 +30,7 @@ type Effect struct {
 	Proficiency     int  `json:"proficiency"`
 	SubclassUpgrade int  `json:"subclassUpgrade"`
 	Multiclass      bool `json:"multiclass"`
+	ComboDie        int  `json:"comboDie"`
 }
 
 type PlanOption struct {
@@ -57,7 +58,34 @@ func effectView(e srd.AdvancementEffect) Effect {
 		Proficiency:     e.Proficiency,
 		SubclassUpgrade: e.SubclassUpgrade,
 		Multiclass:      e.Multiclass,
+		ComboDie:        e.ComboDie,
 	}
+}
+
+var comboDieAdvancement = srd.Advancement{
+	ID:          "comboDie",
+	Label:       "Increase your Combo Die",
+	Description: "Your Combo Die goes up one step: d4, d6, d8, d10, then d12.",
+	Slots:       1,
+	Cost:        1,
+	Effect:      srd.AdvancementEffect{ComboDie: 1},
+}
+
+func (s *Service) tierAdvancements(row db.Character, rules srd.Tier) []srd.Advancement {
+	out := slices.Clone(rules.Advancements)
+	if row.ClassSlug == brawlerClass {
+		out = append(out, comboDieAdvancement)
+	}
+	return out
+}
+
+func findAdvancementIn(list []srd.Advancement, id string) (srd.Advancement, bool) {
+	for _, a := range list {
+		if a.ID == id {
+			return a, true
+		}
+	}
+	return srd.Advancement{}, false
 }
 
 type LevelUpPlan struct {
@@ -79,6 +107,7 @@ type LevelUpPlan struct {
 	DomainCardsPerLevel  int                    `json:"domainCardsPerLevel"`
 	Options              []PlanOption           `json:"options"`
 	AvailableCards       []cards.DomainCard     `json:"availableCards"`
+	MulticlassCards      []cards.DomainCard     `json:"multiclassCards"`
 	Experiences          []Experience           `json:"experiences"`
 	Traits               map[string]int         `json:"traits"`
 	MarkedTraits         []string               `json:"markedTraits"`
@@ -197,7 +226,7 @@ func (s *Service) PlanLevelUp(characterID int64) (LevelUpPlan, error) {
 		proficiency += rules.ProficiencyBonus
 	}
 
-	for _, a := range rules.Advancements {
+	for _, a := range s.tierAdvancements(row, rules) {
 		opt := PlanOption{
 			ID:          a.ID,
 			Label:       a.Label,
@@ -232,6 +261,10 @@ func (s *Service) PlanLevelUp(characterID int64) (LevelUpPlan, error) {
 			opt.Available = false
 			opt.Reason = "already multiclassed"
 		}
+		if opt.Available && a.Effect.ComboDie > 0 && int(row.ComboDie) >= maxComboDie {
+			opt.Available = false
+			opt.Reason = fmt.Sprintf("your Combo Die is already a d%d", maxComboDie)
+		}
 		plan.Options = append(plan.Options, opt)
 	}
 
@@ -241,7 +274,27 @@ func (s *Service) PlanLevelUp(characterID int64) (LevelUpPlan, error) {
 	if plan.AvailableCards, err = s.cardsUpToLevel(characterID, toLevel, view.Domains); err != nil {
 		return LevelUpPlan{}, err
 	}
+	plan.MulticlassCards = []cards.DomainCard{}
+	if row.MulticlassSlug == "" {
+		if others := s.otherDomains(view.Domains); len(others) > 0 {
+			if plan.MulticlassCards, err = s.cardsUpToLevel(characterID, toLevel, others); err != nil {
+				return LevelUpPlan{}, err
+			}
+		}
+	}
 	return plan, nil
+}
+
+func (s *Service) otherDomains(held []string) []string {
+	out := []string{}
+	for _, class := range s.catalog.ListClasses() {
+		for _, d := range class.Domains {
+			if !contains(held, d) && !contains(out, d) {
+				out = append(out, d)
+			}
+		}
+	}
+	return out
 }
 
 func (s *Service) ApplyLevelUp(in LevelUpInput) (Sheet, error) {
@@ -280,6 +333,8 @@ func (s *Service) ApplyLevelUp(in LevelUpInput) (Sheet, error) {
 	multiclass := row.MulticlassSlug
 	multiSubclass := row.MulticlassSubclassSlug
 	domains := append([]string{}, view.Domains...)
+	comboDie := int(row.ComboDie)
+	advancements := s.tierAdvancements(row, rules)
 
 	if newTier {
 		if rules.ClearsMarkedTraits {
@@ -295,7 +350,7 @@ func (s *Service) ApplyLevelUp(in LevelUpInput) (Sheet, error) {
 	extraCards := []string{}
 
 	for _, choice := range in.Choices {
-		adv, ok := findAdvancement(rules, choice.ID)
+		adv, ok := findAdvancementIn(advancements, choice.ID)
 		if !ok {
 			return Sheet{}, fmt.Errorf("%q is not a tier %d advancement", choice.ID, tier)
 		}
@@ -374,6 +429,13 @@ func (s *Service) ApplyLevelUp(in LevelUpInput) (Sheet, error) {
 			mastery = clamp(mastery+e.SubclassUpgrade, 1, 3)
 			summary = append(summary, "subclass upgrade")
 		}
+		if e.ComboDie > 0 {
+			if comboDie >= maxComboDie {
+				return Sheet{}, fmt.Errorf("your Combo Die is already a d%d", maxComboDie)
+			}
+			comboDie = min(comboDie+2*e.ComboDie, maxComboDie)
+			summary = append(summary, fmt.Sprintf("Combo Die to d%d", comboDie))
+		}
 		if e.Multiclass {
 			if multiclass != "" {
 				return Sheet{}, fmt.Errorf("you have already multiclassed")
@@ -445,6 +507,10 @@ func (s *Service) ApplyLevelUp(in LevelUpInput) (Sheet, error) {
 	}
 
 	err = s.tx(func(q *db.Queries) error {
+		before, err := s.snapshot(q, in.CharacterID)
+		if err != nil {
+			return err
+		}
 		if _, err := q.UpdateCharacterProgress(s.ctx, db.UpdateCharacterProgressParams{
 			Level:                  int64(toLevel),
 			Proficiency:            int64(proficiency),
@@ -463,6 +529,7 @@ func (s *Service) ApplyLevelUp(in LevelUpInput) (Sheet, error) {
 			Evasion:                int64(evasion),
 			ThresholdMajor:         int64(major),
 			ThresholdSevere:        int64(severe),
+			ComboDie:               int64(comboDie),
 			ID:                     in.CharacterID,
 		}); err != nil {
 			return fmt.Errorf("applying level-up: %w", err)
@@ -517,7 +584,11 @@ func (s *Service) ApplyLevelUp(in LevelUpInput) (Sheet, error) {
 			}
 			return fmt.Errorf("recording level-up: %w", err)
 		}
-		return nil
+		after, err := s.snapshot(q, in.CharacterID)
+		if err != nil {
+			return err
+		}
+		return s.syncStats(q, in.CharacterID, before, after)
 	})
 	if err != nil {
 		return Sheet{}, err

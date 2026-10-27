@@ -12,6 +12,11 @@ import "../github.com/wailsapp/wails/v3/internal/eventcreate.js";
 export const TableShow = "table:show";
 
 /**
+ * Name of the custom event "table:view".
+ */
+export const TableView = "table:view";
+
+/**
  * Name of the custom event "table:window".
  */
 export const TableWindow = "table:window";

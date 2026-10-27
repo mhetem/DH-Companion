@@ -1,0 +1,115 @@
+{
+    "martialStances": {
+        "name": "Martial Stances",
+        "type": "Stances",
+        "description": "When you choose the Martial Artist subclass, take the Martial Stances sheet to track which stances your character knows. You can also track which stance you have active and your current Focus.",
+        "rules": [
+            {
+                "common": "",
+                "title": "Stances",
+                "type": "Rule",
+                "description": "Stances are special body positionings that enable Martial Artists to attack, react, or defend in combat. Each stance grants your character a different ability, bonus, or feature while active.\n\nYou choose two stances from Tier 1 when you first take the Martial Artist's subclass foundation card. Mark the circle next to each to indicate that your character knows and has access to them. Mark a new stance from your tier or below each time you gain a level."
+            },
+            {
+                "common": "",
+                "title": "Focus",
+                "type": "Rule",
+                "description": "Focus represents your character's poise, clarity, and control. Once per rest during a moment of calm, you can clear your mind and refocus your martial instincts. Clear your Focus track, then roll a number of <strong>d6s</strong> equal to your Instinct and gain Focus equal to the highest result rolled. You can hold a maximum of 6 Focus."
+            },
+            {
+                "common": "",
+                "title": "Shifting into Stances",
+                "type": "Rule",
+                "description": "You can <strong>spend a Focus</strong> to shift into a martial stance and gain its effects. You can shift only into stances you've marked as known. When you shift into a stance, it's considered your active stance until you drop out of it.\n\nYou can't shift into or have more than one active stance at a time. Until you shift into a stance, you are not considered to be in a stance or to have an active stance."
+            },
+            {
+                "common": "",
+                "title": "Dropping Out of Stances",
+                "type": "Rule",
+                "description": "If you are already in a stance when you shift into a different stance, you automatically drop out of the previously active stance. You also drop out of your active stance when you take Severe damage or mark your last Hit Point. Otherwise, you drop out of your active stance at the end of the scene. When you drop out of a stance, you lose any ongoing benefits it provides."
+            }
+        ],
+        "stances": [
+            {
+                "title": "Favored",
+                "tier": 1,
+                "description": "Gain a bonus to damage rolls equal to a trait of your choice."
+            },
+            {
+                "title": "Invigorating",
+                "tier": 1,
+                "description": "On a successful attack, roll a <strong>d4</strong>. On a result of 4, gain a Focus."
+            },
+            {
+                "title": "Quick",
+                "tier": 1,
+                "description": "When you make an attack, you can <strong>spend a Focus</strong> or <strong>mark a Stress</strong> to target another creature within range with that attack."
+            },
+            {
+                "title": "Reliable",
+                "tier": 1,
+                "description": "Gain a +1 bonus to your attack rolls."
+            },
+            {
+                "title": "Aggressive",
+                "tier": 2,
+                "description": "Gain a -1 penalty to your Evasion. On a successful attack, roll an additional damage die and discard the lowest result."
+            },
+            {
+                "title": "Anchored",
+                "tier": 2,
+                "description": "Gain a +2 bonus to your damage thresholds. While in this stance, you can't be moved against your will."
+            },
+            {
+                "title": "Defensive",
+                "tier": 2,
+                "description": "Attack rolls targeting you from within Melee range have disadvantage unless the attacker marks a Stress to negate the disadvantage."
+            },
+            {
+                "title": "Otherworldly",
+                "tier": 2,
+                "description": "On a successful attack, you can deal physical or magic damage."
+            },
+            {
+                "title": "Grappling",
+                "tier": 3,
+                "description": "On a successful attack within Melee range, you can <strong>spend a Focus</strong> or <strong>mark a Stress</strong> to temporarily <em>Restrain</em> the target or throw the target up to Close range."
+            },
+            {
+                "title": "Scary",
+                "tier": 3,
+                "description": "On a successful attack, the target must mark a Stress."
+            },
+            {
+                "title": "Stable",
+                "tier": 3,
+                "description": "You can <strong>spend a Focus</strong> instead of an Armor Slot to reduce damage."
+            },
+            {
+                "title": "Vigilant",
+                "tier": 3,
+                "description": "When you are targeted by an attack, you can <strong>mark a Stress</strong> to gain a <strong>d6</strong> bonus to your Evasion against the attack."
+            },
+            {
+                "title": "Crushing",
+                "tier": 4,
+                "description": "When you deal Severe damage, you can <strong>spend a Hope</strong> to force the target to mark an additional Hit Point."
+            },
+            {
+                "title": "Exacting",
+                "tier": 4,
+                "description": "When you roll a 1 on a damage die, you can treat it as the highest value on the die instead."
+            },
+            {
+                "title": "Honed",
+                "tier": 4,
+                "description": "<strong>Spend a Focus</strong> before you make an attack roll to gain a +1 bonus to your Proficiency for that attack."
+            },
+            {
+                "title": "Isolating",
+                "tier": 4,
+                "description": "Gain advantage on attack rolls when there are no other creatures within Very Close range of you or your target."
+            }
+        ]
+    }
+}

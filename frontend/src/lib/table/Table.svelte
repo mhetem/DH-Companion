@@ -1,10 +1,13 @@
 <script>
   import { Events, Window } from '@wailsio/runtime'
-  import { TableNow } from '../../../bindings/github.com/mhetem/DH-Companion/app.js'
+  import { SetTableView, TableNow } from '../../../bindings/github.com/mhetem/DH-Companion/app.js'
   import { renderMarkdown } from '../gm/markdown.js'
+  import { DEFAULT_VIEW, clampView, frameStyle, gestures, rotateBy, throttle, zoomIn, zoomOut } from './view.js'
 
-  // The players' screen. It never writes anything: it asks once for whatever the
-  // GM is showing, then follows table:show.
+  // The players' screen. It asks once for whatever the GM is showing, then follows
+  // table:show. The only thing it ever sends back is the framing — rotation, zoom
+  // and pan — when the GM handles it here directly; Go relays that to the GM's
+  // preview and keeps it with the handout.
   //
   // Each display is a layer that stays invisible until its image or first video
   // frame has loaded, then fades in over the one before. A switch never shows a
@@ -17,25 +20,37 @@
   let seq = 0
   let idle = $state(false)
   let idleTimer = null
+  let width = $state(0)
+  let height = $state(0)
+
+  // The top layer is the one on show, and the one the wheel and drag move.
+  const top = $derived(layers.at(-1) ?? null)
 
   // Subscribe before asking, so a switch made while the answer is on its way
   // can't be overwritten by the older state it carries.
   $effect(() => {
     let heard = false
-    const off = Events.On('table:show', (e) => {
+    const offShow = Events.On('table:show', (e) => {
       heard = true
       present(e.data)
+    })
+    const offView = Events.On('table:view', (e) => {
+      const { handoutId, view, origin } = e.data
+      if (origin !== 'table' && top?.display.handoutId === handoutId) top.view = clampView(view)
     })
     TableNow()
       .then((display) => {
         if (!heard) present(display)
       })
       .catch(() => {})
-    return off
+    return () => {
+      offShow()
+      offView()
+    }
   })
 
   function present(display) {
-    const layer = { key: ++seq, display, ready: false, failed: false }
+    const layer = { key: ++seq, display, view: clampView(display.view ?? DEFAULT_VIEW), ready: false, failed: false }
     // Only one layer loads at a time: one still loading when the next arrives
     // is dropped, since the players were never going to see it.
     layers = [...layers.filter((l) => l.ready), layer]
@@ -71,6 +86,16 @@
     }
   }
 
+  const send = throttle((handoutId, view) => SetTableView(handoutId, view, 'table').catch(() => {}), 40)
+
+  // The framing moves here at once and reaches Go a moment later. Only a display
+  // with something on it can be framed; a black screen has nothing to move.
+  function setView(next) {
+    if (!top?.display.kind) return
+    top.view = clampView(next)
+    send(top.display.handoutId, $state.snapshot(top.view))
+  }
+
   function wake() {
     idle = false
     clearTimeout(idleTimer)
@@ -83,6 +108,12 @@
       Window.ToggleFullscreen()
     } else if (event.key === 'Escape') {
       Window.UnFullscreen()
+    } else if (top?.display.kind) {
+      if (event.key === 'r') setView(rotateBy(top.view, 90))
+      else if (event.key === 'R') setView(rotateBy(top.view, -90))
+      else if (event.key === '+' || event.key === '=') setView(zoomIn(top.view))
+      else if (event.key === '-') setView(zoomOut(top.view))
+      else if (event.key === '0') setView(DEFAULT_VIEW)
     }
   }
 </script>
@@ -93,22 +124,31 @@
 
 <svelte:window onkeydown={keydown} onmousemove={wake} ondblclick={() => Window.ToggleFullscreen()} />
 
-<main class="table" class:idle style:--fade="{FADE_MS}ms">
+<main
+  class="table"
+  class:idle
+  style:--fade="{FADE_MS}ms"
+  bind:clientWidth={width}
+  bind:clientHeight={height}
+  {@attach gestures(() => (top?.display.kind ? top.view : null), setView)}
+>
   {#each layers as layer (layer.key)}
     {@const display = layer.display}
     <div class="layer {display.kind}" class:ready={layer.ready}>
-      {#if display.mediaUrl && !layer.failed}
-        {#if display.mediaType === 'video'}
-          <video src={display.mediaUrl} autoplay muted loop playsinline {@attach loaded(layer.key)}></video>
-        {:else}
-          <img src={display.mediaUrl} alt="" {@attach loaded(layer.key)} />
+      <div class="frame" style={frameStyle(layer.view, width, height)}>
+        {#if display.mediaUrl && !layer.failed}
+          {#if display.mediaType === 'video'}
+            <video src={display.mediaUrl} autoplay muted loop playsinline {@attach loaded(layer.key)}></video>
+          {:else}
+            <img src={display.mediaUrl} alt="" draggable="false" {@attach loaded(layer.key)} />
+          {/if}
         {/if}
-      {/if}
-      {#if display.kind === 'text' && display.body.trim()}
-        <article class:over={display.mediaUrl && !layer.failed}>
-          {@html renderMarkdown(display.body)}
-        </article>
-      {/if}
+        {#if display.kind === 'text' && display.body.trim()}
+          <article class:over={display.mediaUrl && !layer.failed}>
+            {@html renderMarkdown(display.body)}
+          </article>
+        {/if}
+      </div>
     </div>
   {/each}
 </main>
@@ -120,6 +160,7 @@
     overflow: hidden;
     background: #000;
     user-select: none;
+    touch-action: none;
   }
 
   .table.idle { cursor: none; }
@@ -127,14 +168,18 @@
   .layer {
     position: absolute;
     inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     opacity: 0;
     transition: opacity var(--fade) ease;
   }
 
   .layer.ready { opacity: 1; }
+
+  .frame {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
   img,
   video {
@@ -143,6 +188,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    -webkit-user-drag: none;
   }
 
   /* A map is shown whole, letterboxed if it has to be — cropping one could cut
@@ -156,7 +202,7 @@
   article {
     position: relative;
     max-width: 38em;
-    max-height: 92vh;
+    max-height: 92%;
     padding: 1.5em 2em;
     overflow: hidden;
     color: var(--text);

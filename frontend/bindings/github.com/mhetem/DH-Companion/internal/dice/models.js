@@ -14,16 +14,16 @@
 
 /**
  * @typedef {Object} DualityDice
- * @property {number} Hope
- * @property {number} Fear
- * @property {number} Result
- * @property {string} Msg
+ * @property {number} hope
+ * @property {number} fear
+ * @property {number} result
+ * @property {string} msg
  */
 
 /**
  * @typedef {Object} GMDice
- * @property {number} Result
- * @property {string} Msg
+ * @property {number} result
+ * @property {string} msg
  */
 
 // In interface mode, this file is likely to contain just comments.

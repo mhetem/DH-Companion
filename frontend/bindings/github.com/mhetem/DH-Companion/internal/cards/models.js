@@ -193,6 +193,8 @@ export const Kind = {
     KindArmor: "armor",
     KindItem: "item",
     KindConsumable: "consumable",
+    KindTransformation: "transformation",
+    KindStances: "stances",
 };
 
 /**
@@ -227,12 +229,43 @@ export const Kind = {
  */
 
 /**
+ * @typedef {Object} Stance
+ * @property {string} title
+ * @property {number} tier
+ * @property {string} description
+ */
+
+/**
+ * @typedef {Object} Stances
+ * @property {Kind} kind
+ * @property {string} slug
+ * @property {string} name
+ * @property {string} tier
+ * @property {string} type
+ * @property {string} description
+ * @property {Feature[] | null} rules
+ * @property {Stance[] | null} stances
+ */
+
+/**
  * @typedef {Object} Subclass
  * @property {string} slug
  * @property {string} name
  * @property {string} tagline
  * @property {string} spellcastTrait
  * @property {Feature[] | null} features
+ */
+
+/**
+ * @typedef {Object} Transformation
+ * @property {Kind} kind
+ * @property {string} slug
+ * @property {string} name
+ * @property {string} tier
+ * @property {string} type
+ * @property {string} description
+ * @property {Feature[] | null} features
+ * @property {string[] | null} questions
  */
 
 /**

@@ -1,5 +1,6 @@
 <script>
   import {
+    AdoptUnassignedCountdowns,
     AdvanceCountdown,
     DeleteCountdown,
     ListCountdownsForCampaign,
@@ -16,6 +17,7 @@
   let { campaignId = null, compact = false } = $props()
 
   let clocks = $state([])
+  let loose = $state([])
   let loading = $state(true)
   let error = $state('')
   let busy = $state(false)
@@ -44,6 +46,7 @@
   async function refresh() {
     try {
       clocks = (await (campaignId ? ListCountdownsForCampaign(campaignId) : ListUnassignedCountdowns())) ?? []
+      loose = campaignId && !compact ? ((await ListUnassignedCountdowns()) ?? []) : []
       error = ''
     } catch (e) {
       error = errorMessage(e)
@@ -53,6 +56,21 @@
   }
 
   refresh()
+
+  // Clocks from before campaigns existed, or from a fight run without one, are
+  // only reachable from a campaign-less fight. The campaign tab offers to take
+  // them in, all at once — they were one pile before campaigns split them up.
+  async function adopt() {
+    busy = true
+    try {
+      await AdoptUnassignedCountdowns(campaignId)
+      await refresh()
+    } catch (e) {
+      error = errorMessage(e)
+    } finally {
+      busy = false
+    }
+  }
 
   async function add(event) {
     event.preventDefault()
@@ -152,6 +170,16 @@
 
   {#if error}
     <p class="error">{error}</p>
+  {/if}
+
+  {#if loose.length}
+    <div class="loose">
+      <p>
+        {loose.length === 1 ? 'One countdown isn’t' : `${loose.length} countdowns aren’t`} in any campaign
+        ({loose.map((c) => c.name).join(', ')}) — made before campaigns existed, or in a fight run without one.
+      </p>
+      <button class="btn" onclick={adopt} disabled={busy}>Move {loose.length === 1 ? 'it' : 'them'} here</button>
+    </div>
   {/if}
 
   {#if adding}
@@ -263,6 +291,22 @@
     margin: 0;
     font-size: 0.75rem;
     color: var(--danger);
+  }
+
+  .loose {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px dashed var(--gold-deep);
+    border-radius: 8px;
+  }
+
+  .loose p {
+    flex: 1;
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--muted);
   }
 
   .row {

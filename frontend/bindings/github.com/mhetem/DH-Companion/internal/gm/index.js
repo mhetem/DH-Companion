@@ -94,6 +94,10 @@ import * as $models from "./models.js";
  */
 
 /**
+ * @typedef {$models.HandoutView} HandoutView
+ */
+
+/**
  * @typedef {$models.ImportCounts} ImportCounts
  */
 

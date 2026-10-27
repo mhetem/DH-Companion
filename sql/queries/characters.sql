@@ -88,11 +88,33 @@ UPDATE characters SET
 WHERE id = sqlc.arg(id)
 RETURNING *;
 
+-- name: SetCharacterStats :one
+UPDATE characters SET
+  evasion = sqlc.arg(evasion),
+  armor_score = sqlc.arg(armor_score),
+  armor_marked = sqlc.arg(armor_marked),
+  threshold_major = sqlc.arg(threshold_major),
+  threshold_severe = sqlc.arg(threshold_severe),
+  hp_max = sqlc.arg(hp_max),
+  hp_marked = sqlc.arg(hp_marked),
+  stress_max = sqlc.arg(stress_max),
+  stress_marked = sqlc.arg(stress_marked),
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = sqlc.arg(id)
+RETURNING *;
+
 -- name: SetCharacterGold :one
 UPDATE characters SET
   gold_handfuls = max(0, min(9, CAST(sqlc.arg(gold_handfuls) AS INTEGER))),
   gold_bags = max(0, min(9, CAST(sqlc.arg(gold_bags) AS INTEGER))),
   gold_chests = max(0, min(99, CAST(sqlc.arg(gold_chests) AS INTEGER))),
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = sqlc.arg(id)
+RETURNING *;
+
+-- name: SetCharacterTransformation :one
+UPDATE characters SET
+  transformation_slug = sqlc.arg(transformation_slug),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = sqlc.arg(id)
 RETURNING *;
@@ -123,6 +145,30 @@ UPDATE characters SET
   evasion = sqlc.arg(evasion),
   threshold_major = sqlc.arg(threshold_major),
   threshold_severe = sqlc.arg(threshold_severe),
+  combo_die = sqlc.arg(combo_die),
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = sqlc.arg(id)
+RETURNING *;
+
+-- name: SetCharacterTracks :one
+UPDATE characters SET
+  favor = max(0, min(6, CAST(sqlc.arg(favor) AS INTEGER))),
+  focus = max(0, min(6, CAST(sqlc.arg(focus) AS INTEGER))),
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = sqlc.arg(id)
+RETURNING *;
+
+-- name: SetCharacterStances :one
+UPDATE characters SET
+  known_stances = sqlc.arg(known_stances),
+  active_stance = sqlc.arg(active_stance),
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE id = sqlc.arg(id)
+RETURNING *;
+
+-- name: SetCharacterEffects :one
+UPDATE characters SET
+  active_effects = sqlc.arg(active_effects),
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = sqlc.arg(id)
 RETURNING *;

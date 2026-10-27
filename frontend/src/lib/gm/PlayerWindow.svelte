@@ -9,6 +9,7 @@
     ListHandouts,
     OpenTableWindow,
     SaveHandout,
+    SetTableView,
     ShowHandout,
     TableNow,
     TableScreens,
@@ -20,6 +21,7 @@
   import EmptyState from '../EmptyState.svelte'
   import HandoutForm from './HandoutForm.svelte'
   import HandoutThumb from './HandoutThumb.svelte'
+  import { DEFAULT_VIEW, clampView, gestures, rotateBy, throttle, zoomIn, zoomOut } from '../table/view.js'
 
   // The GM's side of the player window: open it on the table's screen, then pick
   // what it shows from the campaign's maps, scenes and text. Go owns the window and
@@ -34,7 +36,7 @@
   let status = $state({ open: false, fullscreen: false, placeable: true })
   let screens = $state([])
   let screenId = $state(localStorage.getItem(SCREEN_KEY) ?? '')
-  let showing = $state({ handoutId: 0, kind: '', title: '', body: '', mediaUrl: '', mediaType: '' })
+  let showing = $state({ handoutId: 0, kind: '', title: '', body: '', mediaUrl: '', mediaType: '', view: { ...DEFAULT_VIEW } })
 
   let campaigns = $state([])
   let campaignId = $state(null)
@@ -59,7 +61,35 @@
       refreshScreens()
     })
   )
-  $effect(() => Events.On('table:show', (e) => (showing = e.data)))
+  $effect(() => Events.On('table:show', (e) => adopt(e.data)))
+  $effect(() =>
+    Events.On('table:view', (e) => {
+      if (e.data.origin !== 'gm' && e.data.handoutId === showing.handoutId) showing.view = e.data.view
+    })
+  )
+
+  // Framing what's on the table, from here. The preview moves at once and the
+  // player window a moment later; Go keeps the result with the handout, so
+  // showing it again brings back the same rotation, zoom and pan.
+  const view = $derived(clampView(showing.view ?? DEFAULT_VIEW))
+  const framed = $derived(view.rotate !== 0 || view.zoom !== 1 || view.x !== 0 || view.y !== 0)
+  const sendView = throttle((id, next) => SetTableView(id, next, 'gm').catch((e) => (error = errorMessage(e))), 40)
+
+  function setView(next) {
+    if (!showing.kind) return
+    showing.view = clampView(next)
+    sendView(showing.handoutId, $state.snapshot(showing.view))
+  }
+
+  const previewGestures = gestures(() => (showing.kind ? view : null), setView)
+
+  // The list was loaded before any reframing, so the handout going off the table
+  // takes its last framing back into its card.
+  function adopt(next) {
+    const prev = handouts.find((h) => h.id === showing.handoutId)
+    if (prev && prev.id !== next.handoutId) prev.view = $state.snapshot(showing.view)
+    showing = next
+  }
 
   async function load() {
     try {
@@ -130,7 +160,7 @@
   // them", and a closed window would make that a silent no-op.
   const show = (h) =>
     run(`show-${h.id}`, async () => {
-      showing = await ShowHandout(h.id)
+      adopt(await ShowHandout(h.id))
       if (!status.open) status = await OpenTableWindow(screenChoice)
     })
 
@@ -144,7 +174,7 @@
     const saved = await SaveHandout({ ...input, campaignId })
     editing = null
     await loadHandouts()
-    if (showing.handoutId === saved.id) showing = await ShowHandout(saved.id)
+    if (showing.handoutId === saved.id) adopt(await ShowHandout(saved.id))
   }
 
   function remove(h) {
@@ -211,20 +241,37 @@
 
     <div class="now">
       <h3>On the table</h3>
-      <div class="nowrow">
-        <div class="nowthumb">
-          <HandoutThumb kind={showing.kind} mediaUrl={showing.mediaUrl} mediaType={showing.mediaType} body={showing.body} />
-        </div>
-        <div class="nowinfo">
-          {#if showing.kind}
-            <p class="nowtitle">{showing.title}</p>
-            <span class="chip">{handoutKindLabel(showing.kind)}</span>
-          {:else}
-            <p class="nowtitle muted">Nothing — the screen is black</p>
-          {/if}
-          <button class="btn" onclick={blank} disabled={!showing.kind || !!busy}>Blank the screen</button>
-        </div>
+      <HandoutThumb
+        kind={showing.kind}
+        mediaUrl={showing.mediaUrl}
+        mediaType={showing.mediaType}
+        body={showing.body}
+        {view}
+        attach={showing.kind ? previewGestures : null}
+      />
+      <div class="nowinfo">
+        {#if showing.kind}
+          <p class="nowtitle">{showing.title}</p>
+          <span class="chip">{handoutKindLabel(showing.kind)}</span>
+        {:else}
+          <p class="nowtitle muted">Nothing — the screen is black</p>
+        {/if}
+        <button class="btn" onclick={blank} disabled={!showing.kind || !!busy}>Blank the screen</button>
       </div>
+      {#if showing.kind}
+        <div class="framing">
+          <button class="btn ghost" title="Turn left" aria-label="Turn left" onclick={() => setView(rotateBy(view, -90))}>⟲</button>
+          <button class="btn ghost" title="Turn right" aria-label="Turn right" onclick={() => setView(rotateBy(view, 90))}>⟳</button>
+          <button class="btn ghost" title="Zoom out" aria-label="Zoom out" onclick={() => setView(zoomOut(view))}>−</button>
+          <span class="zoom">{Math.round(view.zoom * 100)}%</span>
+          <button class="btn ghost" title="Zoom in" aria-label="Zoom in" onclick={() => setView(zoomIn(view))}>+</button>
+          <button class="btn ghost" onclick={() => setView(DEFAULT_VIEW)} disabled={!framed}>Reset</button>
+        </div>
+        <p class="hint">
+          Drag the preview to move it and scroll to zoom — or do the same on the player window itself, where
+          <kbd>R</kbd> turns it, <kbd>+</kbd> <kbd>−</kbd> zoom and <kbd>0</kbd> resets.
+        </p>
+      {/if}
     </div>
   </section>
 
@@ -275,7 +322,14 @@
       <ul class="grid">
         {#each shown as h (h.id)}
           <li class:live={showing.handoutId === h.id} class:editing={editing?.handout?.id === h.id}>
-            <HandoutThumb kind={h.kind} mediaUrl={h.mediaUrl} mediaType={h.mediaType} body={h.body} missing={h.mediaMissing} />
+            <HandoutThumb
+              kind={h.kind}
+              mediaUrl={h.mediaUrl}
+              mediaType={h.mediaType}
+              body={h.body}
+              missing={h.mediaMissing}
+              view={showing.handoutId === h.id ? view : h.view}
+            />
             <div class="meta">
               <span class="name" title={h.title}>{h.title}</span>
               {#if showing.handoutId === h.id}
@@ -382,29 +436,34 @@
     color: var(--muted);
   }
 
-  .nowrow {
-    display: flex;
-    gap: 0.75rem;
-  }
-
-  .nowthumb { flex: 0 0 12rem; }
-
   .nowinfo {
     display: flex;
-    flex: 1;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.4rem;
+    align-items: center;
+    gap: 0.5rem;
     min-width: 0;
   }
 
   .nowtitle {
+    flex: 1;
+    min-width: 0;
     margin: 0;
-    max-width: 100%;
     overflow: hidden;
     font-size: 0.95rem;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .framing {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .zoom {
+    min-width: 3rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: center;
   }
 
   .nowtitle.muted { color: var(--muted); }

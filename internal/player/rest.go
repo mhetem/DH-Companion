@@ -2,8 +2,10 @@ package player
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
+	"github.com/mhetem/DH-Companion/internal/db"
 	"github.com/mhetem/DH-Companion/internal/dice"
 )
 
@@ -46,14 +48,26 @@ var longRestMoves = []RestMove{
 	{ID: "work-on-project", Label: "Work on a Project", Description: "Advance a long-term project. No change to the sheet."},
 }
 
-func (s *Service) RestMoves(long bool) []RestMove {
+var tributeMove = RestMove{
+	ID:          "tribute",
+	Label:       "Show Tribute",
+	Description: "Show tribute to your patron and describe how. Gain Favor equal to your Spellcast trait.",
+}
+
+func (s *Service) RestMoves(characterID int64, long bool) ([]RestMove, error) {
+	row, err := s.character(characterID)
+	if err != nil {
+		return nil, err
+	}
 	src := shortRestMoves
 	if long {
 		src = longRestMoves
 	}
-	out := make([]RestMove, len(src))
-	copy(out, src)
-	return out
+	out := slices.Clone(src)
+	if usesFavor(row) {
+		out = append(out, tributeMove)
+	}
+	return out, nil
 }
 
 func (s *Service) RestAllowance(long bool) int {
@@ -86,6 +100,7 @@ func (s *Service) Rest(in RestInput) (RestResult, error) {
 	stress := int(row.StressMarked)
 	hope := int(row.Hope)
 	armor := int(row.ArmorMarked)
+	favor := int(row.Favor)
 	outcomes := []string{}
 
 	for _, raw := range in.Moves {
@@ -124,10 +139,51 @@ func (s *Service) Rest(in RestInput) (RestResult, error) {
 			outcomes = append(outcomes, fmt.Sprintf("%s — gained %d Hope", move.Label, hope-before))
 		case "work-on-project":
 			outcomes = append(outcomes, move.Label+" — no change to the sheet")
+		case "tribute":
+			if !usesFavor(row) {
+				return RestResult{}, fmt.Errorf("only a warlock has a patron to show tribute to")
+			}
+			before := favor
+			favor = min(favor+s.favorTrait(row), FavorMax)
+			outcomes = append(outcomes, fmt.Sprintf("%s — gained %d Favor", move.Label, favor-before))
 		}
 	}
 
-	character, err := s.SetVitals(in.CharacterID, hp, stress, hope, armor)
+	kept, ended := endedEffects(decodeTraitList(row.ActiveEffects), false, false, true)
+	if row.ActiveStance != "" {
+		ended = append(ended, row.ActiveStance+" stance")
+	}
+	if len(ended) > 0 {
+		outcomes = append(outcomes, "Ended with the rest: "+strings.Join(ended, ", "))
+	}
+
+	err = s.tx(func(q *db.Queries) error {
+		if _, err := q.SetCharacterVitals(s.ctx, db.SetCharacterVitalsParams{
+			HpMarked:     int64(hp),
+			StressMarked: int64(stress),
+			Hope:         int64(hope),
+			ArmorMarked:  int64(armor),
+			ID:           in.CharacterID,
+		}); err != nil {
+			return fmt.Errorf("setting vitals: %w", err)
+		}
+		if _, err := q.SetCharacterTracks(s.ctx, db.SetCharacterTracksParams{
+			Favor: int64(favor),
+			Focus: row.Focus,
+			ID:    in.CharacterID,
+		}); err != nil {
+			return fmt.Errorf("gaining Favor: %w", err)
+		}
+		if _, err := s.writeEffects(q, in.CharacterID, kept); err != nil {
+			return err
+		}
+		_, err := s.writeStances(q, in.CharacterID, decodeTraitList(row.KnownStances), "")
+		return err
+	})
+	if err != nil {
+		return RestResult{}, err
+	}
+	character, err := s.GetCharacter(in.CharacterID)
 	if err != nil {
 		return RestResult{}, err
 	}
@@ -147,7 +203,7 @@ func findRestMove(long bool, id string) (RestMove, bool) {
 		src = longRestMoves
 	}
 	id = strings.TrimSpace(id)
-	for _, m := range src {
+	for _, m := range append(slices.Clone(src), tributeMove) {
 		if m.ID == id {
 			return m, true
 		}

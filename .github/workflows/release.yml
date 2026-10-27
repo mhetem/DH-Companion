@@ -40,8 +40,11 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
+      # Same as ci.yml: a crawling mirror fails in 10 minutes rather than an hour, and a
+      # re-run of the failed job usually lands on a faster one.
       - name: Linux build deps
         if: runner.os == 'Linux'
+        timeout-minutes: 10
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
@@ -349,7 +352,7 @@ jobs:
           unticked unless you ask for it. Removing the `.deb` or deleting the AppImage
           never touches it.
 
-          This build bundles Daggerheart SRD 1.0 content under the Darrington Press
+          This build bundles Daggerheart SRD 2.0 content under the Darrington Press
           Community Gaming License. See `NOTICE.md` for attribution.
           EOF
           whats_new="docs/releases/${GITHUB_REF_NAME}.md"

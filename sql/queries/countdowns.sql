@@ -21,6 +21,12 @@ SELECT * FROM countdowns
 WHERE campaign_id IS NULL
 ORDER BY created_at ASC;
 
+-- name: AssignUnassignedCountdowns :execrows
+UPDATE countdowns SET
+  campaign_id = ?,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE campaign_id IS NULL;
+
 -- name: AdjustCountdown :one
 UPDATE countdowns SET
   value = max(0, min("max", value + sqlc.arg(delta))),

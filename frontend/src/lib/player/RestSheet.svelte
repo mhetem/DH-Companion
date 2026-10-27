@@ -30,7 +30,7 @@
     loading = true
     error = ''
     counts = {}
-    Promise.all([RestMoves(isLong), RestAllowance(isLong), GetLoadout(target)])
+    Promise.all([RestMoves(target, isLong), RestAllowance(isLong), GetLoadout(target)])
       .then(([list, n, l]) => {
         moves = list ?? []
         allowed = n

@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/mhetem/DH-Companion/internal/db"
 	"github.com/mhetem/DH-Companion/internal/gm"
@@ -67,9 +68,11 @@ type App struct {
 	updaterErr error
 	media      string
 
-	tableMu sync.Mutex
-	table   *application.WebviewWindow
-	showing TableDisplay
+	tableMu     sync.Mutex
+	table       *application.WebviewWindow
+	showing     TableDisplay
+	viewPending *pendingView
+	viewTimer   *time.Timer
 }
 
 func NewApp(gmSvc *gm.Service, playerSvc *player.Service) *App {
@@ -97,7 +100,7 @@ func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) 
 	})
 	a.window.RegisterHook(events.Common.WindowClosing, func(*application.WindowEvent) {
 		a.rememberWindowSize()
-		go a.CloseTableWindow()
+		go a.shutTable()
 	})
 	a.updaterErr = a.initUpdater()
 	return nil

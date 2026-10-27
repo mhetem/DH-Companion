@@ -24,7 +24,7 @@ func (q *Queries) CountHandoutsUsingMedia(ctx context.Context, media string) (in
 const createHandout = `-- name: CreateHandout :one
 INSERT INTO handouts (campaign_id, kind, title, body, media, media_name)
 VALUES (?,?,?,?,?,?)
-RETURNING id, campaign_id, kind, title, body, media, media_name, created_at, updated_at
+RETURNING id, campaign_id, kind, title, body, media, media_name, created_at, updated_at, view_rotate, view_zoom, view_x, view_y
 `
 
 type CreateHandoutParams struct {
@@ -56,6 +56,10 @@ func (q *Queries) CreateHandout(ctx context.Context, arg CreateHandoutParams) (H
 		&i.MediaName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ViewRotate,
+		&i.ViewZoom,
+		&i.ViewX,
+		&i.ViewY,
 	)
 	return i, err
 }
@@ -71,7 +75,7 @@ func (q *Queries) DeleteHandout(ctx context.Context, id int64) error {
 }
 
 const getHandout = `-- name: GetHandout :one
-SELECT id, campaign_id, kind, title, body, media, media_name, created_at, updated_at FROM handouts
+SELECT id, campaign_id, kind, title, body, media, media_name, created_at, updated_at, view_rotate, view_zoom, view_x, view_y FROM handouts
 WHERE id = ?
 `
 
@@ -88,6 +92,10 @@ func (q *Queries) GetHandout(ctx context.Context, id int64) (Handout, error) {
 		&i.MediaName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ViewRotate,
+		&i.ViewZoom,
+		&i.ViewX,
+		&i.ViewY,
 	)
 	return i, err
 }
@@ -121,7 +129,7 @@ func (q *Queries) ListHandoutMediaForCampaign(ctx context.Context, campaignID in
 }
 
 const listHandoutsForCampaign = `-- name: ListHandoutsForCampaign :many
-SELECT id, campaign_id, kind, title, body, media, media_name, created_at, updated_at FROM handouts
+SELECT id, campaign_id, kind, title, body, media, media_name, created_at, updated_at, view_rotate, view_zoom, view_x, view_y FROM handouts
 WHERE campaign_id = ?
 ORDER BY kind ASC, title ASC, id ASC
 `
@@ -145,6 +153,10 @@ func (q *Queries) ListHandoutsForCampaign(ctx context.Context, campaignID int64)
 			&i.MediaName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ViewRotate,
+			&i.ViewZoom,
+			&i.ViewX,
+			&i.ViewY,
 		); err != nil {
 			return nil, err
 		}
@@ -159,6 +171,34 @@ func (q *Queries) ListHandoutsForCampaign(ctx context.Context, campaignID int64)
 	return items, nil
 }
 
+const setHandoutView = `-- name: SetHandoutView :exec
+UPDATE handouts SET
+  view_rotate = ?,
+  view_zoom = ?,
+  view_x = ?,
+  view_y = ?
+WHERE id = ?
+`
+
+type SetHandoutViewParams struct {
+	ViewRotate int64
+	ViewZoom   float64
+	ViewX      float64
+	ViewY      float64
+	ID         int64
+}
+
+func (q *Queries) SetHandoutView(ctx context.Context, arg SetHandoutViewParams) error {
+	_, err := q.db.ExecContext(ctx, setHandoutView,
+		arg.ViewRotate,
+		arg.ViewZoom,
+		arg.ViewX,
+		arg.ViewY,
+		arg.ID,
+	)
+	return err
+}
+
 const updateHandout = `-- name: UpdateHandout :one
 UPDATE handouts SET
   kind = ?,
@@ -168,7 +208,7 @@ UPDATE handouts SET
   media_name = ?,
   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE id = ?
-RETURNING id, campaign_id, kind, title, body, media, media_name, created_at, updated_at
+RETURNING id, campaign_id, kind, title, body, media, media_name, created_at, updated_at, view_rotate, view_zoom, view_x, view_y
 `
 
 type UpdateHandoutParams struct {
@@ -200,6 +240,10 @@ func (q *Queries) UpdateHandout(ctx context.Context, arg UpdateHandoutParams) (H
 		&i.MediaName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ViewRotate,
+		&i.ViewZoom,
+		&i.ViewX,
+		&i.ViewY,
 	)
 	return i, err
 }

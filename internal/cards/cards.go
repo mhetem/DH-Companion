@@ -16,6 +16,9 @@ const (
 	KindArmor       Kind = "armor"
 	KindItem        Kind = "item"
 	KindConsumable  Kind = "consumable"
+
+	KindTransformation Kind = "transformation"
+	KindStances        Kind = "stances"
 )
 
 // Weapon.Category values. A character equips at most one of each at a time.
@@ -175,6 +178,24 @@ type Companion struct {
 	ExampleExperiences         []string  `json:"exampleExperiences"`
 	Rules                      []Feature `json:"rules"`
 	LevelUpOptions             []Feature `json:"levelUpOptions"`
+}
+
+type Transformation struct {
+	Meta
+	Features  []Feature `json:"features"`
+	Questions []string  `json:"questions"`
+}
+
+type Stance struct {
+	Title       string `json:"title"`
+	Tier        int    `json:"tier"`
+	Description string `json:"description"`
+}
+
+type Stances struct {
+	Meta
+	Rules   []Feature `json:"rules"`
+	Stances []Stance  `json:"stances"`
 }
 
 // Weapon covers the primary, secondary and combat wheelchair tables. Type is

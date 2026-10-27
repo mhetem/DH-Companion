@@ -74,7 +74,19 @@ import * as $models from "./models.js";
  */
 
 /**
+ * @typedef {$models.Stance} Stance
+ */
+
+/**
+ * @typedef {$models.Stances} Stances
+ */
+
+/**
  * @typedef {$models.Subclass} Subclass
+ */
+
+/**
+ * @typedef {$models.Transformation} Transformation
  */
 
 /**

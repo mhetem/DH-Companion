@@ -36,6 +36,14 @@ export function AdjustFear(combatID, delta) {
 }
 
 /**
+ * @param {number} campaignID
+ * @returns {$CancellablePromise<number>}
+ */
+export function AdoptUnassignedCountdowns(campaignID) {
+    return $Call.ByID(1013577913, campaignID);
+}
+
+/**
  * @param {number} id
  * @param {number} delta
  * @returns {$CancellablePromise<$models.Countdown>}
@@ -799,6 +807,15 @@ export function SaveEncounter($in) {
  */
 export function SaveHandout($in) {
     return $Call.ByID(3223665504, $in);
+}
+
+/**
+ * @param {number} id
+ * @param {$models.HandoutView} view
+ * @returns {$CancellablePromise<void>}
+ */
+export function SaveHandoutView(id, view) {
+    return $Call.ByID(2248906833, id, view);
 }
 
 /**

@@ -160,16 +160,24 @@ func (s *Service) AddDomainCard(characterID int64, slug string, location string)
 		}
 	}
 
-	_, err = s.q.AddCharacterDomainCard(s.ctx, db.AddCharacterDomainCardParams{
-		CharacterID: characterID,
-		CardSlug:    slug,
-		Location:    loc,
+	err = s.tx(func(q *db.Queries) error {
+		return s.keepStats(q, characterID, func() error {
+			_, err := q.AddCharacterDomainCard(s.ctx, db.AddCharacterDomainCardParams{
+				CharacterID: characterID,
+				CardSlug:    slug,
+				Location:    loc,
+			})
+			if isUniqueViolation(err) {
+				return fmt.Errorf("this character already has %q", slug)
+			}
+			if err != nil {
+				return fmt.Errorf("adding domain card: %w", err)
+			}
+			return nil
+		})
 	})
-	if isUniqueViolation(err) {
-		return Loadout{}, fmt.Errorf("this character already has %q", slug)
-	}
 	if err != nil {
-		return Loadout{}, fmt.Errorf("adding domain card: %w", err)
+		return Loadout{}, err
 	}
 	return s.GetLoadout(characterID)
 }
@@ -200,22 +208,38 @@ func (s *Service) MoveDomainCard(characterID int64, slug string, location string
 		}
 	}
 
-	if _, err := s.q.SetDomainCardLocation(s.ctx, db.SetDomainCardLocationParams{
-		Location:    loc,
-		CharacterID: characterID,
-		CardSlug:    slug,
-	}); err != nil {
-		return Loadout{}, fmt.Errorf("moving domain card: %w", err)
+	err = s.tx(func(q *db.Queries) error {
+		return s.keepStats(q, characterID, func() error {
+			if _, err := q.SetDomainCardLocation(s.ctx, db.SetDomainCardLocationParams{
+				Location:    loc,
+				CharacterID: characterID,
+				CardSlug:    slug,
+			}); err != nil {
+				return fmt.Errorf("moving domain card: %w", err)
+			}
+			return nil
+		})
+	})
+	if err != nil {
+		return Loadout{}, err
 	}
 	return s.GetLoadout(characterID)
 }
 
 func (s *Service) RemoveDomainCard(characterID int64, slug string) (Loadout, error) {
-	if err := s.q.RemoveCharacterDomainCard(s.ctx, db.RemoveCharacterDomainCardParams{
-		CharacterID: characterID,
-		CardSlug:    strings.TrimSpace(slug),
-	}); err != nil {
-		return Loadout{}, fmt.Errorf("removing domain card: %w", err)
+	err := s.tx(func(q *db.Queries) error {
+		return s.keepStats(q, characterID, func() error {
+			if err := q.RemoveCharacterDomainCard(s.ctx, db.RemoveCharacterDomainCardParams{
+				CharacterID: characterID,
+				CardSlug:    strings.TrimSpace(slug),
+			}); err != nil {
+				return fmt.Errorf("removing domain card: %w", err)
+			}
+			return nil
+		})
+	})
+	if err != nil {
+		return Loadout{}, err
 	}
 	return s.GetLoadout(characterID)
 }
@@ -286,31 +310,33 @@ func (s *Service) SwapDomainCard(in SwapInput) (SwapResult, error) {
 	}
 
 	err = s.tx(func(q *db.Queries) error {
-		if outSlug != "" {
+		return s.keepStats(q, in.CharacterID, func() error {
+			if outSlug != "" {
+				if _, err := q.SetDomainCardLocation(s.ctx, db.SetDomainCardLocationParams{
+					Location:    "vault",
+					CharacterID: in.CharacterID,
+					CardSlug:    outSlug,
+				}); err != nil {
+					return fmt.Errorf("vaulting domain card: %w", err)
+				}
+			}
 			if _, err := q.SetDomainCardLocation(s.ctx, db.SetDomainCardLocationParams{
-				Location:    "vault",
+				Location:    "loadout",
 				CharacterID: in.CharacterID,
-				CardSlug:    outSlug,
+				CardSlug:    inSlug,
 			}); err != nil {
-				return fmt.Errorf("vaulting domain card: %w", err)
+				return fmt.Errorf("recalling domain card: %w", err)
 			}
-		}
-		if _, err := q.SetDomainCardLocation(s.ctx, db.SetDomainCardLocationParams{
-			Location:    "loadout",
-			CharacterID: in.CharacterID,
-			CardSlug:    inSlug,
-		}); err != nil {
-			return fmt.Errorf("recalling domain card: %w", err)
-		}
-		if cost > 0 {
-			if _, err := q.AdjustCharacterStress(s.ctx, db.AdjustCharacterStressParams{
-				Delta: int64(cost),
-				ID:    in.CharacterID,
-			}); err != nil {
-				return fmt.Errorf("marking stress: %w", err)
+			if cost > 0 {
+				if _, err := q.AdjustCharacterStress(s.ctx, db.AdjustCharacterStressParams{
+					Delta: int64(cost),
+					ID:    in.CharacterID,
+				}); err != nil {
+					return fmt.Errorf("marking stress: %w", err)
+				}
 			}
-		}
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return SwapResult{}, err

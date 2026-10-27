@@ -1,5 +1,6 @@
 <script>
   import EmptyState from '../EmptyState.svelte'
+  import SrdText from '../SrdText.svelte'
   import FeatureList from '../gm/FeatureList.svelte'
   import DualityDice from './DualityDice.svelte'
   import Experiences from './Experiences.svelte'
@@ -9,12 +10,22 @@
   import RestSheet from './RestSheet.svelte'
   import { active } from './active.svelte.js'
   import {
+    DropStance,
     GetSheet,
+    LearnStance,
+    ListTransformations,
+    Refocus,
+    SetClassTracks,
+    SetEffect,
+    SetTransformation,
     SetVitals,
+    ShiftStance,
+    TakeDamage,
     MASTERY_LABELS,
     TRAITS,
     errorMessage,
     featuresUpTo,
+    gearLine,
     signed
   } from './api.js'
 
@@ -61,14 +72,28 @@
       .finally(() => (loading = false))
   })
 
+  // Mirrors FavorMax and FocusMax in internal/player.
+  const FAVOR_MAX = 6
+  const FOCUS_MAX = 6
+
+  // A character carries which timed effects are on; the sheet's toggle list is
+  // rebuilt from it, since a hit or a rest can end some without the list asking.
+  function merge(character) {
+    const on = character.activeEffects ?? []
+    sheet = {
+      ...sheet,
+      ...character,
+      effects: (sheet.effects ?? []).map((fx) => ({ ...fx, active: on.includes(fx.id) }))
+    }
+  }
+
   // Every vitals mutator returns the whole character, so the sheet renders what the
   // database actually holds rather than a guess made in the UI.
   async function apply(fn) {
     if (busy || !sheet) return
     busy = true
     try {
-      const character = await fn()
-      sheet = { ...sheet, ...character }
+      merge(await fn())
       error = ''
     } catch (e) {
       error = errorMessage(e)
@@ -81,6 +106,35 @@
   const setStress = (value) => apply(() => SetVitals(sheet.id, sheet.hpMarked, value, sheet.hope, sheet.armorMarked))
   const setHope = (value) => apply(() => SetVitals(sheet.id, sheet.hpMarked, sheet.stressMarked, value, sheet.armorMarked))
   const setArmor = (value) => apply(() => SetVitals(sheet.id, sheet.hpMarked, sheet.stressMarked, sheet.hope, value))
+  const setFavor = (value) => apply(() => SetClassTracks(sheet.id, value, sheet.focus))
+  const setFocus = (value) => apply(() => SetClassTracks(sheet.id, sheet.favor, value))
+
+  const toggleEffect = (fx) => apply(() => SetEffect(sheet.id, fx.id, !fx.active))
+  const learnStance = (stance, known) => apply(() => LearnStance(sheet.id, stance.title, known))
+  const shiftStance = (stance, payWith) => apply(() => ShiftStance(sheet.id, stance.title, payWith))
+  const dropStance = () => apply(() => DropStance(sheet.id))
+
+  async function refocus() {
+    if (busy || !sheet) return
+    busy = true
+    try {
+      const result = await Refocus(sheet.id)
+      merge(result.character)
+      restReport = {
+        title: 'Refocus',
+        outcomes: [
+          result.rolls.length
+            ? `Rolled ${result.rolls.join(', ')} — Focus is now ${result.focus}`
+            : 'With no Instinct to roll, Focus clears to 0'
+        ]
+      }
+      error = ''
+    } catch (e) {
+      error = errorMessage(e)
+    } finally {
+      busy = false
+    }
+  }
 
   function openRest(long) {
     restLong = long
@@ -89,7 +143,7 @@
   }
 
   function rested(result) {
-    sheet = { ...sheet, ...result.character }
+    merge(result.character)
     restReport = result
   }
 
@@ -97,8 +151,19 @@
   // rather than guessing which card moved where. The outcome line reuses the rest
   // report's slot — a swap and a rest are the same kind of "here's what happened".
   function swapped(result) {
-    sheet = { ...sheet, ...result.character, loadout: result.loadout.loadout, vault: result.loadout.vault }
+    merge(result.character)
+    sheet = { ...sheet, loadout: result.loadout.loadout, vault: result.loadout.vault }
     restReport = { swap: true, outcomes: [result.outcome] }
+    refreshBonuses()
+  }
+
+  // A card moving in or out of the loadout can change what's counted into the
+  // defenses, and only the sheet carries that list.
+  function refreshBonuses() {
+    if (!sheet) return
+    GetSheet(sheet.id)
+      .then((s) => (sheet = { ...sheet, bonuses: s.bonuses }))
+      .catch(() => {})
   }
 
   function levelled(updated) {
@@ -112,6 +177,74 @@
     if (!diceOpen) toggleDice()
     dicePanel?.rollTrait(key)
   }
+
+  // Damage is typed in, not rolled here: the GM rolls it and says the number. The
+  // backend picks the severity off the thresholds, so the sheet and the rule
+  // can't disagree about what "Major" means.
+  let hitAmount = $state(null)
+  let hitArmor = $state(false)
+  let hit = $state(null)
+
+  const slotsLeft = $derived(sheet ? sheet.armorScore - sheet.armorMarked : 0)
+  const worn = $derived(
+    (sheet?.inventory ?? []).filter((i) => i.equipped && i.kind !== 'item' && i.kind !== 'consumable')
+  )
+
+  async function takeDamage(event) {
+    event.preventDefault()
+    if (busy || !sheet || hitAmount === null || hitAmount === '') return
+    busy = true
+    try {
+      const result = await TakeDamage({ characterId: sheet.id, amount: Number(hitAmount), useArmor: hitArmor })
+      merge(result.character)
+      hit = result
+      hitAmount = null
+      hitArmor = false
+      error = ''
+    } catch (e) {
+      error = errorMessage(e)
+    } finally {
+      busy = false
+    }
+  }
+
+  function describeHit(r) {
+    if (r.severity === 'none') return 'No damage, so nothing to mark.'
+    const severity = r.severity[0].toUpperCase() + r.severity.slice(1)
+    const armor = r.armorUsed ? `, down to ${r.reduced === 'none' ? 'nothing' : r.reduced} with an Armor Slot` : ''
+    const marked = `${r.hpMarked} Hit Point${r.hpMarked === 1 ? '' : 's'} marked`
+    const last = r.downed ? " That's your last Hit Point — time for a death move." : ''
+    const ended = r.ended?.length ? ` Ended: ${r.ended.join(', ')}.` : ''
+    return `${severity} damage${armor}: ${marked}.${last}${ended}`
+  }
+
+  function feature(card) {
+    return card?.feature ? `<strong>${card.feature.title}</strong>: ${card.feature.description}` : ''
+  }
+
+  // Transformations are the GM's to hand out, during play or at creation, so the
+  // sheet takes one rather than the wizard asking for it. A character has one at
+  // most; taking another replaces it.
+  let transformations = $state([])
+  let transformPick = $state('')
+
+  ListTransformations()
+    .then((list) => (transformations = list ?? []))
+    .catch(() => {})
+
+  const transformQuestions = $derived(
+    sheet?.transformation ? [{ title: 'Questions', description: '', questions: sheet.transformation.questions }] : []
+  )
+
+  const transform = (slug) =>
+    apply(async () => {
+      const character = await SetTransformation(sheet.id, slug)
+      const fresh = await GetSheet(sheet.id)
+      transformPick = ''
+      return { ...character, transformation: fresh.transformation }
+    })
+
+  const stanceTiers = [1, 2, 3, 4]
 
   const subclassFeatures = $derived(featuresUpTo(sheet?.subclass?.features ?? [], sheet?.subclassMastery ?? 1))
   const multiclassFeatures = $derived(featuresUpTo(sheet?.multiclassSubclass?.features ?? [], 1))
@@ -136,6 +269,7 @@
           Level {sheet.level} · Tier {sheet.tier} · {sheet.className} ({sheet.subclassName})
           {#if sheet.multiclassName}· {sheet.multiclassName} ({sheet.multiclassSubclassName}){/if}
           · {sheet.ancestryName} · {sheet.communityName}
+          {#if sheet.transformationName}· {sheet.transformationName}{/if}
         </p>
         <p class="meta">
           Proficiency {sheet.proficiency} · {MASTERY_LABELS[sheet.subclassMastery - 1]}
@@ -159,7 +293,7 @@
     {#if restReport}
       <div class="rest">
         <span class="rest-title">
-          {restReport.swap ? 'Domain cards' : restReport.long ? 'Long rest' : 'Short rest'}
+          {restReport.title ?? (restReport.swap ? 'Domain cards' : restReport.long ? 'Long rest' : 'Short rest')}
         </span>
         <ul>
           {#each restReport.outcomes as outcome, i (i)}<li>{outcome}</li>{/each}
@@ -180,7 +314,7 @@
           compact
           character={sheet}
           experiences={sheet.experiences}
-          onupdate={(character) => (sheet = { ...sheet, ...character })}
+          onupdate={merge}
         />
       </div>
     </section>
@@ -212,19 +346,96 @@
           <ResourceTrack label="Stress" tone="stress" marked={sheet.stressMarked} max={sheet.stressMax} {busy} onchange={setStress} />
           <ResourceTrack label="Hope" tone="hope" marked={sheet.hope} max={sheet.hopeMax} {busy} onchange={setHope} />
           <ResourceTrack label="Armor slots" tone="armor" marked={sheet.armorMarked} max={sheet.armorScore} {busy} onchange={setArmor} />
+          {#if sheet.usesFavor}
+            <ResourceTrack label="Favor" tone="hope" marked={sheet.favor} max={FAVOR_MAX} {busy} onchange={setFavor} />
+          {/if}
+          {#if sheet.usesFocus}
+            <ResourceTrack label="Focus" tone="plain" marked={sheet.focus} max={FOCUS_MAX} {busy} onchange={setFocus} />
+            <button class="btn ghost refocus" disabled={busy} onclick={refocus}>
+              Refocus — clear and roll {Math.max(sheet.traits.instinct, 0)}d6
+            </button>
+          {/if}
         </div>
       </section>
 
       <section class="card">
         <h3>Defenses</h3>
         <div class="stats">
-          <div class="stat"><span class="n">{sheet.evasion}</span><span class="l">Evasion</span></div>
+          <div class="stat">
+            <span class="n">{sheet.effectiveEvasion}</span><span class="l">Evasion</span>
+            {#if sheet.effectiveEvasion !== sheet.evasion}<span class="base">base {sheet.evasion}</span>{/if}
+          </div>
           <div class="stat"><span class="n">{sheet.armorScore}</span><span class="l">Armor Score</span></div>
-          <div class="stat"><span class="n">{sheet.thresholdMajor}</span><span class="l">Major</span></div>
-          <div class="stat"><span class="n">{sheet.thresholdSevere}</span><span class="l">Severe</span></div>
+          <div class="stat">
+            <span class="n">{sheet.effectiveMajor}</span><span class="l">Major</span>
+            {#if sheet.effectiveMajor !== sheet.thresholdMajor}<span class="base">base {sheet.thresholdMajor}</span>{/if}
+          </div>
+          <div class="stat">
+            <span class="n">{sheet.effectiveSevere}</span><span class="l">Severe</span>
+            {#if sheet.effectiveSevere !== sheet.thresholdSevere}<span class="base">base {sheet.thresholdSevere}</span>{/if}
+          </div>
         </div>
+        {#if sheet.live?.length}
+          <div class="bonuses">
+            <span class="counted">Right now</span>
+            {#each sheet.live as bonus, i (i)}
+              <span class="bonus"><strong>{bonus.source}</strong> {bonus.effect}</span>
+            {/each}
+          </div>
+        {/if}
+        {#if sheet.effects?.length}
+          <div class="effects">
+            {#each sheet.effects as fx (fx.id)}
+              <button
+                class="effect"
+                class:on={fx.active}
+                disabled={busy}
+                title="{fx.source}: {fx.effect}. Lasts until {fx.ends}."
+                onclick={() => toggleEffect(fx)}
+              >
+                {fx.label}<span class="fx">{fx.effect}</span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+        {#if sheet.bonuses?.length}
+          <div class="bonuses">
+            <span class="counted">Counted in</span>
+            {#each sheet.bonuses as bonus, i (i)}
+              <span class="bonus"><strong>{bonus.source}</strong> {bonus.effect}</span>
+            {/each}
+          </div>
+        {/if}
+        {#if worn.length}
+          <ul class="worn">
+            {#each worn as item (item.id)}
+              <li>
+                <span class="wname">{item.name}</span>
+                <span class="wline">{item.weapon || item.armor ? gearLine(item.weapon ?? item.armor) : item.detail}</span>
+                <SrdText text={feature(item.weapon ?? item.armor)} />
+              </li>
+            {/each}
+          </ul>
+        {/if}
+        <form class="hit" onsubmit={takeDamage}>
+          <label class="took">
+            <span>Took</span>
+            <input type="number" min="0" max="999" bind:value={hitAmount} placeholder="0" aria-label="Damage taken" />
+          </label>
+          <label class="check">
+            <input type="checkbox" bind:checked={hitArmor} disabled={slotsLeft <= 0} />
+            <span>Mark an Armor Slot ({slotsLeft} left)</span>
+          </label>
+          <button class="btn" type="submit" disabled={busy || hitAmount === null || hitAmount === ''}>Take damage</button>
+        </form>
+        {#if hit}
+          <p class="hit-report" class:downed={hit.downed}>{describeHit(hit)}</p>
+        {/if}
         <p class="hint">
           Damage at or above Major marks 2 HP, at or above Severe marks 3. Below Major marks 1.
+          Marking an Armor Slot drops it one step. Gear, subclass and ancestry features and loadout
+          cards with a fixed bonus are counted in as they change; situational ones are still yours
+          to apply.
         </p>
       </section>
 
@@ -259,6 +470,12 @@
           <FeatureList features={[sheet.class.hopeFeature]} />
           <h4>Class features</h4>
           <FeatureList features={sheet.class.features} />
+          {#if sheet.classSlug === 'brawler'}
+            <p class="hint">Your Combo Die is a <strong>d{sheet.comboDie}</strong>.</p>
+          {/if}
+          {#if sheet.usesFavor}
+            <p class="hint">Your Patron Die is a <strong>d{sheet.level >= 5 ? 8 : 6}</strong>.</p>
+          {/if}
         {/if}
         <h4>{sheet.subclassName}</h4>
         <FeatureList features={subclassFeatures} />
@@ -279,7 +496,88 @@
         <FeatureList features={sheet.ancestry?.features ?? []} />
         <h4>{sheet.communityName}</h4>
         <FeatureList features={sheet.community?.features ?? []} />
+        {#if sheet.transformation}
+          <h4>{sheet.transformationName} <span class="aside">transformation</span></h4>
+          <FeatureList features={[...sheet.transformation.features, ...transformQuestions]} />
+          <button class="btn ghost" disabled={busy} onclick={() => transform('')}>Remove the transformation</button>
+        {:else if transformations.length}
+          <h4>Transformation</h4>
+          <div class="transform">
+            <select bind:value={transformPick} aria-label="Transformation">
+              <option value="">None</option>
+              {#each transformations as t (t.slug)}
+                <option value={t.slug}>{t.name}</option>
+              {/each}
+            </select>
+            <button class="btn" disabled={busy || !transformPick} onclick={() => transform(transformPick)}>Take it</button>
+          </div>
+          {#if transformPick}
+            {@const preview = transformations.find((t) => t.slug === transformPick)}
+            <SrdText text={preview?.description} />
+            <FeatureList features={preview?.features ?? []} />
+          {/if}
+          <p class="hint">
+            Optional, and your GM's to give — during play or at character creation. A character can
+            have one, and it doesn't count toward your loadout.
+          </p>
+        {/if}
       </section>
+
+      {#if sheet.stances}
+        <section class="card wide">
+          <h3>
+            {sheet.stances.name}
+            <span class="aside">
+              {sheet.knownStances.length} of {sheet.stanceAllowance} known · Focus {sheet.focus}/{FOCUS_MAX}
+            </span>
+          </h3>
+          {#if sheet.activeStance}
+            <p class="in-stance">
+              In the <strong>{sheet.activeStance}</strong> stance — it ends at the end of the scene, on
+              Severe damage, or when you mark your last Hit Point.
+              <button class="btn ghost" disabled={busy} onclick={dropStance}>Drop out</button>
+            </p>
+          {/if}
+          <details class="rules">
+            <summary>How stances and Focus work</summary>
+            <FeatureList features={sheet.stances.rules} />
+          </details>
+          {#each stanceTiers as tier (tier)}
+            <h4 class:locked={tier > sheet.tier}>Tier {tier}</h4>
+            <ul class="stances">
+              {#each sheet.stances.stances.filter((st) => st.tier === tier) as st (st.title)}
+                {@const known = sheet.knownStances.includes(st.title)}
+                {@const full = sheet.knownStances.length >= sheet.stanceAllowance}
+                <li class:known class:active={sheet.activeStance === st.title}>
+                  <label class="learn">
+                    <input
+                      type="checkbox"
+                      checked={known}
+                      disabled={busy || (!known && (tier > sheet.tier || full))}
+                      onchange={() => learnStance(st, !known)}
+                    />
+                    <strong>{st.title}</strong>
+                    {#if sheet.activeStance === st.title}<span class="chip">active</span>{/if}
+                  </label>
+                  <SrdText text={st.description} />
+                  {#if known && sheet.activeStance !== st.title}
+                    <div class="shift">
+                      <button class="btn ghost" disabled={busy || sheet.focus < 1} onclick={() => shiftStance(st, 'focus')}>
+                        Shift in — spend a Focus
+                      </button>
+                      {#if sheet.flowState}
+                        <button class="btn ghost" disabled={busy} onclick={() => shiftStance(st, 'stress')}>
+                          Shift in — mark a Stress
+                        </button>
+                      {/if}
+                    </div>
+                  {/if}
+                </li>
+              {/each}
+            </ul>
+          {/each}
+        </section>
+      {/if}
 
       {#if sheet.background || sheet.connections}
         <section class="card wide">
@@ -320,7 +618,11 @@
     long={restLong}
     characterId={sheet.id}
     onrested={rested}
-    onswap={(result) => (sheet = { ...sheet, ...result.character, loadout: result.loadout.loadout, vault: result.loadout.vault })}
+    onswap={(result) => {
+      merge(result.character)
+      sheet = { ...sheet, loadout: result.loadout.loadout, vault: result.loadout.vault }
+      refreshBonuses()
+    }}
   />
 {/if}
 
@@ -584,6 +886,188 @@
     line-height: 1.5;
     color: var(--muted);
   }
+
+  .transform {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat .base {
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+
+  .refocus {
+    align-self: flex-start;
+    font-size: 0.75rem;
+  }
+
+  .effects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.6rem;
+  }
+
+  .effect {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.25rem 0.55rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .effect .fx { font-size: 0.65rem; }
+
+  .effect.on {
+    border-color: var(--hope);
+    color: var(--text);
+  }
+
+  .in-stance {
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .stances {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .stances li {
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+
+  .stances li.known { border-color: var(--gold-deep); }
+
+  .stances li.active { border-color: var(--hope); }
+
+  .learn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+  }
+
+  .shift {
+    display: flex;
+    gap: 0.3rem;
+    margin-top: 0.3rem;
+  }
+
+  h4.locked {
+    color: var(--muted);
+    opacity: 0.7;
+  }
+
+  .rules {
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+  }
+
+  .rules summary {
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .bonuses {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.6rem;
+    margin-top: 0.6rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .counted {
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .bonus strong {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .worn {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0.7rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .worn li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .wname { font-size: 0.82rem; }
+
+  .wline {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .worn :global(.srd) { font-size: 0.72rem; }
+
+  .hit {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+
+  .hit label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .hit label span {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+  }
+
+  .hit label.check {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .hit label.check span {
+    font-size: 0.75rem;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .took input { width: 4.5rem; }
+
+  .hit-report {
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+  }
+
+  .hit-report.downed { color: var(--danger); }
 
   .prose {
     margin: 0;
