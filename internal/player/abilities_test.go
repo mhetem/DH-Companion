@@ -185,4 +185,55 @@ func TestCreationBonuses(t *testing.T) {
 	if plain.Sources == nil || len(plain.Sources) != 0 || plain.Evasion != 0 {
 		t.Errorf("a Clank Troubadour has nothing to add: %+v", plain)
 	}
+	earthkin := s.CreationBonuses("bard", "troubadour", "earthkin")
+	if earthkin.ArmorScore != 1 || earthkin.Major != 1 || earthkin.Severe != 1 || len(earthkin.Sources) != 1 {
+		t.Errorf("an Earthkin starts with Stoneskin: %+v", earthkin)
+	}
+}
+
+func TestScaledArmorFeatures(t *testing.T) {
+	s := newTestService(t)
+	wearing := func(slug string) []db.InventoryItem {
+		return []db.InventoryItem{{ID: 1, Kind: "armor", SrdSlug: slug, Name: slug, Equipped: 1}}
+	}
+	warlock := db.Character{ClassSlug: "warlock", SubclassSlug: "pactOfTheEndless", SubclassMastery: 1, Level: 1, Presence: 2}
+	wizard := db.Character{ClassSlug: "wizard", SubclassSlug: "schoolOfKnowledge", SubclassMastery: 1, Level: 1, Knowledge: -1}
+	multiclass := db.Character{ClassSlug: "warrior", SubclassSlug: "callOfTheBrave", SubclassMastery: 1, MulticlassSlug: "wizard", MulticlassSubclassSlug: "schoolOfKnowledge", Level: 5, Knowledge: 1}
+	veteran := db.Character{ClassSlug: "bard", SubclassSlug: "troubadour", SubclassMastery: 1, Level: 5}
+
+	for _, tc := range []struct {
+		name  string
+		row   db.Character
+		armor string
+		want  statMods
+	}{
+		{"Enchanted adds the Spellcast trait", warlock, "mageRobes", statMods{major: 2, severe: 2}},
+		{"a negative Spellcast trait adds nothing", wizard, "mageRobes", statMods{}},
+		{"a multiclass brings a Spellcast trait", multiclass, "legendaryMageRobes", statMods{major: 1, severe: 1}},
+		{"Magnificent adds Presence to Armor Score", warlock, "granminsterSFinery", statMods{armorScore: 2}},
+		{"Attuned adds the tier", veteran, "runeForgedExosuit", statMods{major: 3, severe: 3}},
+	} {
+		if got := s.snapshotOf(tc.row, wearing(tc.armor), nil).mods; got != tc.want {
+			t.Errorf("%s: %+v, want %+v", tc.name, got, tc.want)
+		}
+	}
+
+	traits := map[string]int{"agility": 0, "strength": -1, "finesse": 1, "instinct": 1, "presence": 2, "knowledge": 0}
+	c := characterWith(t, s, "warlock", "pactOfTheEndless", traits, 1, 2)
+	addGear(t, s, c.ID, "armor", "mageRobes", "Mage Robes", true)
+	addGear(t, s, c.ID, "secondary-weapon", "fightingCloak", "Fighting Cloak", true)
+	expectDefenses(t, s, c.ID, 10, 2, 9, 15)
+}
+
+func TestStoneskinOutlastsArmor(t *testing.T) {
+	s := newTestService(t)
+	c := buildCharacter(t, s, "bard", "troubadour", "earthkin", 1, 2, 3)
+
+	chain := addGear(t, s, c.ID, "armor", "chainmailArmor", "Chainmail Armor", true)
+	expectDefenses(t, s, c.ID, 9, 5, 9, 17)
+
+	if _, err := s.SetItemEquipped(chain.ID, false); err != nil {
+		t.Fatalf("SetItemEquipped: %v", err)
+	}
+	expectDefenses(t, s, c.ID, 10, 1, 2, 3)
 }

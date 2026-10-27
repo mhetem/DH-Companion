@@ -14,12 +14,13 @@ type Bonus struct {
 }
 
 type CreationBonus struct {
-	Evasion   int     `json:"evasion"`
-	HPMax     int     `json:"hpMax"`
-	StressMax int     `json:"stressMax"`
-	Major     int     `json:"major"`
-	Severe    int     `json:"severe"`
-	Sources   []Bonus `json:"sources"`
+	ArmorScore int     `json:"armorScore"`
+	Evasion    int     `json:"evasion"`
+	HPMax      int     `json:"hpMax"`
+	StressMax  int     `json:"stressMax"`
+	Major      int     `json:"major"`
+	Severe     int     `json:"severe"`
+	Sources    []Bonus `json:"sources"`
 }
 
 type abilityContext struct {
@@ -27,6 +28,9 @@ type abilityContext struct {
 	armed       bool
 	proficiency int
 	agility     int
+	presence    int
+	spellcast   int
+	tier        int
 	domains     map[string]int
 }
 
@@ -53,6 +57,21 @@ var subclassAbilities = map[string]statMods{
 var ancestryAbilities = map[string]func(abilityContext) statMods{
 	"galapa/Shell": func(c abilityContext) statMods {
 		return statMods{major: c.proficiency, severe: c.proficiency}
+	},
+	"earthkin/Stoneskin": func(abilityContext) statMods {
+		return statMods{armorScore: 1, major: 1, severe: 1}
+	},
+}
+
+var armorAbilities = map[string]func(abilityContext) statMods{
+	"Enchanted": func(c abilityContext) statMods {
+		return statMods{major: max(c.spellcast, 0), severe: max(c.spellcast, 0)}
+	},
+	"Magnificent": func(c abilityContext) statMods {
+		return statMods{armorScore: max(c.presence, 0)}
+	},
+	"Attuned": func(c abilityContext) statMods {
+		return statMods{major: c.tier, severe: c.tier}
 	},
 }
 
@@ -193,12 +212,39 @@ func (s *Service) subclassBonuses(snap *snapshot, classSlug, subclassSlug string
 	}
 }
 
+func traitScore(row db.Character, trait string) int {
+	return map[string]int{
+		"agility":   int(row.Agility),
+		"strength":  int(row.Strength),
+		"finesse":   int(row.Finesse),
+		"instinct":  int(row.Instinct),
+		"presence":  int(row.Presence),
+		"knowledge": int(row.Knowledge),
+	}[strings.ToLower(trait)]
+}
+
+func (s *Service) spellcastScore(row db.Character) int {
+	for _, pick := range [][2]string{{row.ClassSlug, row.SubclassSlug}, {row.MulticlassSlug, row.MulticlassSubclassSlug}} {
+		class, ok := s.catalog.Class(pick[0])
+		if !ok {
+			continue
+		}
+		if sub, ok := class.Subclass(pick[1]); ok && sub.SpellcastTrait != "" {
+			return traitScore(row, sub.SpellcastTrait)
+		}
+	}
+	return 0
+}
+
 func (s *Service) abilityBonuses(snap *snapshot, row db.Character, held []db.CharacterDomainCard) {
 	c := abilityContext{
 		armored:     snap.hasArmor,
 		armed:       snap.armed,
 		proficiency: int(row.Proficiency),
 		agility:     int(row.Agility),
+		presence:    int(row.Presence),
+		spellcast:   s.spellcastScore(row),
+		tier:        tierForLevel(int(row.Level)),
 		domains:     map[string]int{},
 	}
 	loadout := []cards.DomainCard{}
@@ -222,6 +268,11 @@ func (s *Service) abilityBonuses(snap *snapshot, row db.Character, held []db.Cha
 			if fn, ok := ancestryAbilities[row.AncestrySlug+"/"+f.Title]; ok {
 				snap.apply(f.Title, fn(c))
 			}
+		}
+	}
+	if snap.armorFeature != nil {
+		if fn, ok := armorAbilities[snap.armorFeature.Title]; ok {
+			snap.apply(snap.armorName, fn(c))
 		}
 	}
 	for _, card := range loadout {
@@ -268,11 +319,12 @@ func (s *Service) CreationBonuses(classSlug, subclassSlug, ancestrySlug string) 
 		sources = []Bonus{}
 	}
 	return CreationBonus{
-		Evasion:   snap.mods.evasion,
-		HPMax:     snap.mods.hpMax,
-		StressMax: snap.mods.stressMax,
-		Major:     snap.mods.major,
-		Severe:    snap.mods.severe,
-		Sources:   sources,
+		ArmorScore: snap.mods.armorScore,
+		Evasion:    snap.mods.evasion,
+		HPMax:      snap.mods.hpMax,
+		StressMax:  snap.mods.stressMax,
+		Major:      snap.mods.major,
+		Severe:     snap.mods.severe,
+		Sources:    sources,
 	}
 }

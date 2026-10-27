@@ -154,6 +154,15 @@ var effectDefs = []effectDef{
 		available:   func(c liveContext) bool { return c.loadout["frenzy"] },
 		mods:        func(liveContext) statMods { return statMods{severe: 8} },
 	},
+	{
+		id:           "eyeOfTheStorm",
+		source:       "Eye of the Storm",
+		label:        "In the eye of the storm",
+		ends:         "Severe damage or your next use of it",
+		endsOnSevere: true,
+		available:    func(c liveContext) bool { return c.row.AncestrySlug == "skykin" },
+		mods:         func(liveContext) statMods { return statMods{evasion: 1} },
+	},
 }
 
 var beastformAbilities = map[string]statMods{

@@ -26,6 +26,12 @@ func TestNewSRDContentLoads(t *testing.T) {
 	if got := len(s.ListTransformations()); got != 6 {
 		t.Errorf("%d transformations, want 6", got)
 	}
+	if got := len(s.ListAncestries()); got != 25 {
+		t.Errorf("%d ancestries, want 25", got)
+	}
+	if got := len(s.ListCommunities()); got != 15 {
+		t.Errorf("%d communities, want 15", got)
+	}
 }
 
 func TestTransformationOnTheSheet(t *testing.T) {

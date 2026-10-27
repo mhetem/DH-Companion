@@ -201,6 +201,27 @@ func TestToggledEffects(t *testing.T) {
 	}
 }
 
+func TestEyeOfTheStorm(t *testing.T) {
+	s := newTestService(t)
+	clank := newTestCharacter(t, s, 0, 5, 10)
+	if _, err := s.SetEffect(clank.ID, "eyeOfTheStorm", true); err == nil {
+		t.Error("only a Skykin has Eye of the Storm")
+	}
+
+	skykin := buildCharacter(t, s, "bard", "troubadour", "skykin", 0, 5, 10)
+	calm, err := s.SetEffect(skykin.ID, "eyeOfTheStorm", true)
+	if err != nil {
+		t.Fatalf("SetEffect: %v", err)
+	}
+	if calm.EffectiveEvasion != calm.Evasion+1 {
+		t.Fatalf("Eye of the Storm is +1 Evasion: %+v", calm)
+	}
+	severe, _ := s.TakeDamage(DamageInput{CharacterID: skykin.ID, Amount: 12})
+	if severe.Severity != "severe" || len(severe.Character.ActiveEffects) != 0 {
+		t.Fatalf("Severe damage ends it: %+v", severe)
+	}
+}
+
 func TestEffectGroupsAndArmorBlock(t *testing.T) {
 	s := newTestService(t)
 	druid := characterWith(t, s, "druid", "wardenOfTheElements", nil, 5, 10)

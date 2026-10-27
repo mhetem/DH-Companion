@@ -108,11 +108,13 @@ type defenseBase struct {
 }
 
 type snapshot struct {
-	hasArmor bool
-	armed    bool
-	base     defenseBase
-	mods     statMods
-	bonuses  []Bonus
+	hasArmor     bool
+	armed        bool
+	armorName    string
+	armorFeature *cards.Feature
+	base         defenseBase
+	mods         statMods
+	bonuses      []Bonus
 }
 
 func (s *Service) snapshotOf(row db.Character, items []db.InventoryItem, held []db.CharacterDomainCard) snapshot {
@@ -128,6 +130,7 @@ func (s *Service) snapshotOf(row db.Character, items []db.InventoryItem, held []
 			if a, ok := s.catalog.ArmorPiece(r.SrdSlug); ok && r.SrdSlug != "" {
 				snap.base.known = true
 				snap.base.score, snap.base.major, snap.base.severe = a.BaseScore, a.ThresholdMajor, a.ThresholdSevere
+				snap.armorName, snap.armorFeature = r.Name, a.Feature
 				snap.apply(r.Name, featureMods(a.Feature))
 			}
 		case "primary-weapon", "secondary-weapon":

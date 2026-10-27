@@ -1824,7 +1824,7 @@ Notes on gear:
   "+1 Evasion" and "−1 to all character traits and Evasion"), `+N to damage thresholds`, `+N to
   Severe damage threshold`. Anything conditional or scaled ("equal to your Presence", "until
   you clear an Armor Slot", "−5 penalty … until you repair") is left as reminder text on the
-  sheet, and so are trait changes: traits are what level-ups mark and raise, and quietly
+  sheet (Phase 7 later counted the three armor features that scale), and so are trait changes: traits are what level-ups mark and raise, and quietly
   moving them under the player would be worse than a line of text.
 - **Armor marks follow a smaller score down**, so swapping heavy armor for light can't leave
   more slots marked than exist.
@@ -2111,26 +2111,44 @@ Ordered by what a user hits first, not by how interesting it is to build.
 
 ### SRD 2.0 content still to bring in
 
-- [ ] **Ancestries and communities from SRD 2.0.** Phase 6.15 brought in the classes, the Dread
-      domain and transformations, but `ancestries.json` (19) and `communities.json` (9) are
-      still the 1.0 transcription. Compare both against the 2.0 pages: add anything new, and
-      update any feature whose wording or numbers changed, in the existing data's style
-      (ASCII quotes, dashes as hyphens, `<strong>`/`<em>`, `- ` lists). Then check what reads
-      them by title:
-      - `abilities.go` keys Galapa's Shell, Simiah's Nimble, the Giant's Endurance and the
-        Human's High Stamina by ancestry slug and feature title — a renamed feature or a
-        changed number silently stops counting.
-      - Any new ancestry or community feature with a fixed bonus to Evasion, Armor Score,
-        thresholds or slots joins the ability table, as an always-on bonus or, if it only
-        applies at character creation, through `CreationBonuses`.
-      - The README's counts ("19 ancestries, 9 communities"), the only place that quotes them.
-      **Done when:** every 2.0 ancestry and community is in the wizard with its 2.0 text, and
-      the ancestry bonuses still count.
+- [x] **Ancestries and communities from SRD 2.0.** The 1.0 ancestries and communities match
+      the 2.0 pages word for word, so they're untouched, and every title `abilities.go` keys on
+      still matches. 2.0 adds Aetheris, Gnome and the four Elemental Kin (Earthkin, Emberkin,
+      Skykin, Tidekin), and the Duneborne, Freeborne, Frostborne, Hearthborne, Reborne and
+      Warborne communities: 25 ancestries and 15 communities, and the README says so.
+      - **The Elemental Kin are four ancestries.** Each has its own pair of features, so each
+        is its own entry, with the SRD's shared Elemental Kin section appended to its
+        description after its own text.
+      - **Earthkin's Stoneskin is always on, not a creation bonus.** It says "at character
+        creation", like Nimble, but Armor Score and thresholds are recomputed from the armor
+        whenever it changes, so a bonus applied once would be gone the first time armor went
+        on. Counted like Shell. `CreationBonus` carries `armorScore` so the Defenses step can
+        say to add it to a score typed by hand.
+      - **Skykin's Eye of the Storm is a toggle** on the Defenses card: +1 Evasion, ended by
+        Severe damage. Granted to an ally instead, it's that ally's to add.
+      - **Nothing else new moves a defense.** Celestial Wings is per-attack; Frostborne's Hardy
+        and Duneborne's Oasis are rest effects, left to the player like Clank's Efficient.
+      - **The new communities' adjectives keep the SRD's order**, which isn't alphabetical the
+        way the 1.0 lists are. One fix to the source: a doubled full stop after Brave Face.
 
 ### Rules the sheet still leaves to the player
 
 - [x] **Armor and weapon datasets.** Done in Phase 6.13: the data had arrived with the GM's
       Equipment browser, and Inventory is now a picker over it that still accepts free text.
+- [x] **Armor features that scale with the character.** Phase 6.13 read gear features for
+      fixed numbers only, so Mage Robes' Enchanted, Granminster's Finery's Magnificent and the
+      Rune-Forged Exosuit's Attuned were reminder text. They're now `armorAbilities`, beside
+      the ability tables and fed the same context, counted while the linked armor is worn.
+      - **Keyed by feature title**, not armor slug, because the four tiers of Mage Robes share
+        Enchanted.
+      - **Enchanted** adds the Spellcast trait to both thresholds: the main subclass's, or the
+        multiclass subclass's when the main one has none (Guardian, Warrior, Brawler).
+      - **Magnificent** adds Presence to Armor Score; **Attuned** adds the tier to both
+        thresholds. Attuned's smaller loadout isn't enforced, so it stays the player's to keep.
+      - **A trait of 0 or less adds nothing**, rather than taking from the defense.
+      - **They move with a level-up**, which snapshots before and after, like Untouchable. A
+        trait or subclass changed in the edit wizard doesn't resync, also like Untouchable,
+        because that form saves the defenses typed beside it.
 - [x] **Taking damage.** Done in Phase 6.13.
 - [ ] **Death moves** — Blaze of Glory, Avoid Death, Risk It All. Not modelled at all: a
       character at full HP marks is just a character with a full track.
@@ -2233,8 +2251,3 @@ in parallel with Phases 2–5. All of it has landed in `data/` ahead of the Phas
 For what may be redistributed, see the licensing note above — the constraint is the DPCGL's
 Permitted Formats, not the sourcing.
 
-## Suggested order
-Phase 0 → 1 → 2 → 3 → 4 = a complete, usable **GM tool** (build, run, and record a
-campaign). Then Phase 5 (Player) slots in independently, and Phase 6 (CI/release) rides
-along from Phase 0 onward. Phase 7 (LAN sharing) is an optional capstone.
-GM side reaches "better than the web app" by the end of Phase 4.

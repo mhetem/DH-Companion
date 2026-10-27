@@ -111,7 +111,7 @@ database.
 
 - **Character creation** — a seven-step wizard through class, subclass, ancestry, community
   and traits, over the full SRD catalog (13 classes and their subclasses — the Assassin,
-  Brawler, Warlock and Witch included — 19 ancestries, 9 communities), with the text for
+  Brawler, Warlock and Witch included — 25 ancestries, 15 communities), with the text for
   every option shown beside the picker.
 - **The sheet** — traits, live-tracked Hit Points, Stress, Hope and armor slots, Evasion and
   both damage thresholds, gold in handfuls/bags/chests, and your class, subclass, ancestry
@@ -130,8 +130,9 @@ database.
   armor equipped at a time, plus a one-press way to add your class's starting items. Pick
   gear from the SRD tables as you type its name — every weapon, armor, item and consumable —
   or keep anything else as free text. **Equipping SRD armor sets your Armor Score and both
-  thresholds**, and gear features like a shield's *+1 to Armor Score* or heavy armor's
-  *−1 to Evasion* are applied while it's on; a two-handed weapon takes both hands.
+  thresholds**, and gear features like a shield's *+1 to Armor Score*, heavy armor's
+  *−1 to Evasion* or Mage Robes' Spellcast trait to thresholds are applied while it's on; a
+  two-handed weapon takes both hands.
 - **Abilities count themselves in** — subclass features like the Stalwart's *Unwavering*,
   the Galapa's *Shell*, and loadout cards like *Fortified Armor* or *Untouchable* adjust
   Evasion, Armor Score, thresholds and slots as you level, equip and swap cards, and the
@@ -448,7 +449,7 @@ internal/
     rest.go               downtime moves, short and long
     roll.go               duality and damage rolls that write back
     equipment.go          SRD gear, defenses kept in step with it, weapon damage
-    abilities.go          the abilities with fixed bonuses, Bare Bones, and what the wizard adds
+    abilities.go          ability and scaled armor bonuses, Bare Bones, and what the wizard adds
     effects.go            what's true right now: stress-, hope- and stance-driven bonuses, toggles
     classfeatures.go      Favor, Focus, stances, combo strikes, Brawler's Strike
     damage.go             taking damage against the thresholds

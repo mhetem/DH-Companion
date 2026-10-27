@@ -376,7 +376,10 @@
             <p class="blurb">
               Your choices add {bonus.sources.map((b) => `${b.source} (${b.effect})`).join(', ')}. Hit Points,
               Stress and Evasion below already include them.
-              {#if bonus.major || bonus.severe}
+              {#if bonus.armorScore}
+                Armor Score and thresholds pick theirs up when you equip SRD armor in Inventory — if you type
+                them here, add them in.
+              {:else if bonus.major || bonus.severe}
                 Thresholds pick theirs up when you equip SRD armor in Inventory — if you type them here, add
                 them in.
               {/if}

@@ -170,6 +170,7 @@ import * as cards$0 from "../cards/models.js";
 
 /**
  * @typedef {Object} CreationBonus
+ * @property {number} armorScore
  * @property {number} evasion
  * @property {number} hpMax
  * @property {number} stressMax
